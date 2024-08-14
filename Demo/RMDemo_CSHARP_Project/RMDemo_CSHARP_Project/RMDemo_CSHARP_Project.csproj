@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net6.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="xcopy /y /d &quot;..\data\demo_trajectory.txt&quot; &quot;$(OutDir)&quot;&#xD;&#xA;xcopy /y /d &quot;..\lib\api_c.dll&quot; &quot;$(OutDir)&quot;" />
+  </Target>
+
+</Project>
