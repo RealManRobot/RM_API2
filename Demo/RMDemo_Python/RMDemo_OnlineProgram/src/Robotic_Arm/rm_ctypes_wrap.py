@@ -942,35 +942,27 @@ class rm_robot_arm_model_e(IntEnum):
 
     # RM_65型号
     RM_MODEL_RM_65_E = 0
-    """RM_65型号"""
 
     # RM_75型号
     RM_MODEL_RM_75_E = RM_MODEL_RM_65_E + 1
-    """RM_75型号"""
 
     # RML_63I型号（已弃用）
     RM_MODEL_RM_63_I_E = RM_MODEL_RM_75_E + 1
-    """RML_63I型号（已弃用）"""
 
     # RML_63II型号
     RM_MODEL_RM_63_II_E = RM_MODEL_RM_63_I_E + 1
-    """RML_63II型号"""
 
     # RML_63III型号（已弃用）
     RM_MODEL_RM_63_III_E = RM_MODEL_RM_63_II_E + 1
-    """RML_63III型号（已弃用）"""
 
     # ECO_65型号
     RM_MODEL_ECO_65_E = RM_MODEL_RM_63_III_E + 1
-    """ECO_65型号"""
 
     # ECO_62型号
     RM_MODEL_ECO_62_E = RM_MODEL_ECO_65_E + 1
-    """ECO_62型号"""
 
     # GEN_72型号
     RM_MODEL_GEN_72_E = RM_MODEL_ECO_62_E + 1
-    """GEN_72型号"""
 
 
 class rm_force_type_e(IntEnum):
@@ -2777,20 +2769,30 @@ class rm_matrix_t(Structure):
     """  
     矩阵结构体  
 
-    **Args:**  
-        无特殊构造函数参数，通过访问实例属性来设置或读取字段值。  
-
     **Attributes:**  
         - irow (int): 矩阵的行数。  
         - iline (int): 矩阵的列数。  
-        - data (List[List[float]]): 矩阵的数据部分，大小为4x4的浮点数矩阵。  
+        - data (c_float * 16): 矩阵的数据部分，大小为4x4的浮点数矩阵。  
     """
     _fields_ = [
         ('irow', c_short),
         ('iline', c_short),
-        ('data', (c_float * int(4)) * int(4)),
+        ('data', (c_float * 16)),
     ]
 
+
+    def __init__(self, irow=4, iline=4, data=None):  
+            super().__init__()  
+            self.irow = irow  
+            self.iline = iline  
+    
+            if data is None:  
+                self.data = (c_float * 16)(*([0.0] * 16))  # 初始化所有元素为0.0  
+            else:  
+                flattened_data = [float(val) for row in data for val in row]  
+                if len(flattened_data) != 16:  
+                    raise ValueError("Data must contain exactly 16 elements for a 4x4 matrix")  
+                self.data = (c_float * 16)(*flattened_data)  
 
 # 定义机械臂事件回调函数类型，该回调函数接受一个类型为 rm_event_push_data_t 的参数
 rm_event_callback_ptr = CFUNCTYPE(None, rm_event_push_data_t)

@@ -1,0 +1,10 @@
+^C:\USERS\DELL\DESKTOP\API2-DEMO-RELEASE\C\RMDEMO_FORCECONTROL\BUILD\CMAKEFILES\55861C895A0B2B454F3BC8422A6EF85A\GENERATE.STAMP.RULE
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/Users/dell/Desktop/API2-Demo-release/C/RMDemo_ForceControl -BC:/Users/dell/Desktop/API2-Demo-release/C/RMDemo_ForceControl/build --check-stamp-list CMakeFiles/generate.stamp.list --vs-solution-file C:/Users/dell/Desktop/API2-Demo-release/C/RMDemo_ForceControl/build/RMDemo_ForceControl.sln
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

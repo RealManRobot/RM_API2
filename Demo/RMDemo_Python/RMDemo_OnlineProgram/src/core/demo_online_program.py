@@ -109,7 +109,7 @@ class RobotArmController:
                         f'{{"name":"Folder","num":1,"type":{type_value},"enabled":true,"parent_number":0}}\n']
 
         # Read original file content
-        with open(file_path, 'r+', encoding='utf-8') as file:
+        with open(file_path, 'r+', encoding='utf-8', newline='\r\n') as file:
             original_content = file.read()
 
             # Move file pointer to the beginning

@@ -15,7 +15,7 @@
 **更新日志**:
 -
 """
-__version__ = '0.2.9'
+__version__ = '1.0.0'
 
 from .rm_ctypes_wrap import *
 import ctypes
@@ -1340,14 +1340,14 @@ class MovePlan:
     机械臂轨迹规划指令
     """
 
-    def rm_movej(self, joint: list[float], v: int, connect: int, block: int, r: int = 0) -> int:
+    def rm_movej(self, joint: list[float], v: int, r: int, connect: int, block: int) -> int:
         """
         关节空间运动
 
         Args:
             joint (list): 各关节目标角度数组，单位：°
-            v (int): 速度比例1~100，即规划速度和加速度占关节最大线转速和加速度的百分比
-            r (int, optional): 轨迹交融半径，目前默认0。
+            v (int): 速度百分比系数，1~100
+            r (int, optional): 交融半径百分比系数，0~100。
             connect (int): 轨迹连接标志
                 - 0：立即规划并执行轨迹，不与后续轨迹连接。
                 - 1：将当前轨迹与下一条轨迹一起规划，但不立即执行。阻塞模式下，即使发送成功也会立即返回。
@@ -1378,13 +1378,14 @@ class MovePlan:
 
         return tag
 
-    def rm_movel(self, pose: list[float], v: int, connect: int, block: int, r: int = 0) -> int:
+    def rm_movel(self, pose: list[float], v: int, r: int, connect: int, block: int) -> int:
         """
         笛卡尔空间直线运动
 
         Args:
             pose (list[float]): 目标位姿,位置单位：米，姿态单位：弧度
-            v (int): 速度比例1~100，即规划速度和加速度占机械臂末端最大线速度和线加速度的百分比
+            v (int): 速度百分比系数，1~100
+            r (int, optional): 交融半径百分比系数，0~100。
             connect (int): 轨迹连接标志
                 - 0：立即规划并执行轨迹，不与后续轨迹连接。
                 - 1：将当前轨迹与下一条轨迹一起规划，但不立即执行。阻塞模式下，即使发送成功也会立即返回。
@@ -1395,7 +1396,6 @@ class MovePlan:
                 - 单线程模式：
                     - 0：非阻塞模式。
                     - 其他值：阻塞模式并设置超时时间，单位为秒。
-            r (int, optional): 轨迹交融半径，目前默认0。
 
         Returns:
             int: 函数执行的状态码。
@@ -1415,13 +1415,14 @@ class MovePlan:
 
         return tag
 
-    def rm_moves(self, pose: list[float], v: int, connect: int, block: int, r: int = 0) -> int:
+    def rm_moves(self, pose: list[float], v: int, r: int, connect: int, block: int) -> int:
         """
         样条曲线运动
 
         Args:
             pose (list[float]): 目标位姿,位置单位：米，姿态单位：弧度
-            v (int): 速度比例1~100，即规划速度和加速度占机械臂末端最大线速度和线加速度的百分比
+            v (int): 速度百分比系数，1~100
+            r (int, optional): 交融半径百分比系数，0~100。
             connect (int): 轨迹连接标志
                 - 0：立即规划并执行轨迹，不与后续轨迹连接。
                 - 1：将当前轨迹与下一条轨迹一起规划，但不立即执行。阻塞模式下，即使发送成功也会立即返回。
@@ -1434,7 +1435,6 @@ class MovePlan:
                 - 单线程模式：
                     - 0：非阻塞模式。
                     - 其他值：阻塞模式并设置超时时间，单位为秒。
-            r (int, optional): 轨迹交融半径，目前默认0。
 
         Returns:
             int: 函数执行的状态码。
@@ -1454,14 +1454,15 @@ class MovePlan:
 
         return tag
 
-    def rm_movec(self, pose_via: list[float], pose_to: list[float], v: int, loop: int, connect: int, block: int, r: int = 0) -> int:
+    def rm_movec(self, pose_via: list[float], pose_to: list[float], v: int, r: int, loop: int, connect: int, block: int) -> int:
         """
         笛卡尔空间圆弧运动
 
         Args:
             pose_via (list[float]): 中间点位姿，位置单位：米，姿态单位：弧度
             pose_to (list[float]): 终点位姿，位置单位：米，姿态单位：弧度
-            v (int): 速度比例1~100，即规划速度和加速度占机械臂末端最大线速度和线加速度的百分比
+            v (int): 速度百分比系数，1~100
+            r (int, optional): 交融半径百分比系数，0~100。
             loop (int): 规划圈数.
             connect (int): 轨迹连接标志
                 - 0：立即规划并执行轨迹，不与后续轨迹连接。
@@ -1473,7 +1474,6 @@ class MovePlan:
                 - 单线程模式：
                     - 0：非阻塞模式。
                     - 其他值：阻塞模式并设置超时时间，单位为秒。
-            r (int, optional): 轨迹交融半径，目前默认0。
 
         Returns:
             int: 函数执行的状态码。
@@ -1496,13 +1496,14 @@ class MovePlan:
 
         return tag
 
-    def rm_movej_p(self, pose: list[float], v: int, connect: int, block: int, r: int = 0) -> int:
+    def rm_movej_p(self, pose: list[float], v: int, r: int, connect: int, block: int) -> int:
         """
         该函数用于关节空间运动到目标位姿
 
         Args:
             pose (list[float]): 目标位姿，位置单位：米，姿态单位：弧度。
-            v (int): 速度比例1~100，即规划速度和加速度占机械臂末端最大线速度和线加速度的百分比
+            v (int): 速度百分比系数，1~100
+            r (int, optional): 交融半径百分比系数，0~100。
             connect (int): 轨迹连接标志
                 - 0：立即规划并执行轨迹，不与后续轨迹连接。
                 - 1：将当前轨迹与下一条轨迹一起规划，但不立即执行。阻塞模式下，即使发送成功也会立即返回。
@@ -1513,7 +1514,6 @@ class MovePlan:
                 - 单线程模式：
                     - 0：非阻塞模式。
                     - 其他值：阻塞模式并设置超时时间，单位为秒。
-            r (int, optional): 轨迹交融半径，目前默认0。
 
         Returns:
             int: 函数执行的状态码。
@@ -1610,7 +1610,7 @@ class ArmTeachMove:
         Args:
             num (int): 关节序号，1~7
             step (float): 步进的角度，
-            v (int): 速度比例1~100，即规划速度和加速度占机械臂末端最大线速度和线加速度的百分比
+            v (int): 速度百分比系数，1~100
             block (int): 阻塞设置
                 - 多线程模式：
                     - 0：非阻塞模式，发送指令后立即返回。
@@ -1639,7 +1639,7 @@ class ArmTeachMove:
         Args:
             teach_type (rm_pos_teach_type_e): 示教类型
             step (float): 步进的距离，单位m，精确到0.001mm
-            v (int): 速度比例1~100，即规划速度和加速度占机械臂末端最大线速度和线加速度的百分比
+            v (int): 速度百分比系数，1~100
             block (int): 阻塞设置
                 - 多线程模式：
                     - 0：非阻塞模式，发送指令后立即返回。
@@ -1668,7 +1668,7 @@ class ArmTeachMove:
         Args:
             teach_type (rm_ort_teach_type_e): 示教类型
             step (float): 步进的弧度，单位rad，精确到0.001rad
-            v (int): 速度比例1~100，即规划速度和加速度占机械臂末端最大线速度和线加速度的百分比
+            v (int): 速度百分比系数，1~100
             block (int): 阻塞设置
                 - 多线程模式：
                     - 0：非阻塞模式，发送指令后立即返回。
@@ -1697,7 +1697,7 @@ class ArmTeachMove:
         Args:
             num (int): 示教关节的序号，1~7
             direction (int): 示教方向，0-负方向，1-正方向
-            v (int): 速度比例1~100，即规划速度和加速度占关节最大线转速和加速度的百分比
+            v (int): 速度百分比系数，1~100
 
         Returns:
             int: 函数执行的状态码。
@@ -4880,7 +4880,7 @@ class Algo:
         工作坐标系转基坐标系
 
         Args:
-            matrix (rm_matrix_t): 工作坐标系在基坐标系下的矩阵
+            matrix (rm_matrix_t): 工具端坐标在工作坐标系下矩阵
             pose_in_work (rm_pose_t): 工具端坐标在工作坐标系下位姿
             flag (int, optional): 选择姿态表示方式，默认欧拉角表示姿态
                 - 0: 返回使用四元数表示姿态的位姿列表[x,y,z,w,x,y,z]
@@ -5015,7 +5015,7 @@ class Algo:
 
 class RoboticArm(ArmState, MovePlan, JointConfigSettings, JointConfigReader, ArmTipVelocityParameters,
                  ToolCoordinateConfig, WorkCoordinateConfig, ArmTeachMove, ArmMotionControl, ControllerConfig,
-                 CommunicationConfig, EffectorIOConfig, ControllerIOConfig, GripperControl, Force, DragTeach, HandControl, ModbusConfig, InstallPos,
+                 CommunicationConfig, ControllerIOConfig, EffectorIOConfig, GripperControl, Force, DragTeach, HandControl, ModbusConfig, InstallPos,
                  ForcePositionControl, ProjectManagement, GlobalWaypointManage, ElectronicFenceConfig, SelfCollision,
                  UdpConfig, Algo, LiftControl, ExpandControl):
     """机械臂连接、断开、日志设置等操作
@@ -5051,25 +5051,6 @@ class RoboticArm(ArmState, MovePlan, JointConfigSettings, JointConfigReader, Arm
 
         Returns:
             rm_robot_handle: 机械臂句柄，其中包含机械臂id标识。
-
-        Example:
-            使用RoboticArm类连接和控制机械臂：
-            >>> from rm_robot_interface import RoboticArm
-            # 初始化线程模式
-            >>> arm = RoboticArm(rm_thread_mode_e.RM_TRIPLE_MODE_E)
-            # 创建RoboticArm对象
-            >>> handle = arm.rm_create_robot_arm(ip="192.168.1.18", port=8080, level=3)
-            >>> print(handle.id) # 机械臂id标识
-            # 定义零位和目标位置（关节角度）
-            >>> zero_position = [0, 0, 0, 0, 0, 0]
-            >>> target_position = [0, 0, 0, 0, 90.0, 0]
-            # 移动机械臂到零位
-            >>> arm.movej(zero_position, 20, 0, 0, 1)
-            # 移动机械臂到目标位置
-            >>> arm.movej(target_position, 20, 0, 0, 1)
-            # 断开与机械臂的连接
-            >>> arm.rm_delete_robot_arm()
-
         """
         # 当前API版本
         if log_func is None:
@@ -5099,7 +5080,8 @@ class RoboticArm(ArmState, MovePlan, JointConfigSettings, JointConfigReader, Arm
         """
         return rm_delete_robot_arm(self.handle)
 
-    def rm_destory(self) -> int:
+    @classmethod  
+    def rm_destory(cls) -> int:
         """关闭所有机械臂连接，销毁所有线程
         Returns:
             int: 0 表示成功，非0 表示失败
@@ -5171,27 +5153,6 @@ class RoboticArm(ArmState, MovePlan, JointConfigSettings, JointConfigReader, Arm
 
         Notes:
             单线程无法使用该回调函数
-
-        Examples:
-            # 下面是一个如何注册机械臂事件回调函数的示例：
-            # 在这个示例中，我们定义了一个名为`event_callback`的函数，用于处理机械臂的事件，并将其注册为回调函数。
-            # 当机械臂事件发生时，`event_callback`函数将被调用，并接收一个包含事件数据的对象作为参数
-
-                >>> from rm_robot_interface import RoboticArm, rm_event_callback_ptr
-                >>> def event_func(data:rm_event_push_data_t) -> None:
-                ...     print("The motion is complete, the arm is in place.")
-                ...     # 判断接口类型
-                ...     if data.event_type == 1:  # 轨迹规划完成
-                ...         print("运动结果:", data.trajectory_state)
-                ...         print("当前设备:", data.device)
-                ...         print("是否连接下一条轨迹:", data.trajectory_connect)
-                ...     elif data.codeKey == 2:  # 在线编程文件运行完成
-                ...         print("在线编程文件结束id:", data.program_id)
-
-                >>> rm_init(rm_thread_mode_e.RM_TRIPLE_MODE_E)
-                >>> arm = RoboticArm("192.168.1.18", 8080,level=3)
-                >>> event_callback = rm_event_callback_ptr(event_func)
-                >>> arm.rm_get_arm_event_call_back(event_callback)
         """
         rm_get_arm_event_call_back(event_callback)
 
