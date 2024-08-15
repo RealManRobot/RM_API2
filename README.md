@@ -66,7 +66,7 @@ else:
 
 输出结果如下所示：
 
-![输出结果图片](.\image-20240710104820423.png)
+![输出结果图片](https://github.com/RealManRobot/RM_API2/blob/main/image-20240710104820423.png)
 
 
 ## 4.C/C++开发包使用说明
