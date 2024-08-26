@@ -52,7 +52,7 @@ RMDemo_CSHARP_Project
 
    `xcopy /y /d "..\lib\api_c.dll" "$(OutDir)"`
 
-   ![image-20240814101222383](H:\Desktop\1.0.0\Demo\RMDemo_CSHARP_Project\image-20240814101222383.png)
+   ![image-20240814101222383.png](https://github.com/RealManRobot/RM_API2/blob/main/Demo/RMDemo_CSHARP_Project/image-20240814101222383.png?raw=true)
 
 3. 调用动态库中的接口。
 

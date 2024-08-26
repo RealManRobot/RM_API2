@@ -10,7 +10,7 @@ extern "C" {
 #include <stdarg.h>
 #define ARM_DOF 7
 #define  M_PI		 3.14159265358979323846
-#define  SDK_VERSION (char*)"1.0.0"
+#define  SDK_VERSION (char*)"1.0.2"
 
 /**
  * @brief 线程模式
@@ -86,6 +86,12 @@ typedef enum
     RM_TRAJECTORY_REPLAY_PLANNING_E,  ///< 示教轨迹复现规划
 }rm_arm_current_trajectory_e;
 
+typedef struct
+{
+    int joint_speed;   ///< 关节速度。1：上报；0：关闭上报；-1：不设置，保持之前的状态
+    int lift_state;    ///< 升降关节信息。1：上报；0：关闭上报；-1：不设置，保持之前的状态
+    int expand_state;  ///< 扩展关节信息（升降关节和扩展关节为二选一，优先显示升降关节）1：上报；0：关闭上报；-1：不设置，保持之前的状态
+}rm_udp_custom_config;
 
 /**
  * @brief 机械臂主动上报接口配置
@@ -97,6 +103,7 @@ typedef struct {
     int port;       ///< 广播的端口号
     int force_coordinate;       ///< 系统外受力数据的坐标系，0为传感器坐标系 1为当前工作坐标系 2为当前工具坐标系（力传感器版本支持）
     char ip[28];       ///< 自定义的上报目标IP地址
+    rm_udp_custom_config custom_config;     ///< 自定义项内容
 } rm_realtime_push_config_t;
 
 /**
@@ -226,6 +233,7 @@ typedef struct
     float joint_position[ARM_DOF];              ///< 关节角度，单位°，精度：0.001°
     float joint_temperature[ARM_DOF];       ///< 当前关节温度，精度0.001℃
     float joint_voltage[ARM_DOF];       ///< 当前关节电压，精度0.001V
+    float joint_speed[ARM_DOF];       ///< 当前关节速度，精度0.01RPM。
 }rm_joint_status_t;
 
 /**
@@ -521,6 +529,31 @@ typedef struct {
     int coordinate;         ///< 系统外受力数据的坐标系，0为传感器坐标系 1为当前工作坐标系 2为当前工具坐标系
 } rm_force_sensor_t;
 
+/***
+ * 扩展关节数据
+ *
+ */
+typedef struct {
+    float pos;            ///< 当前角度  精度 0.001°，单位：°
+    int current;        ///< 当前驱动电流，单位：mA，精度：1mA
+    int err_flag;       ///< 驱动错误代码，错误代码类型参考关节错误代码
+    int en_flag;        ///< 当前关节使能状态 ，1 为上使能，0 为掉使能
+    int joint_id;       ///< 关节id号
+    int mode;           ///< 当前升降状态，0-空闲，1-正方向速度运动，2-正方向位置运动，3-负方向速度运动，4-负方向位置运动
+} rm_udp_expand_state_t;
+
+/***
+ * 升降机构状态
+ *
+ */
+typedef struct {
+    int height;         ///< 当前升降机构高度，单位：mm，精度：1mm
+    float pos;            ///< 当前角度  精度 0.001°，单位：°
+    int current;        ///< 当前驱动电流，单位：mA，精度：1mA
+    int err_flag;       ///< 驱动错误代码，错误代码类型参考关节错误代码
+    int en_flag;        ///< 当前关节使能状态 ，1 为上使能，0 为掉使能
+} rm_udp_lift_state_t;
+
 /**
  * @brief  udp主动上报机械臂信息
  * 
@@ -534,6 +567,8 @@ typedef struct
     rm_force_sensor_t force_sensor;       ///< 力数据（六维力或一维力版本支持）
     uint16_t sys_err;       ///< 系统错误码
     rm_pose_t waypoint;         ///< 当前路点信息
+    rm_udp_lift_state_t liftState;      ///< 升降关节数据
+    rm_udp_expand_state_t expandState;      ///< 扩展关节数据
 }rm_realtime_arm_joint_state_t; 
 
 /**

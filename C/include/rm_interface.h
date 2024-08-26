@@ -3588,7 +3588,7 @@ rm_pose_t rm_algo_workframe2base(rm_matrix_t matrix, rm_pose_t state);
 /**
  * @brief 计算环绕运动位姿计算环绕运动位姿
  * 
- * @param handle 机械臂控制句柄 
+ * @param handle 机械臂控制句柄，连接机械臂时传入机械臂控制句柄，不连接时传入NULL
  * @param curr_joint 当前关节角度 单位°
  * @param rotate_axis 旋转轴: 1:x轴, 2:y轴, 3:z轴
  * @param rotate_angle 旋转角度: 旋转角度, 单位(度)
@@ -3599,7 +3599,7 @@ rm_pose_t rm_algo_RotateMove(rm_robot_handle *handle,const float* const curr_joi
 /**
  * @brief 计算沿工具坐标系运动位姿
  * 
- * @param handle 机械臂控制句柄
+ * @param handle 机械臂控制句柄，连接机械臂时传入机械臂控制句柄，不连接时传入NULL
  * @param curr_joint 当前关节角度，单位：度
  * @param move_lengthx 沿X轴移动长度，单位：米
  * @param move_lengthy 沿Y轴移动长度，单位：米
@@ -3608,6 +3608,16 @@ rm_pose_t rm_algo_RotateMove(rm_robot_handle *handle,const float* const curr_joi
  */
 rm_pose_t rm_algo_cartesian_tool(rm_robot_handle *handle,const float* const curr_joint, float move_lengthx,
                          float move_lengthy, float move_lengthz);
+/**
+ * @brief 计算Pos和Rot沿某坐标系有一定的位移和旋转角度后，所得到的位姿数据
+ * 
+ * @param handle 机械臂控制句柄，连接机械臂时传入机械臂控制句柄，不连接时传入NULL
+ * @param poseCurrent 当前时刻位姿（欧拉角形式）
+ * @param deltaPosAndRot 移动及旋转数组，位置移动（单位：m），旋转（单位：度）
+ * @param frameMode 坐标系模式选择 0:Work（work即可任意设置坐标系），1:Tool
+ * @return rm_pose_t 平移旋转后的位姿
+ */
+rm_pose_t rm_algo_PoseMove(rm_robot_handle *handle,rm_pose_t poseCurrent, const float *deltaPosAndRot, int frameMode);
 /**
  * @brief 末端位姿转成工具位姿
  * 
