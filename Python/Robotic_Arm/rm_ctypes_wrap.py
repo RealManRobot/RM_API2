@@ -1034,7 +1034,7 @@ class rm_arm_current_trajectory_e(IntEnum):
     # 示教轨迹复现规划
     RM_TRAJECTORY_REPLAY_PLANNING_E = 4
 
-class rm_udp_custom_config(Structure):
+class rm_udp_custom_config_t(Structure):
     """  
     自定义UDP上报项  
 
@@ -1048,6 +1048,14 @@ class rm_udp_custom_config(Structure):
         ('lift_state', c_int),
         ('expand_state', c_int),
     ]
+
+    def __init__(self, joint_speed:int = None,lift_state:int = None,expand_state:int = None) -> None:
+        if all(param is None for param in [joint_speed, lift_state, expand_state]):
+            return
+        else:
+            self.joint_speed = joint_speed
+            self.lift_state = lift_state
+            self.expand_state = expand_state
     
     def to_dict(self, recurse=True):
         """将类的变量返回为字典，如果recurse为True，则递归处理ctypes结构字段"""
@@ -1086,7 +1094,7 @@ class rm_realtime_push_config_t(Structure):
             - 1：当前工作坐标系 
             - 2：当前工具坐标系
         - ip (bytes): 自定义的上报目标IP地址
-        - custom_config (rm_udp_custom_config): 自定义上报项
+        - custom_config (rm_udp_custom_config_t): 自定义上报项
     """
     _fields_ = [
         ('cycle', c_int),
@@ -1094,10 +1102,10 @@ class rm_realtime_push_config_t(Structure):
         ('port', c_int),
         ('force_coordinate', c_int),
         ('ip', c_char * int(28)),
-        ('custom_config', rm_udp_custom_config),
+        ('custom_config', rm_udp_custom_config_t),
     ]
 
-    def __init__(self, cycle: int = None, enable: bool = None, port: int = None, force_coordinate: int = None, ip: str = None, custom_config:rm_udp_custom_config = None) -> None:
+    def __init__(self, cycle: int = None, enable: bool = None, port: int = None, force_coordinate: int = None, ip: str = None, custom_config:rm_udp_custom_config_t = None) -> None:
         """
         UDP机械臂状态主动上报接口配置构造函数
 
@@ -1119,6 +1127,8 @@ class rm_realtime_push_config_t(Structure):
             self.port = port
             self.force_coordinate = force_coordinate
             self.ip = ip.encode('utf-8')
+            if custom_config==None:
+               custom_config=rm_udp_custom_config_t(-1,-1,-1)
             self.custom_config = custom_config
 
     def to_dict(self, recurse=True):
@@ -1673,6 +1683,7 @@ class rm_joint_status_t(Structure):
         ('joint_position', c_float * int(7)),
         ('joint_temperature', c_float * int(7)),
         ('joint_voltage', c_float * int(7)),
+        ('joint_speed', c_float * int(7)),
     ]
 
 
@@ -2741,7 +2752,7 @@ class rm_force_sensor_t(Structure):
 
 class rm_udp_expand_state_t(Structure):
     """  
-    升降机构状态
+    扩展关节状态
 
     **Attributes**:  
         - pos (float): 当前角度  精度 0.001°，单位：°
@@ -4423,11 +4434,11 @@ if _libs[libname].has("rm_algo_workframe2base", "cdecl"):
     rm_algo_workframe2base.argtypes = [rm_matrix_t, rm_pose_t]
     rm_algo_workframe2base.restype = rm_pose_t
 
-if _libs[libname].has("rm_algo_RotateMove", "cdecl"):
-    rm_algo_RotateMove = _libs[libname].get("rm_algo_RotateMove", "cdecl")
-    rm_algo_RotateMove.argtypes = [
+if _libs[libname].has("rm_algo_rotate_move", "cdecl"):
+    rm_algo_rotate_move = _libs[libname].get("rm_algo_rotate_move", "cdecl")
+    rm_algo_rotate_move.argtypes = [
         POINTER(rm_robot_handle), POINTER(c_float), c_int, c_float, rm_pose_t]
-    rm_algo_RotateMove.restype = rm_pose_t
+    rm_algo_rotate_move.restype = rm_pose_t
 
 if _libs[libname].has("rm_algo_cartesian_tool", "cdecl"):
     rm_algo_cartesian_tool = _libs[libname].get(
@@ -4436,10 +4447,10 @@ if _libs[libname].has("rm_algo_cartesian_tool", "cdecl"):
         POINTER(rm_robot_handle), POINTER(c_float), c_float, c_float, c_float]
     rm_algo_cartesian_tool.restype = rm_pose_t
 
-if _libs[libname].has("rm_algo_PoseMove", "cdecl"):
-    rm_algo_PoseMove = _libs[libname].get("rm_algo_PoseMove", "cdecl")
-    rm_algo_PoseMove.argtypes = [POINTER(rm_robot_handle), rm_pose_t, POINTER(c_float), c_int]
-    rm_algo_PoseMove.restype = rm_pose_t
+if _libs[libname].has("rm_algo_pose_move", "cdecl"):
+    rm_algo_pose_move = _libs[libname].get("rm_algo_pose_move", "cdecl")
+    rm_algo_pose_move.argtypes = [POINTER(rm_robot_handle), rm_pose_t, POINTER(c_float), c_int]
+    rm_algo_pose_move.restype = rm_pose_t
 
 if _libs[libname].has("rm_algo_end2tool", "cdecl"):
     rm_algo_end2tool = _libs[libname].get("rm_algo_end2tool", "cdecl")

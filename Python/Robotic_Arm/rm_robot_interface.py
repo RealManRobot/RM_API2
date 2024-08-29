@@ -4966,9 +4966,9 @@ class Algo:
         return pose_eul if flag else pose_qua
         # return end_pose.to_dict()
 
-    def rm_algo_RotateMove(self, curr_joint: list[float], rotate_axis: int, rotate_angle: float, choose_axis: rm_pose_t, flag: int = 1) -> list[float]:
+    def rm_algo_rotate_move(self, curr_joint: list[float], rotate_axis: int, rotate_angle: float, choose_axis: rm_pose_t, flag: int = 1) -> list[float]:
         """
-        计算环绕运动位姿计算环绕运动位姿
+        计算环绕运动位姿
 
         Args:
             curr_joint (list[float]): 当前关节角度 单位°
@@ -4986,7 +4986,7 @@ class Algo:
             curr_joint = (c_float * self.arm_dof)(*curr_joint)
         else:
             curr_joint = (c_float * ARM_DOF)(*curr_joint)
-        pose = rm_algo_RotateMove(
+        pose = rm_algo_rotate_move(
             self.handle, curr_joint, rotate_axis, rotate_angle, choose_axis)
         position = pose.position
         euler = pose.euler
@@ -5030,7 +5030,7 @@ class Algo:
         return pose_eul if flag else pose_qua
         # return pose.to_dict()
 
-    def rm_algo_PoseMove(self, poseCurrent: list[float], deltaPosAndRot: list[float], frameMode: int) -> list[float]:
+    def rm_algo_pose_move(self, poseCurrent: list[float], deltaPosAndRot: list[float], frameMode: int) -> list[float]:
         """
         计算Pos和Rot沿某坐标系有一定的位移和旋转角度后，所得到的位姿数据
 
@@ -5048,7 +5048,7 @@ class Algo:
 
         deltaPosAndRot = (c_float * 6)(*deltaPosAndRot)
 
-        pose = rm_algo_PoseMove(
+        pose = rm_algo_pose_move(
             self.handle, po1, deltaPosAndRot, frameMode)
         
         position = pose.position

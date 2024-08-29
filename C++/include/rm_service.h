@@ -3599,7 +3599,7 @@ RM_SERVICESHARED_EXPORT rm_pose_t rm_algo_workframe2base(rm_matrix_t matrix, rm_
  * @param choose_axis 指定计算时使用的坐标系
  * @return rm_pose_t 计算位姿结果
  */
-RM_SERVICESHARED_EXPORT rm_pose_t rm_algo_RotateMove(rm_robot_handle *handle,const float* const curr_joint, int rotate_axis, float rotate_angle, rm_pose_t choose_axis);
+RM_SERVICESHARED_EXPORT rm_pose_t rm_algo_rotate_move(rm_robot_handle *handle,const float* const curr_joint, int rotate_axis, float rotate_angle, rm_pose_t choose_axis);
 /**
  * @brief 计算沿工具坐标系运动位姿
  * 
@@ -3621,7 +3621,7 @@ RM_SERVICESHARED_EXPORT rm_pose_t rm_algo_cartesian_tool(rm_robot_handle *handle
  * @param frameMode 坐标系模式选择 0:Work（work即可任意设置坐标系），1:Tool
  * @return rm_pose_t 平移旋转后的位姿
  */
-RM_SERVICESHARED_EXPORT rm_pose_t rm_algo_PoseMove(rm_robot_handle *handle,rm_pose_t poseCurrent, const float *deltaPosAndRot, int frameMode);
+RM_SERVICESHARED_EXPORT rm_pose_t rm_algo_pose_move(rm_robot_handle *handle,rm_pose_t poseCurrent, const float *deltaPosAndRot, int frameMode);
 /**
  * @brief 末端位姿转成工具位姿
  * 

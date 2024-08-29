@@ -1961,7 +1961,8 @@ int rm_set_gripper_route(rm_robot_handle *handle, int min_limit, int max_limit);
             - -1: 数据发送失败，通信过程中出现问题。
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。  
-            - -4:超时
+            - -4: 超时
+            - -5: 到位设备检验失败
  */
 int rm_set_gripper_release(rm_robot_handle *handle, int speed, bool block, int timeout);
 /**
@@ -1978,7 +1979,8 @@ int rm_set_gripper_release(rm_robot_handle *handle, int speed, bool block, int t
             - -1: 数据发送失败，通信过程中出现问题。
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。  
-            - -4:超时
+            - -4: 超时
+            - -5: 到位设备检验失败
  */
 int rm_set_gripper_pick(rm_robot_handle *handle, int speed, int force, bool block, int timeout);
 /**
@@ -1995,7 +1997,8 @@ int rm_set_gripper_pick(rm_robot_handle *handle, int speed, int force, bool bloc
             - -1: 数据发送失败，通信过程中出现问题。
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。  
-            - -4:超时
+            - -4: 超时
+            - -5: 到位设备检验失败
  */
 int rm_set_gripper_pick_on(rm_robot_handle *handle, int speed, int force, bool block, int timeout);
 /**
@@ -2012,7 +2015,8 @@ int rm_set_gripper_pick_on(rm_robot_handle *handle, int speed, int force, bool b
             - -1: 数据发送失败，通信过程中出现问题。
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
-            - -4:超时
+            - -4: 超时
+            - -5: 到位设备检验失败
  */
 int rm_set_gripper_position(rm_robot_handle *handle, int position, bool block, int timeout);
 /**
@@ -3595,7 +3599,7 @@ rm_pose_t rm_algo_workframe2base(rm_matrix_t matrix, rm_pose_t state);
  * @param choose_axis 指定计算时使用的坐标系
  * @return rm_pose_t 计算位姿结果
  */
-rm_pose_t rm_algo_RotateMove(rm_robot_handle *handle,const float* const curr_joint, int rotate_axis, float rotate_angle, rm_pose_t choose_axis);
+rm_pose_t rm_algo_rotate_move(rm_robot_handle *handle,const float* const curr_joint, int rotate_axis, float rotate_angle, rm_pose_t choose_axis);
 /**
  * @brief 计算沿工具坐标系运动位姿
  * 
@@ -3617,7 +3621,7 @@ rm_pose_t rm_algo_cartesian_tool(rm_robot_handle *handle,const float* const curr
  * @param frameMode 坐标系模式选择 0:Work（work即可任意设置坐标系），1:Tool
  * @return rm_pose_t 平移旋转后的位姿
  */
-rm_pose_t rm_algo_PoseMove(rm_robot_handle *handle,rm_pose_t poseCurrent, const float *deltaPosAndRot, int frameMode);
+rm_pose_t rm_algo_pose_move(rm_robot_handle *handle,rm_pose_t poseCurrent, const float *deltaPosAndRot, int frameMode);
 /**
  * @brief 末端位姿转成工具位姿
  * 

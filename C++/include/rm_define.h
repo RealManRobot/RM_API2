@@ -91,7 +91,7 @@ typedef struct
     int joint_speed;   ///< 关节速度。1：上报；0：关闭上报；-1：不设置，保持之前的状态
     int lift_state;    ///< 升降关节信息。1：上报；0：关闭上报；-1：不设置，保持之前的状态
     int expand_state;  ///< 扩展关节信息（升降关节和扩展关节为二选一，优先显示升降关节）1：上报；0：关闭上报；-1：不设置，保持之前的状态
-}rm_udp_custom_config;
+}rm_udp_custom_config_t;
 
 /**
  * @brief 机械臂主动上报接口配置
@@ -103,7 +103,7 @@ typedef struct {
     int port;       ///< 广播的端口号
     int force_coordinate;       ///< 系统外受力数据的坐标系，0为传感器坐标系 1为当前工作坐标系 2为当前工具坐标系（力传感器版本支持）
     char ip[28];       ///< 自定义的上报目标IP地址
-    rm_udp_custom_config custom_config;     ///< 自定义项内容
+    rm_udp_custom_config_t custom_config;     ///< 自定义项内容
 } rm_realtime_push_config_t;
 
 /**
