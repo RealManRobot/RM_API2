@@ -22,7 +22,6 @@ extern "C" {
  * 此模块为API及机械臂初始化相关接口，包含API版本号查询、API初始化、连接/断开机械臂、日志设置、
  * 机械臂仿真/真实模式设置、机械臂信息获取、运动到位信息及机械臂实时状态信息回调函数注册等
  * @{  
- * @example rm_demo_01.c
  */
 /**
  * @brief 查询sdk版本号
@@ -42,7 +41,6 @@ char* rm_api_version(void);
  * @return int 函数执行的状态码。  
             - 0: 成功。  
             - -1: 创建线程失败。查看日志以获取具体错误
- * @see rm_create_robot_arm
  */
 int rm_init(rm_thread_mode_e mode);
 
@@ -57,37 +55,24 @@ int rm_destory(void);
 /**
  * @brief 日志打印配置
  * 
- * @code
- * // 打印错误级别的日志信息
- * char *get_cur_time()
- * {
- *   static char s[32] = {0};
- *   struct tm* ltime;
- *   struct timeval stamp;
- *   gettimeofday(&stamp, NULL);
- *   ltime = localtime(&stamp.tv_sec);
- *   strftime(s, 20, "%Y%m%d %H:%M:%S", ltime);
- *   return s;
- * }
- * void api_log(const char* message, va_list args) {
- *     printf("[%s]: ",get_cur_time());
- *     vfprintf(stdout, message, args);
- * }
- * 
- * rm_set_log_call_back(api_log, 3);
- * @endcode
  * @param LogCallback 日志打印回调函数
  * @param level 日志打印等级，0：debug级别，1：info级别，2：warn：级别，3：error级别  
  */
 void rm_set_log_call_back(void (*LogCallback)(const char* message, va_list args),int level);
 
 /**
+ * @brief 保存日志到文件
+ * 
+ * @param path 日志保存文件路径
+ */
+void rm_set_log_save(const char* path);
+
+/**
  * @brief 创建一个机械臂，用于实现对该机械臂的控制
  * 
  * @param ip 机械臂的ip地址
  * @param port 机械臂的端口号
- * @return rm_robot_handle* 创建成功后，返回机械臂控制句柄，创建失败返回空
- * @see rm_init
+ * @return rm_robot_handle* 创建成功后，返回机械臂控制句柄，连接成功句柄id大于0，连接失败句柄id返回-1，达到最大连接数5创建失败返回空
  */
 rm_robot_handle *rm_create_robot_arm(const char *ip,int port);
 
@@ -104,12 +89,12 @@ int rm_delete_robot_arm(rm_robot_handle *handle);
  * @brief 机械臂仿真/真实模式设置
  * 
  * @param handle 机械臂控制句柄
- * @param mode 模式 0:仿真 1:真实
+ * @param mode 模式 0:仿真模式 1:真实模式
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_set_arm_run_mode(rm_robot_handle *handle, int mode);
@@ -117,12 +102,12 @@ int rm_set_arm_run_mode(rm_robot_handle *handle, int mode);
  * @brief 机械臂仿真/真实模式获取
  * 
  * @param handle 机械臂控制句柄
- * @param mode 模式 0:仿真 1:真实
+ * @param mode 模式 0:仿真模式 1:真实模式
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_get_arm_run_mode(rm_robot_handle *handle,int *mode);
@@ -130,7 +115,7 @@ int rm_get_arm_run_mode(rm_robot_handle *handle,int *mode);
  * @brief 获取机械臂基本信息
  * 
  * @param handle 机械臂控制句柄
- * @param robot_info 机械臂基本信息结构体
+ * @param robot_info 存放机械臂基本信息结构体
  * @return int 函数执行的状态码。  
             - 0: 成功。  
             - -1: 未找到对应句柄,句柄为空或已被删除。
@@ -168,19 +153,14 @@ void rm_realtime_arm_state_call_back(rm_realtime_arm_state_callback_ptr realtime
 /**
  * @brief 设置关节最大速度
  * 
- * @code
- * // 设置关节1最大速度180°/s  
- * int ret = rm_set_joint_max_speed(handle,1,180);
- * printf("set_joint_max_speed result:%d\n",ret);
- * @endcode
  * @param handle 机械臂句柄
  * @param joint_num 关节序号
  * @param max_speed 关节最大速度，单位：°/s
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。  
  */
 int rm_set_joint_max_speed(rm_robot_handle *handle,int joint_num,float max_speed);
@@ -192,9 +172,9 @@ int rm_set_joint_max_speed(rm_robot_handle *handle,int joint_num,float max_speed
  * @param max_acc 关节最大加速度，单位：°/s²
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。  
  */
 int rm_set_joint_max_acc(rm_robot_handle *handle,int joint_num,float max_acc);
@@ -206,9 +186,9 @@ int rm_set_joint_max_acc(rm_robot_handle *handle,int joint_num,float max_acc);
  * @param min_pos 关节最小位置，单位：°
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。  
  */
 int rm_set_joint_min_pos(rm_robot_handle *handle,int joint_num,float min_pos);
@@ -220,9 +200,9 @@ int rm_set_joint_min_pos(rm_robot_handle *handle,int joint_num,float min_pos);
  * @param max_pos 关节最大位置，单位：°
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。  
  */
 int rm_set_joint_max_pos(rm_robot_handle *handle,int joint_num,float max_pos);
@@ -234,9 +214,9 @@ int rm_set_joint_max_pos(rm_robot_handle *handle,int joint_num,float max_pos);
  * @param max_speed 关节最大速度，单位：°/s
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。  
  */
 int rm_set_joint_drive_max_speed(rm_robot_handle *handle,int joint_num,float max_speed);
@@ -248,9 +228,9 @@ int rm_set_joint_drive_max_speed(rm_robot_handle *handle,int joint_num,float max
  * @param max_acc 关节最大加速度，单位：°/s² 
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。  
  */
 int rm_set_joint_drive_max_acc(rm_robot_handle *handle,int joint_num,float max_acc);
@@ -262,9 +242,9 @@ int rm_set_joint_drive_max_acc(rm_robot_handle *handle,int joint_num,float max_a
  * @param min_pos 关节最小位置
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。  
  */
 int rm_set_joint_drive_min_pos(rm_robot_handle *handle,int joint_num,float min_pos);
@@ -276,9 +256,9 @@ int rm_set_joint_drive_min_pos(rm_robot_handle *handle,int joint_num,float min_p
  * @param max_pos 关节最大位置
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。  
  */
 int rm_set_joint_drive_max_pos(rm_robot_handle *handle,int joint_num,float max_pos);
@@ -290,9 +270,9 @@ int rm_set_joint_drive_max_pos(rm_robot_handle *handle,int joint_num,float max_p
  * @param en_state 1：上使能 0：掉使能
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。   
  */
 int rm_set_joint_en_state(rm_robot_handle *handle,int joint_num,int en_state);
@@ -303,9 +283,9 @@ int rm_set_joint_en_state(rm_robot_handle *handle,int joint_num,int en_state);
  * @param joint_num 关节序号
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。  
  */
 int rm_set_joint_zero_pos(rm_robot_handle *handle,int joint_num);
@@ -316,9 +296,9 @@ int rm_set_joint_zero_pos(rm_robot_handle *handle,int joint_num);
  * @param joint_num 关节序号
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。  
  */
 int rm_set_joint_clear_err(rm_robot_handle *handle,int joint_num);
@@ -329,9 +309,9 @@ int rm_set_joint_clear_err(rm_robot_handle *handle,int joint_num);
  * @param limit_mode 1-正式模式，各关节限位为规格参数中的软限位和硬件限位
  * @return int 函数执行的状态码。   
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。  
  */
 int rm_auto_set_joint_limit(rm_robot_handle *handle,int limit_mode);
@@ -342,9 +322,9 @@ int rm_auto_set_joint_limit(rm_robot_handle *handle,int limit_mode);
  * @param max_speed 关节1~7转速数组，单位：°/s
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_get_joint_max_speed(rm_robot_handle *handle,float *max_speed);
@@ -355,9 +335,9 @@ int rm_get_joint_max_speed(rm_robot_handle *handle,float *max_speed);
  * @param max_acc 关节1~7加速度数组，单位：°/s
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_get_joint_max_acc(rm_robot_handle *handle,float *max_acc);
@@ -368,9 +348,9 @@ int rm_get_joint_max_acc(rm_robot_handle *handle,float *max_acc);
  * @param min_pos 关节1~7最小位置数组，单位：°
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_get_joint_min_pos(rm_robot_handle *handle,float *min_pos);
@@ -381,9 +361,9 @@ int rm_get_joint_min_pos(rm_robot_handle *handle,float *min_pos);
  * @param max_pos 关节1~7最大位置数组，单位：°
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_get_joint_max_pos(rm_robot_handle *handle,float *max_pos);
@@ -394,9 +374,9 @@ int rm_get_joint_max_pos(rm_robot_handle *handle,float *max_pos);
  * @param max_speed 关节1~7转速数组，单位：°/s
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_get_joint_drive_max_speed(rm_robot_handle *handle,float *max_speed);
@@ -407,9 +387,9 @@ int rm_get_joint_drive_max_speed(rm_robot_handle *handle,float *max_speed);
  * @param max_acc 关节1~7加速度数组，单位：°/s
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_get_joint_drive_max_acc(rm_robot_handle *handle,float *max_acc);
@@ -420,9 +400,9 @@ int rm_get_joint_drive_max_acc(rm_robot_handle *handle,float *max_acc);
  * @param min_pos 关节1~7最小位置数组，单位：°
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_get_joint_drive_min_pos(rm_robot_handle *handle,float *min_pos);
@@ -433,9 +413,9 @@ int rm_get_joint_drive_min_pos(rm_robot_handle *handle,float *min_pos);
  * @param max_pos 关节1~7最大位置数组，单位：°
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_get_joint_drive_max_pos(rm_robot_handle *handle,float *max_pos);
@@ -446,9 +426,9 @@ int rm_get_joint_drive_max_pos(rm_robot_handle *handle,float *max_pos);
  * @param en_state 关节1~7使能状态数组，1-使能状态，0-掉使能状态
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_get_joint_en_state(rm_robot_handle *handle,uint8_t *en_state);
@@ -460,9 +440,9 @@ int rm_get_joint_en_state(rm_robot_handle *handle,uint8_t *en_state);
  * @param brake_state 反馈关节抱闸状态，1 代表抱闸未打开，0 代表抱闸已打开
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_get_joint_err_flag(rm_robot_handle *handle,uint16_t *err_flag,uint16_t *brake_state);
@@ -481,9 +461,9 @@ int rm_get_joint_err_flag(rm_robot_handle *handle,uint16_t *err_flag,uint16_t *b
  * @param speed 末端最大线速度，单位m/s
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_set_arm_max_line_speed(rm_robot_handle *handle,float speed);
@@ -494,9 +474,9 @@ int rm_set_arm_max_line_speed(rm_robot_handle *handle,float speed);
  * @param acc 末端最大线加速度，单位m/s^2
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_set_arm_max_line_acc(rm_robot_handle *handle,float acc);
@@ -507,9 +487,9 @@ int rm_set_arm_max_line_acc(rm_robot_handle *handle,float acc);
  * @param speed 末端最大角速度，单位rad/s
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_set_arm_max_angular_speed(rm_robot_handle *handle,float speed);
@@ -520,9 +500,9 @@ int rm_set_arm_max_angular_speed(rm_robot_handle *handle,float speed);
  * @param acc 末端最大角加速度，单位rad/s^2
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_set_arm_max_angular_acc(rm_robot_handle *handle,float acc);
@@ -532,9 +512,9 @@ int rm_set_arm_max_angular_acc(rm_robot_handle *handle,float acc);
  * @param handle 机械臂句柄
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_set_arm_tcp_init(rm_robot_handle *handle);
@@ -542,12 +522,12 @@ int rm_set_arm_tcp_init(rm_robot_handle *handle);
  * @brief 设置机械臂动力学碰撞检测等级
  * 
  * @param handle 机械臂句柄
- * @param collision_stage 等级：0~8，0-无碰撞，8-碰撞最灵敏
+ * @param collision_stage 存放碰撞等级值，数据为0-8，0-无碰撞检测，8-碰撞检测最灵敏
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_set_collision_state(rm_robot_handle *handle,int collision_stage);
@@ -558,9 +538,9 @@ int rm_set_collision_state(rm_robot_handle *handle,int collision_stage);
  * @param collision_stage 等级，范围：0~8
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_get_collision_stage(rm_robot_handle *handle,int *collision_stage);
@@ -571,9 +551,9 @@ int rm_get_collision_stage(rm_robot_handle *handle,int *collision_stage);
  * @param speed 末端最大线速度，单位m/s
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_get_arm_max_line_speed(rm_robot_handle *handle, float *speed);
@@ -584,9 +564,9 @@ int rm_get_arm_max_line_speed(rm_robot_handle *handle, float *speed);
  * @param acc 末端最大线加速度，单位m/s^2
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_get_arm_max_line_acc(rm_robot_handle *handle, float *acc);
@@ -597,9 +577,9 @@ int rm_get_arm_max_line_acc(rm_robot_handle *handle, float *acc);
  * @param speed 末端最大角速度，单位rad/s
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_get_arm_max_angular_speed(rm_robot_handle *handle, float *speed);
@@ -610,9 +590,9 @@ int rm_get_arm_max_angular_speed(rm_robot_handle *handle, float *speed);
  * @param acc 末端最大角加速度，单位rad/s^2
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_get_arm_max_angular_acc(rm_robot_handle *handle, float *acc);
@@ -630,9 +610,9 @@ int rm_get_arm_max_angular_acc(rm_robot_handle *handle, float *acc);
  * @param point_num 1~6代表6个标定点
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_set_auto_tool_frame(rm_robot_handle *handle,int point_num);
@@ -647,9 +627,9 @@ int rm_set_auto_tool_frame(rm_robot_handle *handle,int point_num);
  * @param z 新工具执行末端负载位置 位置z 单位m
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_generate_auto_tool_frame(rm_robot_handle *handle, const char *name,float payload,float x,float y,float z);
@@ -660,9 +640,9 @@ int rm_generate_auto_tool_frame(rm_robot_handle *handle, const char *name,float 
  * @param frame 新工具坐标系参数结构体
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。 可能情况：要设置的坐标系名称已存在 
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_set_manual_tool_frame(rm_robot_handle *handle, rm_frame_t frame);
@@ -673,9 +653,9 @@ int rm_set_manual_tool_frame(rm_robot_handle *handle, rm_frame_t frame);
  * @param tool_name 目标工具坐标系名称
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。可能情况：切换的坐标系不存在  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_change_tool_frame(rm_robot_handle *handle, const char* tool_name);
@@ -686,9 +666,9 @@ int rm_change_tool_frame(rm_robot_handle *handle, const char* tool_name);
  * @param tool_name 要删除的工具坐标系名称
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_delete_tool_frame(rm_robot_handle *handle, const char* tool_name);
@@ -696,12 +676,12 @@ int rm_delete_tool_frame(rm_robot_handle *handle, const char* tool_name);
  * @brief 修改指定工具坐标系
  * 
  * @param handle 机械臂控制句柄 
- * @param frame 要修改的工具坐标系名称
+ * @param frame 要修改的工具坐标系参数
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_update_tool_frame(rm_robot_handle *handle, rm_frame_t frame);
@@ -713,9 +693,9 @@ int rm_update_tool_frame(rm_robot_handle *handle, rm_frame_t frame);
  * @param len 返回的工具坐标系名称长度
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_get_total_tool_frame(rm_robot_handle *handle, rm_frame_name_t *frame_names, int *len);
@@ -727,12 +707,12 @@ int rm_get_total_tool_frame(rm_robot_handle *handle, rm_frame_name_t *frame_name
  * @param frame 返回的工具参数
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。可能情况：查询的工具坐标系不存在  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_get_given_tool_frame(rm_robot_handle *handle, char *name, rm_frame_t *frame);
+int rm_get_given_tool_frame(rm_robot_handle *handle, const char *name, rm_frame_t *frame);
 /**
  * @brief 获取当前工具坐标系
  * 
@@ -740,9 +720,9 @@ int rm_get_given_tool_frame(rm_robot_handle *handle, char *name, rm_frame_t *fra
  * @param tool_frame 返回的坐标系
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_get_current_tool_frame(rm_robot_handle *handle, rm_frame_t *tool_frame);
@@ -753,9 +733,9 @@ int rm_get_current_tool_frame(rm_robot_handle *handle, rm_frame_t *tool_frame);
  * @param envelope 包络参数列表，每个工具最多支持 5 个包络球，可以没有包络
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_set_tool_envelope(rm_robot_handle *handle, rm_envelope_balls_list_t envelope);
@@ -767,9 +747,9 @@ int rm_set_tool_envelope(rm_robot_handle *handle, rm_envelope_balls_list_t envel
  * @param envelope 包络参数列表，每个工具最多支持 5 个包络球，可以没有包络
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回获取失败，检查工具坐标系是否存在。  
+            - 1: 控制器返回获取失败，可能情况：获取的工具坐标系不存在。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_get_tool_envelope(rm_robot_handle *handle, const char* tool_name, rm_envelope_balls_list_t *envelope);
@@ -789,9 +769,9 @@ int rm_get_tool_envelope(rm_robot_handle *handle, const char* tool_name, rm_enve
  * @param point_num 1~3代表3个标定点，依次为原点、X轴一点、Y轴一点，4代表生成坐标系。
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_set_auto_work_frame(rm_robot_handle *handle,const char *workname, int point_num);
@@ -803,9 +783,9 @@ int rm_set_auto_work_frame(rm_robot_handle *handle,const char *workname, int poi
  * @param pose 新工作坐标系相对于基坐标系的位姿
  * @return  int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。
  */
 int rm_set_manual_work_frame(rm_robot_handle *handle, const char* work_name, rm_pose_t pose);
@@ -816,9 +796,9 @@ int rm_set_manual_work_frame(rm_robot_handle *handle, const char* work_name, rm_
  * @param work_name 目标工作坐标系名称
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_change_work_frame(rm_robot_handle *handle, const char* work_name);
@@ -829,9 +809,9 @@ int rm_change_work_frame(rm_robot_handle *handle, const char* work_name);
  * @param work_name 要删除的工作坐标系名称
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_delete_work_frame(rm_robot_handle *handle, const char* work_name);
@@ -843,9 +823,9 @@ int rm_delete_work_frame(rm_robot_handle *handle, const char* work_name);
  * @param pose 更新工作坐标系相对于基坐标系的位姿
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_update_work_frame(rm_robot_handle *handle, const char* work_name, rm_pose_t pose);
@@ -857,9 +837,9 @@ int rm_update_work_frame(rm_robot_handle *handle, const char* work_name, rm_pose
  * @param len 返回的工作坐标系名称长度
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_get_total_work_frame(rm_robot_handle *handle, rm_frame_name_t *frame_names, int *len);
@@ -871,12 +851,12 @@ int rm_get_total_work_frame(rm_robot_handle *handle, rm_frame_name_t *frame_name
  * @param pose 获取到的位姿
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。例如：查询的工具坐标系不存在  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_get_given_work_frame(rm_robot_handle *handle, char *name, rm_pose_t *pose);
+int rm_get_given_work_frame(rm_robot_handle *handle, const char *name, rm_pose_t *pose);
 /**
  * @brief 获取当前工作坐标系
  * 
@@ -884,9 +864,9 @@ int rm_get_given_work_frame(rm_robot_handle *handle, char *name, rm_pose_t *pose
  * @param work_frame 返回的坐标系
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_get_current_work_frame(rm_robot_handle *handle, rm_frame_t *work_frame);
@@ -905,9 +885,9 @@ int rm_get_current_work_frame(rm_robot_handle *handle, rm_frame_t *work_frame);
  * @param state 机械臂当前状态结构体
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_get_current_arm_state(rm_robot_handle *handle,rm_current_arm_state_t *state);
@@ -918,9 +898,9 @@ int rm_get_current_arm_state(rm_robot_handle *handle,rm_current_arm_state_t *sta
  * @param temperature 关节1~7温度数组
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_get_current_joint_temperature(rm_robot_handle *handle, float *temperature);
@@ -931,9 +911,9 @@ int rm_get_current_joint_temperature(rm_robot_handle *handle, float *temperature
  * @param current 关节1~7电流数组
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_get_current_joint_current(rm_robot_handle *handle, float *current);
@@ -944,9 +924,9 @@ int rm_get_current_joint_current(rm_robot_handle *handle, float *current);
  * @param voltage 关节1~7电压数组
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_get_current_joint_voltage(rm_robot_handle *handle, float *voltage);
@@ -957,9 +937,9 @@ int rm_get_current_joint_voltage(rm_robot_handle *handle, float *voltage);
  * @param joint 当前7个关节的角度数组
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_get_joint_degree(rm_robot_handle *handle, float *joint);
@@ -970,9 +950,9 @@ int rm_get_joint_degree(rm_robot_handle *handle, float *joint);
  * @param state 存储机械臂信息的结构体
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_get_arm_all_state(rm_robot_handle *handle, rm_arm_all_state_t *state);
@@ -991,9 +971,9 @@ int rm_get_arm_all_state(rm_robot_handle *handle, rm_arm_all_state_t *state);
  * @param joint 机械臂初始位置关节角度数组
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_set_init_pose(rm_robot_handle *handle, float *joint);
@@ -1004,9 +984,9 @@ int rm_set_init_pose(rm_robot_handle *handle, float *joint);
  * @param joint 机械臂初始位置关节角度数组
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_get_init_pose(rm_robot_handle *handle, float *joint);
@@ -1023,24 +1003,24 @@ int rm_get_init_pose(rm_robot_handle *handle, float *joint);
  * 
  * @param handle 机械臂控制句柄 
  * @param joint 目标关节1~7角度数组
- * @param v 速度比例1~100，即规划速度和加速度占关节最大线转速和加速度的百分比
- * @param r 轨迹交融半径，目前默认0。
+ * @param v 速度百分比系数，1~100
+ * @param r 交融半径百分比系数，0~100。
  * @param trajectory_connect 轨迹连接标志  
  *        - 0：立即规划并执行轨迹，不与后续轨迹连接。  
  *        - 1：将当前轨迹与下一条轨迹一起规划，但不立即执行。阻塞模式下，即使发送成功也会立即返回。  
  * @param block 阻塞设置
  *        - 多线程模式：  
  *            - 0：非阻塞模式，发送指令后立即返回。  
- *            - 1：阻塞模式，等待机械臂到达目标位置或规划失败后才返回。  
+ *            - 1：阻塞模式，等待机械臂到达目标位置或规划失败后返回。  
  *        - 单线程模式：  
  *            - 0：非阻塞模式。  
  *            - 其他值：阻塞模式并设置超时时间，根据运动时间设置，单位为秒。
  * @attention 使用单线程阻塞模式时，请设置超时时间确保轨迹在超时时间内运行结束返回
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
             - -4: 当前到位设备校验失败，即当前到位设备不为关节。
             - -5: 单线程模式超时未接收到返回，请确保超时时间设置合理。
@@ -1051,8 +1031,8 @@ int rm_movej(rm_robot_handle *handle, const float *joint, int v, int r,int traje
  * 
  * @param handle 机械臂控制句柄 
  * @param pose 目标位姿,位置单位：米，姿态单位：弧度
- * @param v 速度比例1~100，即规划速度和加速度占机械臂末端最大线速度和线加速度的百分比
- * @param r 轨迹交融半径，目前默认0。
+ * @param v 速度百分比系数，1~100
+ * @param r 交融半径百分比系数，0~100。
  * @param trajectory_connect 轨迹连接标志  
  *        - 0：立即规划并执行轨迹，不与后续轨迹连接。  
  *        - 1：将当前轨迹与下一条轨迹一起规划，但不立即执行。阻塞模式下，即使发送成功也会立即返回。  
@@ -1066,14 +1046,43 @@ int rm_movej(rm_robot_handle *handle, const float *joint, int v, int r,int traje
  * @attention 使用单线程阻塞模式时，请设置超时时间确保轨迹在超时时间内运行结束返回
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
             - -4: 当前到位设备校验失败，即当前到位设备不为关节。
             - -5: 单线程模式超时未接收到返回，请确保超时时间设置合理。
  */
 int rm_movel(rm_robot_handle *handle,rm_pose_t pose, int v, int r, int trajectory_connect, int block);
+/**
+ * @brief 样条曲线运动
+ * 
+ * @param handle 机械臂控制句柄 
+ * @param pose 目标位姿,位置单位：米，姿态单位：弧度
+ * @param v 速度百分比系数，1~100
+ * @param r 交融半径百分比系数，0~100。
+ * @param trajectory_connect 轨迹连接标志  
+ *        - 0：立即规划并执行轨迹，不与后续轨迹连接。  
+ *        - 1：将当前轨迹与下一条轨迹一起规划，但不立即执行。阻塞模式下，即使发送成功也会立即返回。  
+ * @note 样条曲线运动需至少连续下发三个点位（trajectory_connect设置为1），否则运动轨迹为直线
+ * @param block 阻塞设置
+ *        - 多线程模式：  
+ *            - 0：非阻塞模式，发送指令后立即返回。  
+ *            - 1：阻塞模式，等待机械臂到达目标位置或规划失败后才返回。  
+ *        - 单线程模式：  
+ *            - 0：非阻塞模式，发送指令后立即返回。  
+ *            - 其他值：阻塞模式并设置超时时间，根据运动时间设置，单位为秒。
+ * @attention 使用单线程阻塞模式时，请设置超时时间确保轨迹在超时时间内运行结束返回
+ * @return int 函数执行的状态码。  
+            - 0: 成功。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
+            - -1: 数据发送失败，通信过程中出现问题。
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
+            - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
+            - -4: 当前到位设备校验失败，即当前到位设备不为关节。
+            - -5: 单线程模式超时未接收到返回，请确保超时时间设置合理。
+ */
+int rm_moves(rm_robot_handle *handle,rm_pose_t pose, int v, int r, int trajectory_connect, int block);
 /**
  * @brief 笛卡尔空间圆弧运动
  * 
@@ -1081,7 +1090,7 @@ int rm_movel(rm_robot_handle *handle,rm_pose_t pose, int v, int r, int trajector
  * @param pose_via 中间点位姿，位置单位：米，姿态单位：弧度
  * @param pose_to 终点位姿
  * @param v 速度比例1~100，即规划速度和加速度占机械臂末端最大角速度和角加速度的百分比
- * @param r 轨迹交融半径，目前默认0。
+ * @param r 交融半径百分比系数，0~100。
  * @param loop 规划圈数.
  * @param trajectory_connect 轨迹连接标志  
  *        - 0：立即规划并执行轨迹，不与后续轨迹连接。  
@@ -1096,9 +1105,9 @@ int rm_movel(rm_robot_handle *handle,rm_pose_t pose, int v, int r, int trajector
  * @attention 使用单线程阻塞模式时，请设置超时时间确保轨迹在超时时间内运行结束返回
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。
             - -4: 当前到位设备校验失败，即当前到位设备不为关节。 
             - -5: 单线程模式超时未接收到返回，请确保超时时间设置合理。
@@ -1109,8 +1118,8 @@ int rm_movec(rm_robot_handle *handle,rm_pose_t pose_via, rm_pose_t pose_to, int 
  * 
  * @param handle 机械臂控制句柄 
  * @param pose 目标位姿，位置单位：米，姿态单位：弧度。
- * @param v 速度比例1~100，即规划速度和加速度占机械臂末端最大线速度和线加速度的百分比
- * @param r 轨迹交融半径，目前默认0。
+ * @param v 速度百分比系数，1~100
+ * @param r 交融半径百分比系数，0~100。
  * @param trajectory_connect 轨迹连接标志  
  *        - 0：立即规划并执行轨迹，不与后续轨迹连接。  
  *        - 1：将当前轨迹与下一条轨迹一起规划，但不立即执行。阻塞模式下，即使发送成功也会立即返回。  
@@ -1124,9 +1133,9 @@ int rm_movec(rm_robot_handle *handle,rm_pose_t pose_via, rm_pose_t pose_to, int 
  * @attention 使用单线程阻塞模式时，请设置超时时间确保轨迹在超时时间内运行结束返回
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。
             - -4: 当前到位设备校验失败，即当前到位设备不为关节。 
             - -5: 单线程模式超时未接收到返回，请确保超时时间设置合理。
@@ -1179,9 +1188,9 @@ int rm_movep_canfd(rm_robot_handle *handle, rm_pose_t pose, bool follow);
  * @param handle 机械臂控制句柄 
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_set_arm_slow_stop(rm_robot_handle *handle);
@@ -1191,9 +1200,9 @@ int rm_set_arm_slow_stop(rm_robot_handle *handle);
  * @param handle 机械臂控制句柄 
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。
  */
 int rm_set_arm_stop(rm_robot_handle *handle);
@@ -1203,9 +1212,9 @@ int rm_set_arm_stop(rm_robot_handle *handle);
  * @param handle 机械臂控制句柄 
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_set_arm_pause(rm_robot_handle *handle);
@@ -1215,9 +1224,9 @@ int rm_set_arm_pause(rm_robot_handle *handle);
  * @param handle 机械臂控制句柄 
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_set_arm_continue(rm_robot_handle *handle);
@@ -1227,9 +1236,9 @@ int rm_set_arm_continue(rm_robot_handle *handle);
  * @param handle 机械臂控制句柄 
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。
  * @attention 必须在暂停后使用，否则机械臂会发生意外！！！！ 
  */
@@ -1240,9 +1249,9 @@ int rm_set_delete_current_trajectory(rm_robot_handle *handle);
  * @param handle 机械臂控制句柄 
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  * @attention 必须在暂停后使用，否则机械臂会发生意外！！！！
  */
@@ -1255,9 +1264,9 @@ int rm_set_arm_delete_trajectory(rm_robot_handle *handle);
  * @param data 无规划和关节空间规划为当前关节1~7角度数组；笛卡尔空间规划则为当前末端位姿
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_get_arm_current_trajectory(rm_robot_handle *handle,rm_arm_current_trajectory_e *type,float *data);
@@ -1275,7 +1284,7 @@ int rm_get_arm_current_trajectory(rm_robot_handle *handle,rm_arm_current_traject
  * @param handle 机械臂控制句柄 
  * @param joint_num 关节序号，1~7
  * @param step 步进的角度，
- * @param v 速度比例1~100，即规划速度和加速度占机械臂末端最大线速度和线加速度的百分比
+ * @param v 速度百分比系数，1~100
  * @param block 阻塞设置
  *        - 多线程模式：  
  *            - 0：非阻塞模式，发送指令后立即返回。  
@@ -1286,9 +1295,9 @@ int rm_get_arm_current_trajectory(rm_robot_handle *handle,rm_arm_current_traject
  * @attention 使用单线程阻塞模式时，请设置超时时间确保轨迹在超时时间内运行结束返回
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。
             - -4: 当前到位设备校验失败，即当前到位设备不为关节。 
             - -5: 单线程模式超时未接收到返回，请确保超时时间设置合理。 
@@ -1300,7 +1309,7 @@ int rm_set_joint_step(rm_robot_handle *handle,int joint_num, float step, int v, 
  * @param handle 机械臂控制句柄 
  * @param type 示教类型
  * @param step 步进的距离，单位m，精确到0.001mm
- * @param v 速度比例1~100，即规划速度和加速度占机械臂末端最大线速度和线加速度的百分比
+ * @param v 速度百分比系数，1~100
  * @param block 阻塞设置
  *        - 多线程模式：  
  *            - 0：非阻塞模式，发送指令后立即返回。  
@@ -1311,9 +1320,9 @@ int rm_set_joint_step(rm_robot_handle *handle,int joint_num, float step, int v, 
  * @attention 使用单线程阻塞模式时，请设置超时时间确保轨迹在超时时间内运行结束返回
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
             - -4: 当前到位设备校验失败，即当前到位设备不为关节。 
             - -5: 单线程模式超时未接收到返回，请确保超时时间设置合理。
@@ -1326,7 +1335,7 @@ int rm_set_pos_step(rm_robot_handle *handle, rm_pos_teach_type_e type, float ste
  * @param handle 机械臂控制句柄 
  * @param type 示教类型
  * @param step 步进的弧度，单位rad，精确到0.001rad
- * @param v 速度比例1~100，即规划速度和加速度占机械臂末端最大线速度和线加速度的百分比
+ * @param v 速度百分比系数，1~100
  * @param block 阻塞设置
  *        - 多线程模式：  
  *            - 0：非阻塞模式，发送指令后立即返回。  
@@ -1337,9 +1346,9 @@ int rm_set_pos_step(rm_robot_handle *handle, rm_pos_teach_type_e type, float ste
  * @attention 使用单线程阻塞模式时，请设置超时时间确保轨迹在超时时间内运行结束返回
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
             - -4: 当前到位设备校验失败，即当前到位设备不为关节。 
             - -5: 单线程模式超时未接收到返回，请确保超时时间设置合理。
@@ -1353,9 +1362,9 @@ int rm_set_ort_step(rm_robot_handle *handle, rm_ort_teach_type_e type, float ste
  * @param frame_type 0: 工作坐标系运动, 1: 工具坐标系运动
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_set_teach_frame(rm_robot_handle *handle, int frame_type);
@@ -1366,9 +1375,9 @@ int rm_set_teach_frame(rm_robot_handle *handle, int frame_type);
  * @param frame_type 0: 工作坐标系运动, 1: 工具坐标系运动
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_get_teach_frame(rm_robot_handle *handle,int *frame_type);
@@ -1381,9 +1390,9 @@ int rm_get_teach_frame(rm_robot_handle *handle,int *frame_type);
  * @param v 速度比例1~100，即规划速度和加速度占关节最大线转速和加速度的百分比
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_set_joint_teach(rm_robot_handle *handle,int joint_num, int direction, int v);
@@ -1396,9 +1405,9 @@ int rm_set_joint_teach(rm_robot_handle *handle,int joint_num, int direction, int
  * @param v 即规划速度和加速度占机械臂末端最大线速度和线加速度的百分比
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  * @attention 参考坐标系默认为当前工作坐标系，可调用rm_set_teach_frame修改为工具坐标系，
  */
@@ -1412,9 +1421,9 @@ int rm_set_pos_teach(rm_robot_handle *handle,rm_pos_teach_type_e type, int direc
  * @param v 速度比例1~100，即规划速度和加速度占机械臂末端最大角速度和角加速度的百分比
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  * @attention 参考坐标系默认为当前工作坐标系，可调用rm_set_teach_frame修改为工具坐标系，
  */
@@ -1425,9 +1434,9 @@ int rm_set_ort_teach(rm_robot_handle *handle,rm_ort_teach_type_e type, int direc
  * @param handle 机械臂控制句柄 
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_set_stop_teach(rm_robot_handle *handle);
@@ -1449,9 +1458,9 @@ int rm_set_stop_teach(rm_robot_handle *handle);
  * @param err_flag 控制器运行错误代码
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_get_controller_state(rm_robot_handle *handle, float *voltage, float *current, float *temperature, int *err_flag);
@@ -1462,9 +1471,9 @@ int rm_get_controller_state(rm_robot_handle *handle, float *voltage, float *curr
  * @param arm_power 1-上电状态，0 断电状态
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_set_arm_power(rm_robot_handle *handle, int arm_power);
@@ -1475,9 +1484,9 @@ int rm_set_arm_power(rm_robot_handle *handle, int arm_power);
  * @param power_state 获取到的机械臂电源状态，1-上电状态，0 断电状态
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_get_arm_power_state(rm_robot_handle *handle, int *power_state);
@@ -1491,9 +1500,9 @@ int rm_get_arm_power_state(rm_robot_handle *handle, int *power_state);
  * @param sec 读取到的时间
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_get_system_runtime(rm_robot_handle *handle, int *day, int *hour, int *min, int *sec);
@@ -1503,9 +1512,9 @@ int rm_get_system_runtime(rm_robot_handle *handle, int *day, int *hour, int *min
  * @param handle 机械臂控制句柄 
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_clear_system_runtime(rm_robot_handle *handle);
@@ -1516,9 +1525,9 @@ int rm_clear_system_runtime(rm_robot_handle *handle);
  * @param joint_odom 各关节累计的转动角度
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_get_joint_odom(rm_robot_handle *handle, float *joint_odom);
@@ -1528,9 +1537,9 @@ int rm_get_joint_odom(rm_robot_handle *handle, float *joint_odom);
  * @param handle 机械臂控制句柄 
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_clear_joint_odom(rm_robot_handle *handle);
@@ -1541,9 +1550,9 @@ int rm_clear_joint_odom(rm_robot_handle *handle);
  * @param ip 有线网口 IP 地址
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_set_NetIP(rm_robot_handle *handle, const char* ip);
@@ -1553,9 +1562,9 @@ int rm_set_NetIP(rm_robot_handle *handle, const char* ip);
  * @param handle 机械臂控制句柄 
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_clear_system_err(rm_robot_handle *handle);
@@ -1566,9 +1575,9 @@ int rm_clear_system_err(rm_robot_handle *handle);
  * @param software_info 机械臂软件信息结构体
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_get_arm_software_info(rm_robot_handle *handle,rm_arm_software_version_t *software_info);
@@ -1581,9 +1590,9 @@ int rm_get_arm_software_info(rm_robot_handle *handle,rm_arm_software_version_t *
  * @param timeout modbus 协议超时时间，单位 100ms，仅在 modbus-RTU 模式下提供此字段
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_get_controller_RS485_mode(rm_robot_handle *handle, int* mode, int* baudrate, int* timeout);
@@ -1596,9 +1605,9 @@ int rm_get_controller_RS485_mode(rm_robot_handle *handle, int* mode, int* baudra
  * @param timeout modbus 协议超时时间，单位 100ms，仅在 modbus-RTU 模式下提供此字段
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_get_tool_RS485_mode(rm_robot_handle *handle, int* mode, int* baudrate, int* timeout);
@@ -1609,9 +1618,9 @@ int rm_get_tool_RS485_mode(rm_robot_handle *handle, int* mode, int* baudrate, in
  * @param version 获取到的各关节软件版本号数组
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  * @attention 获取到的关节软件版本号需转换为十六进制，例如获取某关节版本为54536，转换为十六进制为D508，则当前关节的版本号为 Vd5.0.8
  */
@@ -1623,9 +1632,9 @@ int rm_get_joint_software_version(rm_robot_handle *handle,int *version);
  * @param version 获取到的末端接口板软件版本号
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  * @attention 获取到的末端接口板软件版本号需转换为十六进制，例如获取到版本号393，转换为十六进制为189，则当前关节的版本号为 V1.8.9
  */
@@ -1684,9 +1693,9 @@ int rm_set_RS485(rm_robot_handle *handle, int baudrate);
  * @param mac MAC地址
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_get_wired_net(rm_robot_handle *handle, char * ip, char * mask, char * mac);
@@ -1697,9 +1706,9 @@ int rm_get_wired_net(rm_robot_handle *handle, char * ip, char * mask, char * mac
  * @param wifi_net 无线网卡网络信息结构体
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  * @attention 结构体中的channel值只有在AP模式时才可获取到，标识 wifi 热点的物理信道号
  */
@@ -1710,9 +1719,9 @@ int rm_get_wifi_net(rm_robot_handle *handle, rm_wifi_net_t *wifi_net);
  * @param handle 机械臂控制句柄 
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_set_net_default(rm_robot_handle *handle);
@@ -1722,9 +1731,9 @@ int rm_set_net_default(rm_robot_handle *handle);
  * @param handle 机械臂控制句柄 
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_set_wifi_close(rm_robot_handle *handle);
@@ -1749,9 +1758,9 @@ int rm_set_wifi_close(rm_robot_handle *handle);
  * 10-输入外部轴最大软限位复用模式（外部轴模式可配置）、11-输入外部轴最小软限位复用模式（外部轴模式可配置）。
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_set_IO_mode(rm_robot_handle *handle, int io_num, int io_mode);
@@ -1763,9 +1772,9 @@ int rm_set_IO_mode(rm_robot_handle *handle, int io_num, int io_mode);
  * @param state IO 状态，1-输出高，0-输出低
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_set_DO_state(rm_robot_handle *handle, int io_num, int state);
@@ -1780,9 +1789,9 @@ int rm_set_DO_state(rm_robot_handle *handle, int io_num, int state);
  * 9- 输入进入力位姿结合拖动复用模式、10-输入外部轴最大软限位复用模式、11-输入外部轴最小软限位复用模式
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_get_IO_state(rm_robot_handle *handle, int io_num, int* state, int* mode);
@@ -1790,12 +1799,12 @@ int rm_get_IO_state(rm_robot_handle *handle, int io_num, int* state, int* mode);
  * @brief 获取所有 IO 输入状态
  * 
  * @param handle 机械臂控制句柄 
- * @param DI_state 数字输入状态，1：高，0：低，-1：该端口不是输入模式
+ * @param DI_state  1~4端口数字输入状态数组，1：高，0：低，-1：该端口不是输入模式
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_get_IO_input(rm_robot_handle *handle, int *DI_state);
@@ -1803,12 +1812,12 @@ int rm_get_IO_input(rm_robot_handle *handle, int *DI_state);
  * @brief 获取所有 IO 输出状态
  * 
  * @param handle 机械臂控制句柄 
- * @param DO_state 数字输出状态，1：高，0：低，-1：该端口不是输出模式
+ * @param DO_state 1~4端口数字输出状态数组，1：高，0：低，-1：该端口不是输出模式
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_get_IO_output(rm_robot_handle *handle, int *DO_state);
@@ -1819,9 +1828,9 @@ int rm_get_IO_output(rm_robot_handle *handle, int *DO_state);
  * @param voltage_type 电源输出类型，0：0V，2：12V，3：24V
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_set_voltage(rm_robot_handle *handle, int voltage_type);
@@ -1832,9 +1841,9 @@ int rm_set_voltage(rm_robot_handle *handle, int voltage_type);
  * @param voltage_type 电源输出类型，0：0V，2：12V，3：24V
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_get_voltage(rm_robot_handle *handle, int *voltage_type);
@@ -1855,9 +1864,9 @@ int rm_get_voltage(rm_robot_handle *handle, int *voltage_type);
  * @param state IO 状态，1-输出高，0-输出低
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_set_tool_DO_state(rm_robot_handle *handle, int io_num, int state);
@@ -1869,9 +1878,9 @@ int rm_set_tool_DO_state(rm_robot_handle *handle, int io_num, int state);
  * @param io_mode 模式，0-输入状态，1-输出状态
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_set_tool_IO_mode(rm_robot_handle *handle, int io_num, int io_mode);
@@ -1883,9 +1892,9 @@ int rm_set_tool_IO_mode(rm_robot_handle *handle, int io_num, int io_mode);
  * @param state 0-低，1-高
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_get_tool_IO_state(rm_robot_handle *handle, int* mode, int* state);
@@ -1896,9 +1905,9 @@ int rm_get_tool_IO_state(rm_robot_handle *handle, int* mode, int* state);
  * @param voltage_type 电源输出类型，0：0V，1：5V，2：12V，3：24V，
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  * @attention 电源输出设置为 5V 时，工具端的IO 暂不支持输入输出功能
  */
@@ -1910,9 +1919,9 @@ int rm_set_tool_voltage(rm_robot_handle *handle, int voltage_type);
  * @param voltage_type 电源输出类型，0：0V，1：5V，2：12V，3：24V，
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_get_tool_voltage(rm_robot_handle *handle, int *voltage_type);
@@ -1933,9 +1942,9 @@ int rm_get_tool_voltage(rm_robot_handle *handle, int *voltage_type);
  * @param max_limit 手爪开口最大值，范围：0~1000，无单位量纲
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_set_gripper_route(rm_robot_handle *handle, int min_limit, int max_limit);
@@ -1948,11 +1957,12 @@ int rm_set_gripper_route(rm_robot_handle *handle, int min_limit, int max_limit);
  * @param timeout 阻塞模式下超时时间设置，单位：秒
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。  
-            - -4:超时
+            - -4: 超时
+            - -5: 到位设备检验失败
  */
 int rm_set_gripper_release(rm_robot_handle *handle, int speed, bool block, int timeout);
 /**
@@ -1965,11 +1975,12 @@ int rm_set_gripper_release(rm_robot_handle *handle, int speed, bool block, int t
  * @param timeout 阻塞模式下超时时间设置，单位：秒
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。  
-            - -4:超时
+            - -4: 超时
+            - -5: 到位设备检验失败
  */
 int rm_set_gripper_pick(rm_robot_handle *handle, int speed, int force, bool block, int timeout);
 /**
@@ -1982,11 +1993,12 @@ int rm_set_gripper_pick(rm_robot_handle *handle, int speed, int force, bool bloc
  * @param timeout 阻塞模式下超时时间设置，单位：秒
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。  
-            - -4:超时
+            - -4: 超时
+            - -5: 到位设备检验失败
  */
 int rm_set_gripper_pick_on(rm_robot_handle *handle, int speed, int force, bool block, int timeout);
 /**
@@ -1999,11 +2011,12 @@ int rm_set_gripper_pick_on(rm_robot_handle *handle, int speed, int force, bool b
  * @param timeout 阻塞模式下超时时间设置，单位：秒
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
-            - -4:超时
+            - -4: 超时
+            - -5: 到位设备检验失败
  */
 int rm_set_gripper_position(rm_robot_handle *handle, int position, bool block, int timeout);
 /**
@@ -2013,9 +2026,9 @@ int rm_set_gripper_position(rm_robot_handle *handle, int position, bool block, i
  * @param state 夹爪状态结构体
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  * @attention 此接口默认不更新数据，从首次控制夹爪开始后，使能更新状态，如果此时控制灵巧手或打开末端modbus功能，将不再更新数据。另外夹爪需要支持最新的固件，方可支持此功能
  */
@@ -2041,9 +2054,9 @@ int rm_get_gripper_state(rm_robot_handle *handle, rm_gripper_state_t *state);
  * @param data 力传感器数据结构体
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。可能情况：当前机械臂不是六维力版本。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_get_force_data(rm_robot_handle *handle, rm_force_data_t *data);
@@ -2053,9 +2066,9 @@ int rm_get_force_data(rm_robot_handle *handle, rm_force_data_t *data);
  * @param handle 机械臂控制句柄 
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_clear_force_data(rm_robot_handle *handle);
@@ -2074,9 +2087,9 @@ int rm_clear_force_data(rm_robot_handle *handle);
  * @param block true 表示阻塞模式，等待标定完成后返回；false 表示非阻塞模式，发送后立即返回
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_set_force_sensor(rm_robot_handle *handle, bool block);
@@ -2091,9 +2104,9 @@ int rm_set_force_sensor(rm_robot_handle *handle, bool block);
  * @param block true 表示阻塞模式，等待标定完成后返回；false 表示非阻塞模式，发送后立即返回
  * @return int 函数执行的状态码。  
             - 0: 计算成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_manual_set_force(rm_robot_handle *handle, int count, float *joint, bool block);
@@ -2103,9 +2116,9 @@ int rm_manual_set_force(rm_robot_handle *handle, int count, float *joint, bool b
  * @param handle 机械臂控制句柄 
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_stop_set_force_sensor(rm_robot_handle *handle);
@@ -2125,9 +2138,9 @@ int rm_stop_set_force_sensor(rm_robot_handle *handle);
  * @param data 一维力数据结构体
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_get_Fz(rm_robot_handle *handle, rm_fz_data_t *data);
@@ -2137,9 +2150,9 @@ int rm_get_Fz(rm_robot_handle *handle, rm_fz_data_t *data);
  * @param handle 机械臂控制句柄 
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_clear_Fz(rm_robot_handle *handle);
@@ -2151,9 +2164,9 @@ int rm_clear_Fz(rm_robot_handle *handle);
  * @param block true 表示阻塞模式，等待标定完成后返回；false 表示非阻塞模式，发送后立即返回
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_auto_set_Fz(rm_robot_handle *handle, bool block);
@@ -2168,9 +2181,9 @@ int rm_auto_set_Fz(rm_robot_handle *handle, bool block);
  * @param block true 表示阻塞模式，等待标定完成后返回；false 表示非阻塞模式，发送后立即返回
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_manual_set_Fz(rm_robot_handle *handle, float *joint1, float *joint2, bool block);
@@ -2189,9 +2202,9 @@ int rm_manual_set_Fz(rm_robot_handle *handle, float *joint1, float *joint2, bool
  * @param trajectory_record 拖动示教时记录轨迹，0-不记录，1-记录轨迹
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_start_drag_teach(rm_robot_handle *handle, int trajectory_record);
@@ -2201,9 +2214,9 @@ int rm_start_drag_teach(rm_robot_handle *handle, int trajectory_record);
  * @param handle 机械臂控制句柄 
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_stop_drag_teach(rm_robot_handle *handle);
@@ -2215,9 +2228,9 @@ int rm_stop_drag_teach(rm_robot_handle *handle);
  * @param singular_wall 仅在六维力模式拖动示教中生效，用于指定是否开启拖动奇异墙，0表示关闭拖动奇异墙，1表示开启拖动奇异墙
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  * @note 失败的可能原因:  
             - 当前机械臂非六维力版本（六维力拖动示教）。  
@@ -2241,9 +2254,9 @@ int rm_start_multi_drag_teach(rm_robot_handle *handle, int mode, int singular_wa
  * @attention 使用单线程阻塞模式时，请设置超时时间确保轨迹在超时时间内运行结束返回
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
             - -4: 当前到位设备校验失败，即当前到位设备不为关节。 
             - -5: 单线程模式超时未接收到返回，请确保超时时间设置合理。 
@@ -2264,9 +2277,9 @@ int rm_drag_trajectory_origin(rm_robot_handle *handle, int block);
  * @attention 使用单线程阻塞模式时，请设置超时时间确保轨迹在超时时间内运行结束返回
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误，请确保机械臂当前位置为拖动示教起点。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误，请确保机械臂当前位置为拖动示教起点。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。  
             - -4: 当前到位设备校验失败，即当前到位设备不为关节。 
             - -5: 单线程模式超时未接收到返回，请确保超时时间设置合理。
@@ -2280,9 +2293,9 @@ int rm_run_drag_trajectory(rm_robot_handle *handle, int block);
  * @param handle 机械臂控制句柄 
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_pause_drag_trajectory(rm_robot_handle *handle);
@@ -2292,9 +2305,9 @@ int rm_pause_drag_trajectory(rm_robot_handle *handle);
  * @param handle 机械臂控制句柄 
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_continue_drag_trajectory(rm_robot_handle *handle);
@@ -2304,9 +2317,9 @@ int rm_continue_drag_trajectory(rm_robot_handle *handle);
  * @param handle 机械臂控制句柄 
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_stop_drag_trajectory(rm_robot_handle *handle);
@@ -2314,16 +2327,19 @@ int rm_stop_drag_trajectory(rm_robot_handle *handle);
  * @brief 保存拖动示教轨迹
  * 
  * @param handle 机械臂控制句柄 
- * @param name 轨迹要保存的文件路径及名称，例: c:/rm_test.txt
+ * @param name 轨迹要保存的文件路径及名称，长度不超过300个字符，例: c:/rm_test.txt
  * @param num 轨迹点数
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，确保有拖动示教点位可保存。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
+            - -4: 文件打开失败
+            - -5: 文件名称截取失败
+            - -6: 获取到的点位解析错误，保存失败
  */
-int rm_save_trajectory(rm_robot_handle *handle, char* name, int *num);
+int rm_save_trajectory(rm_robot_handle *handle,const char* name, int *num);
 /**
  * @brief 力位混合控制
  * @details 在笛卡尔空间轨迹规划时，使用该功能可保证机械臂末端接触力恒定，使用时力的方向与机械臂运动方向不能在同一方向。
@@ -2335,9 +2351,9 @@ int rm_save_trajectory(rm_robot_handle *handle, char* name, int *num);
  * @param N 力的大小，单位N
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_set_force_position(rm_robot_handle *handle, int sensor, int mode, int direction, float N);
@@ -2347,9 +2363,9 @@ int rm_set_force_position(rm_robot_handle *handle, int sensor, int mode, int dir
  * @param handle 机械臂控制句柄 
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_stop_force_position(rm_robot_handle *handle);
@@ -2370,9 +2386,9 @@ int rm_stop_force_position(rm_robot_handle *handle);
  * @param timeout 阻塞模式下超时时间设置，单位：秒
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
             - -4: 当前到位设备校验失败，即当前到位设备不为灵巧手
             - -5: 超时未返回。 
@@ -2387,9 +2403,9 @@ int rm_set_hand_posture(rm_robot_handle *handle, int posture_num, bool block, in
  * @param timeout 阻塞模式下超时时间设置，单位：秒
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
             - -4: 当前到位设备校验失败，即当前到位设备不为灵巧手
             - -5: 超时未返回。 
@@ -2399,12 +2415,12 @@ int rm_set_hand_seq(rm_robot_handle *handle, int seq_num, bool block, int timeou
  * @brief 设置灵巧手各自由度角度
  * @details 设置灵巧手角度，灵巧手有6个自由度，从1~6分别为小拇指，无名指，中指，食指，大拇指弯曲，大拇指旋转
  * @param handle 机械臂控制句柄 
- * @param hand_angle 手指角度数组，范围：0~1000. 另外，-1代表该自由度不执行任何操作，保持当前状态
+ * @param hand_angle 手指角度数组，6个元素分别代表6个自由度的角度，范围：0~1000. 另外，-1代表该自由度不执行任何操作，保持当前状态
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_set_hand_angle(rm_robot_handle *handle, const int *hand_angle);
@@ -2415,9 +2431,9 @@ int rm_set_hand_angle(rm_robot_handle *handle, const int *hand_angle);
  * @param speed 手指速度，范围：1~1000
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_set_hand_speed(rm_robot_handle *handle, int speed);
@@ -2428,9 +2444,9 @@ int rm_set_hand_speed(rm_robot_handle *handle, int speed);
  * @param hand_force 手指力，范围：1~1000
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_set_hand_force(rm_robot_handle *handle, int hand_force);
@@ -2462,9 +2478,9 @@ int rm_set_hand_force(rm_robot_handle *handle, int hand_force);
  * @note 其他配置默认为：数据位-8，停止位-1，奇偶校验-无
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_set_modbus_mode(rm_robot_handle *handle, int port, int baudrate, int timeout);
@@ -2475,9 +2491,9 @@ int rm_set_modbus_mode(rm_robot_handle *handle, int port, int baudrate, int time
  * @param port 通讯端口，0-控制器RS485端口为RTU主站，1-末端接口板RS485接口为RTU主站，2-控制器RS485端口为RTU从站
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_close_modbus_mode(rm_robot_handle *handle, int port);
@@ -2490,21 +2506,21 @@ int rm_close_modbus_mode(rm_robot_handle *handle, int port);
  * @param timeout 超时时间，单位秒。
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_set_modbustcp_mode(rm_robot_handle *handle, const char *ip, int port, int timeout);
 /**
- * @brief 关闭通讯端口ModbusRTU模式
+ * @brief 配置关闭 ModbusTCP 从站
  * 
  * @param handle 机械臂控制句柄 
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_close_modbustcp_mode(rm_robot_handle *handle);
@@ -2518,7 +2534,7 @@ int rm_close_modbustcp_mode(rm_robot_handle *handle);
             - 0: 成功。  
             - 1: 读取失败，超时时间内未获取到数据。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_read_coils(rm_robot_handle *handle, rm_peripheral_read_write_params_t params, int *data);
@@ -2532,7 +2548,7 @@ int rm_read_coils(rm_robot_handle *handle, rm_peripheral_read_write_params_t par
             - 0: 成功。  
             - 1: 读取失败，超时时间内未获取到数据。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_read_input_status(rm_robot_handle *handle, rm_peripheral_read_write_params_t params, int *data);
@@ -2547,7 +2563,7 @@ int rm_read_input_status(rm_robot_handle *handle, rm_peripheral_read_write_param
             - 0: 成功。  
             - 1: 读取失败，超时时间内未获取到数据。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_read_holding_registers(rm_robot_handle *handle, rm_peripheral_read_write_params_t params, int *data);
@@ -2562,7 +2578,7 @@ int rm_read_holding_registers(rm_robot_handle *handle, rm_peripheral_read_write_
             - 0: 成功。  
             - 1: 读取失败，超时时间内未获取到数据。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_read_input_registers(rm_robot_handle *handle, rm_peripheral_read_write_params_t params, int *data);
@@ -2576,7 +2592,7 @@ int rm_read_input_registers(rm_robot_handle *handle, rm_peripheral_read_write_pa
             - 0: 成功。  
             - 1: 写操作失败，超时时间内未获取到数据，或者指令内容错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_write_single_coil(rm_robot_handle *handle, rm_peripheral_read_write_params_t params, int data);
@@ -2590,7 +2606,7 @@ int rm_write_single_coil(rm_robot_handle *handle, rm_peripheral_read_write_param
             - 0: 成功。  
             - 1: 写操作失败，超时时间内未获取到数据，或者指令内容错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_write_single_register(rm_robot_handle *handle, rm_peripheral_read_write_params_t params, int data);
@@ -2604,7 +2620,7 @@ int rm_write_single_register(rm_robot_handle *handle, rm_peripheral_read_write_p
             - 0: 成功。  
             - 1: 写操作失败，超时时间内未获取到数据，或者指令内容错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_write_registers(rm_robot_handle *handle, rm_peripheral_read_write_params_t params, int *data);
@@ -2618,7 +2634,7 @@ int rm_write_registers(rm_robot_handle *handle, rm_peripheral_read_write_params_
             - 0: 成功。  
             - 1: 写操作失败，超时时间内未获取到数据，或者指令内容错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_write_coils(rm_robot_handle *handle, rm_peripheral_read_write_params_t params, int *data);
@@ -2632,7 +2648,7 @@ int rm_write_coils(rm_robot_handle *handle, rm_peripheral_read_write_params_t pa
             - 0: 成功。  
             - 1: 读取失败，超时时间内未获取到数据。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_read_multiple_coils(rm_robot_handle *handle, rm_peripheral_read_write_params_t params, int *data);
@@ -2646,10 +2662,24 @@ int rm_read_multiple_coils(rm_robot_handle *handle, rm_peripheral_read_write_par
             - 0: 成功。  
             - 1: 读取失败，超时时间内未获取到数据。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_read_multiple_holding_registers(rm_robot_handle *handle, rm_peripheral_read_write_params_t params, int *data);
+/**
+ * @brief 读多个输入寄存器
+ * 
+ * @param handle 机械臂控制句柄 
+ * @param params 多个输入寄存器读取参数结构体，要读的寄存器的数量 2 < num < 13，该指令最多一次性支持读 12 个寄存器数据， 即 24 个 byte
+ * @param data 返回寄存器数据，数据类型：int8
+ * @return int 函数执行的状态码。  
+            - 0: 成功。  
+            - 1: 读取失败，超时时间内未获取到数据。  
+            - -1: 数据发送失败，通信过程中出现问题。
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
+            - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
+ */
+int rm_read_multiple_input_registers(rm_robot_handle *handle, rm_peripheral_read_write_params_t params, int *data);
 /** @} */ // 结束组的定义
 
 /**  
@@ -2667,9 +2697,9 @@ int rm_read_multiple_holding_registers(rm_robot_handle *handle, rm_peripheral_re
  * @param z 方位角，单位 °
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_set_install_pose(rm_robot_handle *handle, float x, float y, float z);
@@ -2682,9 +2712,9 @@ int rm_set_install_pose(rm_robot_handle *handle, float x, float y, float z);
  * @param z 方位角(out)，单位 °
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_get_install_pose(rm_robot_handle *handle, float *x, float *y, float *z);
@@ -2695,6 +2725,13 @@ int rm_get_install_pose(rm_robot_handle *handle, float *x, float *y, float *z);
  * 
  * 针对睿尔曼带一维力和六维力版本的机械臂，用户除了可直接使用示教器调用底层的力位混合控制模块外，还可以将
  * 自定义的轨迹以周期性透传的形式结合底层的力位混合控制算法进行补偿。
+ * 
+ * @attention 该功能只适用于一维力传感器和六维力传感器机械臂版本  
+ * 
+ * 透传效果和周期、轨迹是否平滑有关，周期要求稳定，防止出现较大波动，用户使用该指令时请做好轨迹规划，轨迹规划的
+ * 平滑程度决定了机械臂的运行状态。基础系列 WIFI 和网口模式透传周期最快 20ms，USB 和 RS485 模式透传周期最快 10ms。
+ * 高速网口的透传周期最快也可到 10ms，不过在使用该高速网口前，需要使用指令打开配置。另外 I 系列有线网口周期最快可达 2ms。
+ * 
  * @{  
  */
 /**
@@ -2703,9 +2740,9 @@ int rm_get_install_pose(rm_robot_handle *handle, float *x, float *y, float *z);
  * @param handle 机械臂控制句柄 
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_start_force_position_move(rm_robot_handle *handle);
@@ -2715,9 +2752,9 @@ int rm_start_force_position_move(rm_robot_handle *handle);
  * @param handle 机械臂控制句柄 
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_stop_force_position_move(rm_robot_handle *handle);
@@ -2733,9 +2770,9 @@ int rm_stop_force_position_move(rm_robot_handle *handle);
  * @param follow 是否高跟随
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_force_position_move_joint(rm_robot_handle *handle,const float *joint,int sensor,int mode,int dir,float force, bool follow);
@@ -2751,9 +2788,9 @@ int rm_force_position_move_joint(rm_robot_handle *handle,const float *joint,int 
  * @param follow 是否高跟随
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_force_position_move_pose(rm_robot_handle *handle, rm_pose_t pose,int sensor,int mode,int dir,float force, bool follow);
@@ -2775,9 +2812,9 @@ int rm_force_position_move_pose(rm_robot_handle *handle, rm_pose_t pose,int sens
         - speed=0：升降机构停止运动
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_set_lift_speed(rm_robot_handle *handle, int speed);
@@ -2787,15 +2824,23 @@ int rm_set_lift_speed(rm_robot_handle *handle, int speed);
  * @param handle 机械臂控制句柄 
  * @param speed 速度百分比，1~100
  * @param height 目标高度，单位 mm，范围：0~2600
+ * @param block 阻塞设置
+ *        - 多线程模式：  
+ *            - 0：非阻塞模式，发送指令后立即返回。  
+ *            - 1：阻塞模式，等待升降机到达目标位置或规划失败后才返回。  
+ *        - 单线程模式：  
+ *            - 0：非阻塞模式，发送指令后立即返回。  
+ *            - 其他值：阻塞模式并设置超时时间，单位为秒。
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
             - -4: 当前到位设备校验失败，即当前到位设备不为升降机构。
+            - -5: 单线程模式超时未接收到返回，请确保超时时间设置合理。
  */
-int rm_set_lift_height(rm_robot_handle *handle, int speed, int height);
+int rm_set_lift_height(rm_robot_handle *handle, int speed, int height, int block);
 /**
  * @brief 获取升降机构状态
  * 
@@ -2803,9 +2848,9 @@ int rm_set_lift_height(rm_robot_handle *handle, int speed, int height);
  * @param state 当前升降机构状态
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_get_lift_state(rm_robot_handle *handle, rm_expand_state_t *state);
@@ -2824,9 +2869,9 @@ int rm_get_lift_state(rm_robot_handle *handle, rm_expand_state_t *state);
  * @param state 扩展关节状态结构体
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_get_expand_state(rm_robot_handle *handle, rm_expand_state_t *state);
@@ -2840,9 +2885,9 @@ int rm_get_expand_state(rm_robot_handle *handle, rm_expand_state_t *state);
         - speed=0：扩展关节停止运动
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_set_expand_speed(rm_robot_handle *handle, int speed);
@@ -2852,15 +2897,23 @@ int rm_set_expand_speed(rm_robot_handle *handle, int speed);
  * @param handle 机械臂控制句柄 
  * @param speed 速度百分比，1~100
  * @param pos 扩展关节角度，单位度
+ * @param block 阻塞设置
+ *        - 多线程模式：  
+ *            - 0：非阻塞模式，发送指令后立即返回。  
+ *            - 1：阻塞模式，等待升降机到达目标位置或规划失败后才返回。  
+ *        - 单线程模式：  
+ *            - 0：非阻塞模式，发送指令后立即返回。  
+ *            - 其他值：阻塞模式并设置超时时间，单位为秒。
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。
             - -4: 当前到位设备校验失败，即当前到位设备不为扩展关节。
+            - -5: 单线程模式超时未接收到返回，请确保超时时间设置合理。
  */
-int rm_set_expand_pos(rm_robot_handle *handle, int speed, int pos);
+int rm_set_expand_pos(rm_robot_handle *handle, int speed, int pos, int block);
 /** @} */ // 结束组的定义
 
 /**  
@@ -2874,12 +2927,12 @@ int rm_set_expand_pos(rm_robot_handle *handle, int speed, int pos);
  * 
  * @param handle 机械臂控制句柄 
  * @param project 文件下发参数配置结构体
- * @param errline 若运行失败，该参数返回有问题的工程行数，err_line 为 0，则代表校验数据长度不对
+ * @param errline 若运行失败，该参数返回有问题的工程行数，err_line 为 0，则代表校验数据长度不对，err_line 为 -1，则代表无错误
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_send_project(rm_robot_handle *handle, rm_send_project_t project, int *errline);
@@ -2890,9 +2943,9 @@ int rm_send_project(rm_robot_handle *handle, rm_send_project_t project, int *err
  * @param speed 当前进度条的速度数据
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。
  */
 int rm_set_plan_speed(rm_robot_handle *handle, int speed);
@@ -2907,9 +2960,9 @@ int rm_set_plan_speed(rm_robot_handle *handle, int speed);
  * @param trajectorys 在线编程程序列表
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_get_program_trajectory_list(rm_robot_handle *handle, int page_num, int page_size, const char *vague_search,rm_program_trajectorys_t *trajectorys);
@@ -2930,9 +2983,9 @@ int rm_get_program_trajectory_list(rm_robot_handle *handle, int page_num, int pa
  * @attention 使用单线程阻塞模式时，请设置超时时间确保轨迹在超时时间内运行结束返回
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
             - -4: 运行状态已停止但未接收到运行成功，是否在外部停止了轨迹。
  */ 
@@ -2944,9 +2997,9 @@ int rm_set_program_id_run(rm_robot_handle *handle, int id, int speed, int block)
  * @param run_state 在线编程运行状态结构体
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_get_program_run_state(rm_robot_handle *handle, rm_program_run_state_t *run_state);
@@ -2957,9 +3010,9 @@ int rm_get_program_run_state(rm_robot_handle *handle, rm_program_run_state_t *ru
  * @param id 指定轨迹的ID
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_delete_program_trajectory(rm_robot_handle *handle, int id);
@@ -2972,9 +3025,9 @@ int rm_delete_program_trajectory(rm_robot_handle *handle, int id);
  * @param name 更新后的文件名称
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_update_program_trajectory(rm_robot_handle *handle, int id, int speed, const char* name);
@@ -2985,9 +3038,9 @@ int rm_update_program_trajectory(rm_robot_handle *handle, int id, int speed, con
  * @param id 设置 IO 默认运行的在线编程文件编号，支持 0-100，0 代表取消设置
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_set_default_run_program(rm_robot_handle *handle, int id);
@@ -2998,9 +3051,9 @@ int rm_set_default_run_program(rm_robot_handle *handle, int id);
  * @param id IO 默认运行的在线编程文件编号，支持 0-100，0 代表无默认
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_get_default_run_program(rm_robot_handle *handle, int *id);
@@ -3011,9 +3064,9 @@ int rm_get_default_run_program(rm_robot_handle *handle, int *id);
  * @param waypoint 新增全局路点参数（无需输入新增全局路点时间）
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_add_global_waypoint(rm_robot_handle *handle, rm_waypoint_t waypoint);
@@ -3024,9 +3077,9 @@ int rm_add_global_waypoint(rm_robot_handle *handle, rm_waypoint_t waypoint);
  * @param waypoint 更新全局路点参数（无需输入更新全局路点时间）
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_update_global_waypoint(rm_robot_handle *handle, rm_waypoint_t waypoint);
@@ -3037,9 +3090,9 @@ int rm_update_global_waypoint(rm_robot_handle *handle, rm_waypoint_t waypoint);
  * @param point_name 全局路点名称
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_delete_global_waypoint(rm_robot_handle *handle, const char* point_name);
@@ -3051,9 +3104,9 @@ int rm_delete_global_waypoint(rm_robot_handle *handle, const char* point_name);
  * @param point 返回指定的全局路点参数
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_get_given_global_waypoint(rm_robot_handle *handle, const char* name, rm_waypoint_t *point);
@@ -3067,9 +3120,9 @@ int rm_get_given_global_waypoint(rm_robot_handle *handle, const char* name, rm_w
  * @param point_list 返回的全局路点列表
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_get_global_waypoints_list(rm_robot_handle *handle, int page_num, int page_size, const char *vague_search,rm_waypoint_list_t *point_list);
@@ -3089,9 +3142,9 @@ int rm_get_global_waypoints_list(rm_robot_handle *handle, int page_num, int page
  * @param config UDP配置结构体
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_set_realtime_push(rm_robot_handle *handle, rm_realtime_push_config_t config);
@@ -3102,9 +3155,9 @@ int rm_set_realtime_push(rm_robot_handle *handle, rm_realtime_push_config_t conf
  * @param config 获取到的UDP机械臂状态主动上报配置
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_get_realtime_push(rm_robot_handle *handle, rm_realtime_push_config_t *config);
@@ -3137,9 +3190,9 @@ int rm_get_realtime_push(rm_robot_handle *handle, rm_realtime_push_config_t *con
  * @param config 几何模型参数结构体
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 -4:form设置有误
  */
 int rm_add_electronic_fence_config(rm_robot_handle *handle, rm_fence_config_t config);
@@ -3150,9 +3203,9 @@ int rm_add_electronic_fence_config(rm_robot_handle *handle, rm_fence_config_t co
  * @param config 几何模型参数结构体
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_update_electronic_fence_config(rm_robot_handle *handle, rm_fence_config_t config);
@@ -3163,9 +3216,9 @@ int rm_update_electronic_fence_config(rm_robot_handle *handle, rm_fence_config_t
  * @param form_name 几何模型名称，不超过 10 个字节，支持字母、数字、下划线
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_delete_electronic_fence_config(rm_robot_handle *handle, const char* form_name);
@@ -3177,9 +3230,9 @@ int rm_delete_electronic_fence_config(rm_robot_handle *handle, const char* form_
  * @param len 几何模型名称列表长度
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_get_electronic_fence_list_names(rm_robot_handle *handle, rm_fence_names_t *names, int *len);
@@ -3191,9 +3244,9 @@ int rm_get_electronic_fence_list_names(rm_robot_handle *handle, rm_fence_names_t
  * @param config 返回几何模型参数结构体
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_get_given_electronic_fence_config(rm_robot_handle *handle, const char* name, rm_fence_config_t *config);
@@ -3205,9 +3258,9 @@ int rm_get_given_electronic_fence_config(rm_robot_handle *handle, const char* na
  * @param len 几何模型信息列表长度
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_get_electronic_fence_list_infos(rm_robot_handle *handle, rm_fence_config_list_t *config_list, int *len);
@@ -3218,9 +3271,9 @@ int rm_get_electronic_fence_list_infos(rm_robot_handle *handle, rm_fence_config_
  * @param state 电子围栏使能状态
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  * @note 电子围栏功能通过精确设置参数，确保机械臂的轨迹规划、示教等运动均在设定的电子围栏范围内进行。当机械臂的运动轨迹可能超出电子围栏的界限时，
  * 系统会立即返回相应的错误码，并自动中止运动，从而有效保障机械臂的安全运行。需要注意的是，电子围栏目前仅支持长方体和点面矢量平面这两种形状，并
@@ -3234,9 +3287,9 @@ int rm_set_electronic_fence_enable(rm_robot_handle *handle, rm_electronic_fence_
  * @param state 电子围栏使能状态
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_get_electronic_fence_enable(rm_robot_handle *handle,rm_electronic_fence_enable_t *state);
@@ -3247,9 +3300,9 @@ int rm_get_electronic_fence_enable(rm_robot_handle *handle,rm_electronic_fence_e
  * @param config 当前电子围栏参数结构体（无需设置电子围栏名称）
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_set_electronic_fence_config(rm_robot_handle *handle, rm_fence_config_t config);
@@ -3260,9 +3313,9 @@ int rm_set_electronic_fence_config(rm_robot_handle *handle, rm_fence_config_t co
  * @param config 返回当前电子围栏参数结构体（返回参数中不包含电子围栏名称）
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_get_electronic_fence_config(rm_robot_handle *handle, rm_fence_config_t *config);
@@ -3273,9 +3326,9 @@ int rm_get_electronic_fence_config(rm_robot_handle *handle, rm_fence_config_t *c
  * @param state 虚拟墙状态结构体
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_set_virtual_wall_enable(rm_robot_handle *handle, rm_electronic_fence_enable_t state);
@@ -3286,9 +3339,9 @@ int rm_set_virtual_wall_enable(rm_robot_handle *handle, rm_electronic_fence_enab
  * @param state 虚拟墙状态结构体
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_get_virtual_wall_enable(rm_robot_handle *handle,rm_electronic_fence_enable_t *state);
@@ -3299,9 +3352,9 @@ int rm_get_virtual_wall_enable(rm_robot_handle *handle,rm_electronic_fence_enabl
  * @param config 当前虚拟墙参数（无需设置虚拟墙名称）
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_set_virtual_wall_config(rm_robot_handle *handle, rm_fence_config_t config);
@@ -3312,9 +3365,9 @@ int rm_set_virtual_wall_config(rm_robot_handle *handle, rm_fence_config_t config
  * @param config 当前虚拟墙参数（返回参数中不包含虚拟墙名称）
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_get_virtual_wall_config(rm_robot_handle *handle, rm_fence_config_t *config);
@@ -3334,9 +3387,9 @@ int rm_get_virtual_wall_config(rm_robot_handle *handle, rm_fence_config_t *confi
  * @param state true代表使能，false代表禁使能
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_set_self_collision_enable(rm_robot_handle *handle, bool state);
@@ -3347,9 +3400,9 @@ int rm_set_self_collision_enable(rm_robot_handle *handle, bool state);
  * @param state true代表使能，false代表禁使能
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_get_self_collision_enable(rm_robot_handle *handle,bool *state);
@@ -3400,13 +3453,13 @@ void rm_algo_get_curr_workframe(rm_frame_t* coord_work);
 /**
  * @brief 设置工具坐标系
  * 
- * @param coord_tool 坐标系数据
+ * @param coord_tool 坐标系数据(无需设置名称)
  */
 void rm_algo_set_toolframe(const rm_frame_t* const coord_tool);
 /**
  * @brief 获取算法当前工具坐标系
  * 
- * @param coord_tool 当前工具坐标系
+ * @param coord_tool 当前工具坐标系(获取到的坐标系参数，不包括坐标系名称)
  */
 void rm_algo_get_curr_toolframe(rm_frame_t* coord_tool);
 /**
@@ -3462,48 +3515,26 @@ void rm_algo_get_joint_max_acc(float* joint_alim_max);
  * 
  * @param handle 机械臂控制句柄 
  * @param params 逆解输入参数结构体
- * @param q_out 输出的关节角度 单位°
+ * @param q_out 存放输出的关节角度数组 单位°
  * @return int 逆解结果
  *            - 0: 逆解成功
  *            - 1: 逆解失败
- *            - -1: 上一时刻关节角度输入为空
+ *            - -1: 上一时刻关节角度输入为空或超关节限位
+ *            - -2: 目标位姿四元数不合法
  * @attention 机械臂已连接时，可直接调用该接口进行计算，计算使用的参数均为机械臂当前的参数；  
- * 未连接机械臂时，需首先调用初始化算法依赖数据接口，并按照实际需求设置使用的坐标系及关节速度位置等限制
+ * 未连接机械臂时，需首先调用初始化算法依赖数据接口，并按照实际需求设置使用的坐标系、安装方式及关节速度位置等限制
  *（不设置则按照出厂默认的参数进行计算），此时机械臂控制句柄设置为NULL即可
  */
 int rm_algo_inverse_kinematics(rm_robot_handle *handle, rm_inverse_kinematics_params_t params, float *q_out);
 /**
  * @brief 正解算法接口
  *
- * @param handle 机械臂控制句柄 
+ * @param handle 机械臂控制句柄，连接机械臂时传入机械臂控制句柄，不连接时传入NULL 
  * @param joint 关节角度，单位：°
  * 
  * @return rm_pose_t 目标位姿
- * @code
-    rm_pose_t pose;
-    pose.position.x = 0.186350;
-    pose.position.y = 0.062099;
-    pose.position.z = 0.2;
-    pose.euler.rx = 3.141;
-    pose.euler.ry = 0;
-    pose.euler.rz = 1.569;
-    float q_in_values[] = {0, 0, -90, 0, -90, 0};
-    float q_out[6]; 
-    rm_inverse_kinematics_params_t params = {
-        .q_in = *q_in_values,
-        .q_pose = &pose,
-        .flag = 1,
-    };
-    // 不连接机械臂调用正逆解
-    rm_algo_init_sys_data(RM_MODEL_RM_65_E, RM_MODEL_RM_B_E);
-    pose = rm_algo_forward_kinematics(NULL, q_out);
-    printf("rm_algo_forward_kinematics pose:[%.2f] [%.2f] [%.2f]\n",pose.position.x,pose.position.y,pose.position.z);
-    pose.position.x += 0.01;
-    int ret = rm_algo_inverse_kinematics(NULL, &params, q_out);
-    printf("algo_inverse_kinematics:[%d],[%.2f] [%.2f][%.2f] [%.2f][%.2f] [%.2f]\n",ret,q_out[0],q_out[1],q_out[2],q_out[3],q_out[4],q_out[5]);
- * @endcode
  * @attention 机械臂已连接时，可直接调用该接口进行计算，计算使用的参数均为机械臂当前的参数；  
- * 未连接机械臂时，需首先调用初始化算法依赖数据接口，并按照实际需求设置使用的坐标系及关节速度位置等限制
+ * 未连接机械臂时，需首先调用初始化算法依赖数据接口，并按照实际需求设置使用的坐标系、安装方式及关节速度位置等限制
  *（不设置则按照出厂默认的参数进行计算），此时机械臂控制句柄设置为NULL即可
  */
 rm_pose_t rm_algo_forward_kinematics(rm_robot_handle *handle,const float* const joint);
@@ -3561,18 +3592,18 @@ rm_pose_t rm_algo_workframe2base(rm_matrix_t matrix, rm_pose_t state);
 /**
  * @brief 计算环绕运动位姿计算环绕运动位姿
  * 
- * @param handle 机械臂控制句柄 
+ * @param handle 机械臂控制句柄，连接机械臂时传入机械臂控制句柄，不连接时传入NULL
  * @param curr_joint 当前关节角度 单位°
  * @param rotate_axis 旋转轴: 1:x轴, 2:y轴, 3:z轴
  * @param rotate_angle 旋转角度: 旋转角度, 单位(度)
  * @param choose_axis 指定计算时使用的坐标系
  * @return rm_pose_t 计算位姿结果
  */
-rm_pose_t rm_algo_RotateMove(rm_robot_handle *handle,const float* const curr_joint, int rotate_axis, float rotate_angle, rm_pose_t choose_axis);
+rm_pose_t rm_algo_rotate_move(rm_robot_handle *handle,const float* const curr_joint, int rotate_axis, float rotate_angle, rm_pose_t choose_axis);
 /**
  * @brief 计算沿工具坐标系运动位姿
  * 
- * @param handle 机械臂控制句柄
+ * @param handle 机械臂控制句柄，连接机械臂时传入机械臂控制句柄，不连接时传入NULL
  * @param curr_joint 当前关节角度，单位：度
  * @param move_lengthx 沿X轴移动长度，单位：米
  * @param move_lengthy 沿Y轴移动长度，单位：米
@@ -3581,6 +3612,16 @@ rm_pose_t rm_algo_RotateMove(rm_robot_handle *handle,const float* const curr_joi
  */
 rm_pose_t rm_algo_cartesian_tool(rm_robot_handle *handle,const float* const curr_joint, float move_lengthx,
                          float move_lengthy, float move_lengthz);
+/**
+ * @brief 计算Pos和Rot沿某坐标系有一定的位移和旋转角度后，所得到的位姿数据
+ * 
+ * @param handle 机械臂控制句柄，连接机械臂时传入机械臂控制句柄，不连接时传入NULL
+ * @param poseCurrent 当前时刻位姿（欧拉角形式）
+ * @param deltaPosAndRot 移动及旋转数组，位置移动（单位：m），旋转（单位：度）
+ * @param frameMode 坐标系模式选择 0:Work（work即可任意设置坐标系），1:Tool
+ * @return rm_pose_t 平移旋转后的位姿
+ */
+rm_pose_t rm_algo_pose_move(rm_robot_handle *handle,rm_pose_t poseCurrent, const float *deltaPosAndRot, int frameMode);
 /**
  * @brief 末端位姿转成工具位姿
  * 

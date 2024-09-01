@@ -15,7 +15,8 @@
 **更新日志**:
 -
 """
-__version__ = '1.0.0'
+# python包版本
+__version__ = '1.0.2'
 
 from .rm_ctypes_wrap import *
 import ctypes
@@ -4523,6 +4524,23 @@ class UdpConfig:
         tag = rm_get_realtime_push(self.handle, byref(config))
         return tag, config.to_dict()
 
+    def rm_realtime_arm_state_call_back(self, arm_state_callback):
+        """
+        注册UDP机械臂实时状态主动上报信息回调函数，该回调函数接收rm_realtime_arm_joint_state_t类型数据
+        作为参数，没有返回值
+        当使用三线程，并且UDP机械臂状态主动上报正确配置时，数据会以设定的周期返回
+
+        Args:
+            arm_state_callback (rm_realtime_arm_state_callback_ptr): 
+                机械臂实时状态信息回调函数
+
+        Notes:
+            - 需确保打开三线程模式，仅在三线程模式会打开UDP接口接收数据
+            - 需确保广播端口号、上报目标IP、是否主动上报等 UDP 机械臂状态主动上报配置正确
+            - 需确保防火墙不会阻止数据的接收
+        """
+        rm_realtime_arm_state_call_back(arm_state_callback)
+
 
 class Algo:
     """
@@ -4948,9 +4966,9 @@ class Algo:
         return pose_eul if flag else pose_qua
         # return end_pose.to_dict()
 
-    def rm_algo_RotateMove(self, curr_joint: list[float], rotate_axis: int, rotate_angle: float, choose_axis: rm_pose_t, flag: int = 1) -> list[float]:
+    def rm_algo_rotate_move(self, curr_joint: list[float], rotate_axis: int, rotate_angle: float, choose_axis: rm_pose_t, flag: int = 1) -> list[float]:
         """
-        计算环绕运动位姿计算环绕运动位姿
+        计算环绕运动位姿
 
         Args:
             curr_joint (list[float]): 当前关节角度 单位°
@@ -4968,7 +4986,7 @@ class Algo:
             curr_joint = (c_float * self.arm_dof)(*curr_joint)
         else:
             curr_joint = (c_float * ARM_DOF)(*curr_joint)
-        pose = rm_algo_RotateMove(
+        pose = rm_algo_rotate_move(
             self.handle, curr_joint, rotate_axis, rotate_angle, choose_axis)
         position = pose.position
         euler = pose.euler
@@ -5012,6 +5030,34 @@ class Algo:
         return pose_eul if flag else pose_qua
         # return pose.to_dict()
 
+    def rm_algo_pose_move(self, poseCurrent: list[float], deltaPosAndRot: list[float], frameMode: int) -> list[float]:
+        """
+        计算Pos和Rot沿某坐标系有一定的位移和旋转角度后，所得到的位姿数据
+
+        Args:
+            poseCurrent (list[float]): 当前时刻位姿（欧拉角形式）
+            deltaPosAndRot (list[float]): 移动及旋转数组，位置移动（单位：m），旋转（单位：度）
+            frameMode (int): 坐标系模式选择 0:Work（work即可任意设置坐标系），1:Tool
+
+        Returns:
+            list[float]: 平移旋转后的位姿
+        """
+        po1 = rm_pose_t()
+        po1.position = rm_position_t(*poseCurrent[:3])
+        po1.euler = rm_euler_t(*poseCurrent[3:])
+
+        deltaPosAndRot = (c_float * 6)(*deltaPosAndRot)
+
+        pose = rm_algo_pose_move(
+            self.handle, po1, deltaPosAndRot, frameMode)
+        
+        position = pose.position
+        euler = pose.euler
+        pose_eul = [position.x, position.y,
+                    position.z, euler.rx, euler.ry, euler.rz]
+        return pose_eul
+
+
 
 class RoboticArm(ArmState, MovePlan, JointConfigSettings, JointConfigReader, ArmTipVelocityParameters,
                  ToolCoordinateConfig, WorkCoordinateConfig, ArmTeachMove, ArmMotionControl, ControllerConfig,
@@ -5033,7 +5079,7 @@ class RoboticArm(ArmState, MovePlan, JointConfigSettings, JointConfigReader, Arm
         if mode == None:
             return
         rm_init(mode)
-        print("current api version: ", rm_api_version())
+        print("current c api version: ", rm_api_version())
 
     def rm_create_robot_arm(self, ip: str, port: int, level: int = 3, log_func: CFUNCTYPE = None) -> rm_robot_handle:
         """
@@ -5052,7 +5098,6 @@ class RoboticArm(ArmState, MovePlan, JointConfigSettings, JointConfigReader, Arm
         Returns:
             rm_robot_handle: 机械臂句柄，其中包含机械臂id标识。
         """
-        # 当前API版本
         if log_func is None:
             rm_set_log_call_back(0, level)
         else:
@@ -5155,20 +5200,3 @@ class RoboticArm(ArmState, MovePlan, JointConfigSettings, JointConfigReader, Arm
             单线程无法使用该回调函数
         """
         rm_get_arm_event_call_back(event_callback)
-
-    def rm_realtime_arm_state_call_back(self, arm_state_callback):
-        """
-        注册UDP机械臂实时状态主动上报信息回调函数，该回调函数接收rm_realtime_arm_joint_state_t类型数据
-        作为参数，没有返回值
-        当使用三线程，并且UDP机械臂状态主动上报正确配置时，数据会以设定的周期返回
-
-        Args:
-            arm_state_callback (rm_realtime_arm_state_callback_ptr): 
-                机械臂实时状态信息回调函数
-
-        Notes:
-            - 需确保打开三线程模式，仅在三线程模式会打开UDP接口接收数据
-            - 需确保广播端口号、上报目标IP、是否主动上报等 UDP 机械臂状态主动上报配置正确
-            - 需确保防火墙不会阻止数据的接收
-        """
-        rm_realtime_arm_state_call_back(arm_state_callback)

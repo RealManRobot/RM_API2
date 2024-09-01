@@ -1034,6 +1034,52 @@ class rm_arm_current_trajectory_e(IntEnum):
     # 示教轨迹复现规划
     RM_TRAJECTORY_REPLAY_PLANNING_E = 4
 
+class rm_udp_custom_config_t(Structure):
+    """  
+    自定义UDP上报项  
+
+    **Attributes**:  
+        - joint_speed (int): 关节速度。1：上报；0：关闭上报；-1：不设置，保持之前的状态
+        - lift_state (int): 升降关节信息。1：上报；0：关闭上报；-1：不设置，保持之前的状态
+        - expand_state (int): 扩展关节信息（升降关节和扩展关节为二选一，优先显示升降关节）1：上报；0：关闭上报；-1：不设置，保持之前的状态
+    """
+    _fields_ = [
+        ('joint_speed', c_int),
+        ('lift_state', c_int),
+        ('expand_state', c_int),
+    ]
+
+    def __init__(self, joint_speed:int = None,lift_state:int = None,expand_state:int = None) -> None:
+        if all(param is None for param in [joint_speed, lift_state, expand_state]):
+            return
+        else:
+            self.joint_speed = joint_speed
+            self.lift_state = lift_state
+            self.expand_state = expand_state
+    
+    def to_dict(self, recurse=True):
+        """将类的变量返回为字典，如果recurse为True，则递归处理ctypes结构字段"""
+        result = {}
+        for field, ctype in self._fields_:
+            value = getattr(self, field)
+
+            if recurse and isinstance(ctype, type) and issubclass(ctype, Structure):
+                value = value.to_dict(recurse=recurse)
+            result[field] = value
+
+        for key, value in result.items():
+            if isinstance(value, bytes):
+                try:
+                    # 尝试使用 UTF-8 解码
+                    result[key] = value.decode('utf-8')
+                except UnicodeDecodeError:
+                    # 如果不是 UTF-8 编码，则可能需要根据实际情况处理
+                    # 这里简单地将字节转换为十六进制字符串作为替代方案
+                    result[key] = value.hex()
+            else:
+                # 值不是字节类型，直接保留
+                result[key] = value
+        return result
 
 class rm_realtime_push_config_t(Structure):
     """  
@@ -1048,6 +1094,7 @@ class rm_realtime_push_config_t(Structure):
             - 1：当前工作坐标系 
             - 2：当前工具坐标系
         - ip (bytes): 自定义的上报目标IP地址
+        - custom_config (rm_udp_custom_config_t): 自定义上报项
     """
     _fields_ = [
         ('cycle', c_int),
@@ -1055,9 +1102,10 @@ class rm_realtime_push_config_t(Structure):
         ('port', c_int),
         ('force_coordinate', c_int),
         ('ip', c_char * int(28)),
+        ('custom_config', rm_udp_custom_config_t),
     ]
 
-    def __init__(self, cycle: int = None, enable: bool = None, port: int = None, force_coordinate: int = None, ip: str = None) -> None:
+    def __init__(self, cycle: int = None, enable: bool = None, port: int = None, force_coordinate: int = None, ip: str = None, custom_config:rm_udp_custom_config_t = None) -> None:
         """
         UDP机械臂状态主动上报接口配置构造函数
 
@@ -1071,7 +1119,7 @@ class rm_realtime_push_config_t(Structure):
                         - 2：当前工具坐标系
             ip (str, optional): 自定义的上报目标IP地址. Defaults to None.
         """
-        if all(param is None for param in [cycle, enable, port, force_coordinate, ip]):
+        if all(param is None for param in [cycle, enable, port, force_coordinate, ip, custom_config]):
             return
         else:
             self.cycle = cycle
@@ -1079,6 +1127,9 @@ class rm_realtime_push_config_t(Structure):
             self.port = port
             self.force_coordinate = force_coordinate
             self.ip = ip.encode('utf-8')
+            if custom_config==None:
+               custom_config=rm_udp_custom_config_t(-1,-1,-1)
+            self.custom_config = custom_config
 
     def to_dict(self, recurse=True):
         """将类的变量返回为字典，如果recurse为True，则递归处理ctypes结构字段"""
@@ -1632,6 +1683,7 @@ class rm_joint_status_t(Structure):
         ('joint_position', c_float * int(7)),
         ('joint_temperature', c_float * int(7)),
         ('joint_voltage', c_float * int(7)),
+        ('joint_speed', c_float * int(7)),
     ]
 
 
@@ -2698,6 +2750,46 @@ class rm_force_sensor_t(Structure):
     ]
 
 
+class rm_udp_expand_state_t(Structure):
+    """  
+    扩展关节状态
+
+    **Attributes**:  
+        - pos (float): 当前角度  精度 0.001°，单位：°
+        - current (int): 当前驱动电流，单位：mA，精度：1mA
+        - err_flag (int): 驱动错误代码，错误代码类型参考关节错误代码
+        - en_flag (int): 当前关节使能状态 ，1 为上使能，0 为掉使能
+        - joint_id (int): 关节id号
+        - mode (int): 当前升降状态，0-空闲，1-正方向速度运动，2-正方向位置运动，3-负方向速度运动，4-负方向位置运动
+    """
+    _fields_ = [
+        ('pos', c_float),
+        ('current', c_int),
+        ('err_flag', c_int),
+        ('en_flag', c_int),
+        ('joint_id', c_int),
+        ('mode', c_int),
+    ]
+
+class rm_udp_lift_state_t(Structure):
+    """  
+    升降机构状态
+
+    **Attributes**:  
+        - height (int): 当前升降机构高度，单位：mm，精度：1mm
+        - pos (float): 当前角度  精度 0.001°，单位：°
+        - current (int): 当前驱动电流，单位：mA，精度：1mA
+        - err_flag (int): 驱动错误代码，错误代码类型参考关节错误代码
+        - en_flag (int): 当前关节使能状态 ，1 为上使能，0 为掉使能
+    """
+    _fields_ = [
+        ('height', c_int),
+        ('pos', c_float),
+        ('current', c_int),
+        ('err_flag', c_int),
+        ('en_flag', c_int),
+    ]
+
 class rm_realtime_arm_joint_state_t(Structure):
     """  
     机械臂实时状态推送信息结构体  
@@ -2710,6 +2802,8 @@ class rm_realtime_arm_joint_state_t(Structure):
         - force_sensor (rm_force_sensor_t): 力传感器数据结构体  
         - sys_err (uint16_t): 系统错误码  
         - waypoint (rm_pose_t): 当前位置姿态结构体  
+        - liftState (rm_udp_lift_state_t): 升降关节数据
+        - expandState (rm_udp_expand_state_t): 扩展关节数据
     """
     _fields_ = [
         ('errCode', c_int),
@@ -2719,6 +2813,8 @@ class rm_realtime_arm_joint_state_t(Structure):
         ('force_sensor', rm_force_sensor_t),
         ('sys_err', uint16_t),
         ('waypoint', rm_pose_t),
+        ('liftState', rm_udp_lift_state_t),
+        ('expandState', rm_udp_expand_state_t),
     ]
 
 
@@ -4338,11 +4434,11 @@ if _libs[libname].has("rm_algo_workframe2base", "cdecl"):
     rm_algo_workframe2base.argtypes = [rm_matrix_t, rm_pose_t]
     rm_algo_workframe2base.restype = rm_pose_t
 
-if _libs[libname].has("rm_algo_RotateMove", "cdecl"):
-    rm_algo_RotateMove = _libs[libname].get("rm_algo_RotateMove", "cdecl")
-    rm_algo_RotateMove.argtypes = [
+if _libs[libname].has("rm_algo_rotate_move", "cdecl"):
+    rm_algo_rotate_move = _libs[libname].get("rm_algo_rotate_move", "cdecl")
+    rm_algo_rotate_move.argtypes = [
         POINTER(rm_robot_handle), POINTER(c_float), c_int, c_float, rm_pose_t]
-    rm_algo_RotateMove.restype = rm_pose_t
+    rm_algo_rotate_move.restype = rm_pose_t
 
 if _libs[libname].has("rm_algo_cartesian_tool", "cdecl"):
     rm_algo_cartesian_tool = _libs[libname].get(
@@ -4350,6 +4446,11 @@ if _libs[libname].has("rm_algo_cartesian_tool", "cdecl"):
     rm_algo_cartesian_tool.argtypes = [
         POINTER(rm_robot_handle), POINTER(c_float), c_float, c_float, c_float]
     rm_algo_cartesian_tool.restype = rm_pose_t
+
+if _libs[libname].has("rm_algo_pose_move", "cdecl"):
+    rm_algo_pose_move = _libs[libname].get("rm_algo_pose_move", "cdecl")
+    rm_algo_pose_move.argtypes = [POINTER(rm_robot_handle), rm_pose_t, POINTER(c_float), c_int]
+    rm_algo_pose_move.restype = rm_pose_t
 
 if _libs[libname].has("rm_algo_end2tool", "cdecl"):
     rm_algo_end2tool = _libs[libname].get("rm_algo_end2tool", "cdecl")

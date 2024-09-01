@@ -22,7 +22,6 @@ extern "C" {
  * 此模块为API及机械臂初始化相关接口，包含API版本号查询、API初始化、连接/断开机械臂、日志设置、
  * 机械臂仿真/真实模式设置、机械臂信息获取、运动到位信息及机械臂实时状态信息回调函数注册等
  * @{  
- * @example rm_demo_01.c
  */
 /**
  * @brief 查询sdk版本号
@@ -42,7 +41,6 @@ char* rm_api_version(void);
  * @return int 函数执行的状态码。  
             - 0: 成功。  
             - -1: 创建线程失败。查看日志以获取具体错误
- * @see rm_create_robot_arm
  */
 int rm_init(rm_thread_mode_e mode);
 
@@ -57,29 +55,17 @@ int rm_destory(void);
 /**
  * @brief 日志打印配置
  * 
- * @code
- * // 打印错误级别的日志信息
- * char *get_cur_time()
- * {
- *   static char s[32] = {0};
- *   struct tm* ltime;
- *   struct timeval stamp;
- *   gettimeofday(&stamp, NULL);
- *   ltime = localtime(&stamp.tv_sec);
- *   strftime(s, 20, "%Y%m%d %H:%M:%S", ltime);
- *   return s;
- * }
- * void api_log(const char* message, va_list args) {
- *     printf("[%s]: ",get_cur_time());
- *     vfprintf(stdout, message, args);
- * }
- * 
- * rm_set_log_call_back(api_log, 3);
- * @endcode
  * @param LogCallback 日志打印回调函数
  * @param level 日志打印等级，0：debug级别，1：info级别，2：warn：级别，3：error级别  
  */
 void rm_set_log_call_back(void (*LogCallback)(const char* message, va_list args),int level);
+
+/**
+ * @brief 保存日志到文件
+ * 
+ * @param path 日志保存文件路径
+ */
+void rm_set_log_save(const char* path);
 
 /**
  * @brief 创建一个机械臂，用于实现对该机械臂的控制
@@ -87,7 +73,6 @@ void rm_set_log_call_back(void (*LogCallback)(const char* message, va_list args)
  * @param ip 机械臂的ip地址
  * @param port 机械臂的端口号
  * @return rm_robot_handle* 创建成功后，返回机械臂控制句柄，连接成功句柄id大于0，连接失败句柄id返回-1，达到最大连接数5创建失败返回空
- * @see rm_init
  */
 rm_robot_handle *rm_create_robot_arm(const char *ip,int port);
 
@@ -104,7 +89,7 @@ int rm_delete_robot_arm(rm_robot_handle *handle);
  * @brief 机械臂仿真/真实模式设置
  * 
  * @param handle 机械臂控制句柄
- * @param mode 模式 0:仿真 1:真实
+ * @param mode 模式 0:仿真模式 1:真实模式
  * @return int 函数执行的状态码。  
             - 0: 成功。  
             - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
@@ -117,7 +102,7 @@ int rm_set_arm_run_mode(rm_robot_handle *handle, int mode);
  * @brief 机械臂仿真/真实模式获取
  * 
  * @param handle 机械臂控制句柄
- * @param mode 模式 0:仿真 1:真实
+ * @param mode 模式 0:仿真模式 1:真实模式
  * @return int 函数执行的状态码。  
             - 0: 成功。  
             - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
@@ -168,11 +153,6 @@ void rm_realtime_arm_state_call_back(rm_realtime_arm_state_callback_ptr realtime
 /**
  * @brief 设置关节最大速度
  * 
- * @code
- * // 设置关节1最大速度180°/s  
- * int ret = rm_set_joint_max_speed(handle,1,180);
- * printf("set_joint_max_speed result:%d\n",ret);
- * @endcode
  * @param handle 机械臂句柄
  * @param joint_num 关节序号
  * @param max_speed 关节最大速度，单位：°/s
@@ -662,7 +642,7 @@ int rm_generate_auto_tool_frame(rm_robot_handle *handle, const char *name,float 
             - 0: 成功。  
             - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。 可能情况：要设置的坐标系名称已存在 
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_set_manual_tool_frame(rm_robot_handle *handle, rm_frame_t frame);
@@ -696,7 +676,7 @@ int rm_delete_tool_frame(rm_robot_handle *handle, const char* tool_name);
  * @brief 修改指定工具坐标系
  * 
  * @param handle 机械臂控制句柄 
- * @param frame 要修改的工具坐标系名称
+ * @param frame 要修改的工具坐标系参数
  * @return int 函数执行的状态码。  
             - 0: 成功。  
             - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
@@ -1023,8 +1003,8 @@ int rm_get_init_pose(rm_robot_handle *handle, float *joint);
  * 
  * @param handle 机械臂控制句柄 
  * @param joint 目标关节1~7角度数组
- * @param v 速度比例1~100，即规划速度和加速度占关节最大线转速和加速度的百分比
- * @param r 轨迹交融半径，目前默认0。
+ * @param v 速度百分比系数，1~100
+ * @param r 交融半径百分比系数，0~100。
  * @param trajectory_connect 轨迹连接标志  
  *        - 0：立即规划并执行轨迹，不与后续轨迹连接。  
  *        - 1：将当前轨迹与下一条轨迹一起规划，但不立即执行。阻塞模式下，即使发送成功也会立即返回。  
@@ -1051,8 +1031,8 @@ int rm_movej(rm_robot_handle *handle, const float *joint, int v, int r,int traje
  * 
  * @param handle 机械臂控制句柄 
  * @param pose 目标位姿,位置单位：米，姿态单位：弧度
- * @param v 速度比例1~100，即规划速度和加速度占机械臂末端最大线速度和线加速度的百分比
- * @param r 轨迹交融半径，目前默认0。
+ * @param v 速度百分比系数，1~100
+ * @param r 交融半径百分比系数，0~100。
  * @param trajectory_connect 轨迹连接标志  
  *        - 0：立即规划并执行轨迹，不与后续轨迹连接。  
  *        - 1：将当前轨迹与下一条轨迹一起规划，但不立即执行。阻塞模式下，即使发送成功也会立即返回。  
@@ -1079,8 +1059,8 @@ int rm_movel(rm_robot_handle *handle,rm_pose_t pose, int v, int r, int trajector
  * 
  * @param handle 机械臂控制句柄 
  * @param pose 目标位姿,位置单位：米，姿态单位：弧度
- * @param v 速度比例1~100，即规划速度和加速度占机械臂末端最大线速度和线加速度的百分比
- * @param r 轨迹交融半径，目前默认0。
+ * @param v 速度百分比系数，1~100
+ * @param r 交融半径百分比系数，0~100。
  * @param trajectory_connect 轨迹连接标志  
  *        - 0：立即规划并执行轨迹，不与后续轨迹连接。  
  *        - 1：将当前轨迹与下一条轨迹一起规划，但不立即执行。阻塞模式下，即使发送成功也会立即返回。  
@@ -1110,7 +1090,7 @@ int rm_moves(rm_robot_handle *handle,rm_pose_t pose, int v, int r, int trajector
  * @param pose_via 中间点位姿，位置单位：米，姿态单位：弧度
  * @param pose_to 终点位姿
  * @param v 速度比例1~100，即规划速度和加速度占机械臂末端最大角速度和角加速度的百分比
- * @param r 轨迹交融半径，目前默认0。
+ * @param r 交融半径百分比系数，0~100。
  * @param loop 规划圈数.
  * @param trajectory_connect 轨迹连接标志  
  *        - 0：立即规划并执行轨迹，不与后续轨迹连接。  
@@ -1138,8 +1118,8 @@ int rm_movec(rm_robot_handle *handle,rm_pose_t pose_via, rm_pose_t pose_to, int 
  * 
  * @param handle 机械臂控制句柄 
  * @param pose 目标位姿，位置单位：米，姿态单位：弧度。
- * @param v 速度比例1~100，即规划速度和加速度占机械臂末端最大线速度和线加速度的百分比
- * @param r 轨迹交融半径，目前默认0。
+ * @param v 速度百分比系数，1~100
+ * @param r 交融半径百分比系数，0~100。
  * @param trajectory_connect 轨迹连接标志  
  *        - 0：立即规划并执行轨迹，不与后续轨迹连接。  
  *        - 1：将当前轨迹与下一条轨迹一起规划，但不立即执行。阻塞模式下，即使发送成功也会立即返回。  
@@ -1304,7 +1284,7 @@ int rm_get_arm_current_trajectory(rm_robot_handle *handle,rm_arm_current_traject
  * @param handle 机械臂控制句柄 
  * @param joint_num 关节序号，1~7
  * @param step 步进的角度，
- * @param v 速度比例1~100，即规划速度和加速度占机械臂末端最大线速度和线加速度的百分比
+ * @param v 速度百分比系数，1~100
  * @param block 阻塞设置
  *        - 多线程模式：  
  *            - 0：非阻塞模式，发送指令后立即返回。  
@@ -1329,7 +1309,7 @@ int rm_set_joint_step(rm_robot_handle *handle,int joint_num, float step, int v, 
  * @param handle 机械臂控制句柄 
  * @param type 示教类型
  * @param step 步进的距离，单位m，精确到0.001mm
- * @param v 速度比例1~100，即规划速度和加速度占机械臂末端最大线速度和线加速度的百分比
+ * @param v 速度百分比系数，1~100
  * @param block 阻塞设置
  *        - 多线程模式：  
  *            - 0：非阻塞模式，发送指令后立即返回。  
@@ -1355,7 +1335,7 @@ int rm_set_pos_step(rm_robot_handle *handle, rm_pos_teach_type_e type, float ste
  * @param handle 机械臂控制句柄 
  * @param type 示教类型
  * @param step 步进的弧度，单位rad，精确到0.001rad
- * @param v 速度比例1~100，即规划速度和加速度占机械臂末端最大线速度和线加速度的百分比
+ * @param v 速度百分比系数，1~100
  * @param block 阻塞设置
  *        - 多线程模式：  
  *            - 0：非阻塞模式，发送指令后立即返回。  
@@ -1981,7 +1961,8 @@ int rm_set_gripper_route(rm_robot_handle *handle, int min_limit, int max_limit);
             - -1: 数据发送失败，通信过程中出现问题。
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。  
-            - -4:超时
+            - -4: 超时
+            - -5: 到位设备检验失败
  */
 int rm_set_gripper_release(rm_robot_handle *handle, int speed, bool block, int timeout);
 /**
@@ -1998,7 +1979,8 @@ int rm_set_gripper_release(rm_robot_handle *handle, int speed, bool block, int t
             - -1: 数据发送失败，通信过程中出现问题。
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。  
-            - -4:超时
+            - -4: 超时
+            - -5: 到位设备检验失败
  */
 int rm_set_gripper_pick(rm_robot_handle *handle, int speed, int force, bool block, int timeout);
 /**
@@ -2015,7 +1997,8 @@ int rm_set_gripper_pick(rm_robot_handle *handle, int speed, int force, bool bloc
             - -1: 数据发送失败，通信过程中出现问题。
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。  
-            - -4:超时
+            - -4: 超时
+            - -5: 到位设备检验失败
  */
 int rm_set_gripper_pick_on(rm_robot_handle *handle, int speed, int force, bool block, int timeout);
 /**
@@ -2032,7 +2015,8 @@ int rm_set_gripper_pick_on(rm_robot_handle *handle, int speed, int force, bool b
             - -1: 数据发送失败，通信过程中出现问题。
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
-            - -4:超时
+            - -4: 超时
+            - -5: 到位设备检验失败
  */
 int rm_set_gripper_position(rm_robot_handle *handle, int position, bool block, int timeout);
 /**
@@ -2072,7 +2056,7 @@ int rm_get_gripper_state(rm_robot_handle *handle, rm_gripper_state_t *state);
             - 0: 成功。  
             - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。可能情况：当前机械臂不是六维力版本。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_get_force_data(rm_robot_handle *handle, rm_force_data_t *data);
@@ -2355,7 +2339,7 @@ int rm_stop_drag_trajectory(rm_robot_handle *handle);
             - -5: 文件名称截取失败
             - -6: 获取到的点位解析错误，保存失败
  */
-int rm_save_trajectory(rm_robot_handle *handle, char* name, int *num);
+int rm_save_trajectory(rm_robot_handle *handle,const char* name, int *num);
 /**
  * @brief 力位混合控制
  * @details 在笛卡尔空间轨迹规划时，使用该功能可保证机械臂末端接触力恒定，使用时力的方向与机械臂运动方向不能在同一方向。
@@ -2431,7 +2415,7 @@ int rm_set_hand_seq(rm_robot_handle *handle, int seq_num, bool block, int timeou
  * @brief 设置灵巧手各自由度角度
  * @details 设置灵巧手角度，灵巧手有6个自由度，从1~6分别为小拇指，无名指，中指，食指，大拇指弯曲，大拇指旋转
  * @param handle 机械臂控制句柄 
- * @param hand_angle 手指角度数组，范围：0~1000. 另外，-1代表该自由度不执行任何操作，保持当前状态
+ * @param hand_angle 手指角度数组，6个元素分别代表6个自由度的角度，范围：0~1000. 另外，-1代表该自由度不执行任何操作，保持当前状态
  * @return int 函数执行的状态码。  
             - 0: 成功。  
             - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
@@ -2529,7 +2513,7 @@ int rm_close_modbus_mode(rm_robot_handle *handle, int port);
  */
 int rm_set_modbustcp_mode(rm_robot_handle *handle, const char *ip, int port, int timeout);
 /**
- * @brief 关闭通讯端口ModbusRTU模式
+ * @brief 配置关闭 ModbusTCP 从站
  * 
  * @param handle 机械臂控制句柄 
  * @return int 函数执行的状态码。  
@@ -3549,29 +3533,6 @@ int rm_algo_inverse_kinematics(rm_robot_handle *handle, rm_inverse_kinematics_pa
  * @param joint 关节角度，单位：°
  * 
  * @return rm_pose_t 目标位姿
- * @code
-    rm_pose_t pose;
-    pose.position.x = 0.186350;
-    pose.position.y = 0.062099;
-    pose.position.z = 0.2;
-    pose.euler.rx = 3.141;
-    pose.euler.ry = 0;
-    pose.euler.rz = 1.569;
-    float q_in_values[] = {0, 0, -90, 0, -90, 0};
-    float q_out[6]; 
-    rm_inverse_kinematics_params_t params = {
-        .q_in = *q_in_values,
-        .q_pose = &pose,
-        .flag = 1,
-    };
-    // 不连接机械臂调用正逆解
-    rm_algo_init_sys_data(RM_MODEL_RM_65_E, RM_MODEL_RM_B_E);
-    pose = rm_algo_forward_kinematics(NULL, q_out);
-    printf("rm_algo_forward_kinematics pose:[%.2f] [%.2f] [%.2f]\n",pose.position.x,pose.position.y,pose.position.z);
-    pose.position.x += 0.01;
-    int ret = rm_algo_inverse_kinematics(NULL, &params, q_out);
-    printf("algo_inverse_kinematics:[%d],[%.2f] [%.2f][%.2f] [%.2f][%.2f] [%.2f]\n",ret,q_out[0],q_out[1],q_out[2],q_out[3],q_out[4],q_out[5]);
- * @endcode
  * @attention 机械臂已连接时，可直接调用该接口进行计算，计算使用的参数均为机械臂当前的参数；  
  * 未连接机械臂时，需首先调用初始化算法依赖数据接口，并按照实际需求设置使用的坐标系、安装方式及关节速度位置等限制
  *（不设置则按照出厂默认的参数进行计算），此时机械臂控制句柄设置为NULL即可
@@ -3631,18 +3592,18 @@ rm_pose_t rm_algo_workframe2base(rm_matrix_t matrix, rm_pose_t state);
 /**
  * @brief 计算环绕运动位姿计算环绕运动位姿
  * 
- * @param handle 机械臂控制句柄 
+ * @param handle 机械臂控制句柄，连接机械臂时传入机械臂控制句柄，不连接时传入NULL
  * @param curr_joint 当前关节角度 单位°
  * @param rotate_axis 旋转轴: 1:x轴, 2:y轴, 3:z轴
  * @param rotate_angle 旋转角度: 旋转角度, 单位(度)
  * @param choose_axis 指定计算时使用的坐标系
  * @return rm_pose_t 计算位姿结果
  */
-rm_pose_t rm_algo_RotateMove(rm_robot_handle *handle,const float* const curr_joint, int rotate_axis, float rotate_angle, rm_pose_t choose_axis);
+rm_pose_t rm_algo_rotate_move(rm_robot_handle *handle,const float* const curr_joint, int rotate_axis, float rotate_angle, rm_pose_t choose_axis);
 /**
  * @brief 计算沿工具坐标系运动位姿
  * 
- * @param handle 机械臂控制句柄
+ * @param handle 机械臂控制句柄，连接机械臂时传入机械臂控制句柄，不连接时传入NULL
  * @param curr_joint 当前关节角度，单位：度
  * @param move_lengthx 沿X轴移动长度，单位：米
  * @param move_lengthy 沿Y轴移动长度，单位：米
@@ -3651,6 +3612,16 @@ rm_pose_t rm_algo_RotateMove(rm_robot_handle *handle,const float* const curr_joi
  */
 rm_pose_t rm_algo_cartesian_tool(rm_robot_handle *handle,const float* const curr_joint, float move_lengthx,
                          float move_lengthy, float move_lengthz);
+/**
+ * @brief 计算Pos和Rot沿某坐标系有一定的位移和旋转角度后，所得到的位姿数据
+ * 
+ * @param handle 机械臂控制句柄，连接机械臂时传入机械臂控制句柄，不连接时传入NULL
+ * @param poseCurrent 当前时刻位姿（欧拉角形式）
+ * @param deltaPosAndRot 移动及旋转数组，位置移动（单位：m），旋转（单位：度）
+ * @param frameMode 坐标系模式选择 0:Work（work即可任意设置坐标系），1:Tool
+ * @return rm_pose_t 平移旋转后的位姿
+ */
+rm_pose_t rm_algo_pose_move(rm_robot_handle *handle,rm_pose_t poseCurrent, const float *deltaPosAndRot, int frameMode);
 /**
  * @brief 末端位姿转成工具位姿
  * 
