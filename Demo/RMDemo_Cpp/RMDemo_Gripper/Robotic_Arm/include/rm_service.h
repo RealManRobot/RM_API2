@@ -1171,6 +1171,24 @@ RM_SERVICESHARED_EXPORT int rm_movej_canfd(rm_robot_handle *handle,float *joint,
             - -1: 数据发送失败，通信过程中出现问题。
  */
 RM_SERVICESHARED_EXPORT int rm_movep_canfd(rm_robot_handle *handle, rm_pose_t pose, bool follow);
+/**
+ * @brief 关节空间跟随运动
+ * @param handle 机械臂控制句柄 
+ * @param joint 关节1~7目标角度数组,单位：°
+ * @return int 函数执行的状态码。  
+            - 0: 成功。  
+            - -1: 数据发送失败，通信过程中出现问题。
+ */
+RM_SERVICESHARED_EXPORT int rm_movej_follow(rm_robot_handle *handle,float *joint);
+/**
+ * @brief 笛卡尔空间跟随运动   
+ * @param handle 机械臂控制句柄 
+ * @param pose 位姿 (优先采用四元数表达)
+ * @return int 函数执行的状态码。  
+            - 0: 成功。  
+            - -1: 数据发送失败，通信过程中出现问题。
+ */
+RM_SERVICESHARED_EXPORT int rm_movep_follow(rm_robot_handle *handle, rm_pose_t pose);
 /** @} */ // 结束组的定义
 
 /**  
@@ -2248,6 +2266,51 @@ RM_SERVICESHARED_EXPORT int rm_stop_drag_teach(rm_robot_handle *handle);
  */
 RM_SERVICESHARED_EXPORT int rm_start_multi_drag_teach(rm_robot_handle *handle, int mode, int singular_wall);
 /**
+ * @brief 开始复合模式拖动示教-新参数
+ * 
+ * @param handle 机械臂控制句柄 
+ * @param teach_state 复合拖动示教参数
+ * @return int 函数执行的状态码。  
+            - 0: 成功。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
+            - -1: 数据发送失败，通信过程中出现问题。
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
+            - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
+ * @note 失败的可能原因:  
+            - 当前机械臂非六维力版本（六维力拖动示教）。  
+            - 机械臂当前处于 IO 急停状态
+            - 机械臂当前处于仿真模式
+            - 输入参数有误
+            - 使用六维力模式拖动示教时，当前已处于奇异区
+ */
+RM_SERVICESHARED_EXPORT int rm_start_multi_drag_teach(rm_robot_handle *handle, rm_multi_drag_teach_t teach_state);
+/**
+ * @brief 设置电流环拖动示教灵敏度
+ * 
+ * @param handle 机械臂控制句柄 
+ * @param grade 等级，0到100，表示0~100%，当设置为100时保持初始状态
+ * @return int 函数执行的状态码。  
+            - 0: 成功。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
+            - -1: 数据发送失败，通信过程中出现问题。
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
+            - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
+ */
+RM_SERVICESHARED_EXPORT int rm_set_drag_teach_sensitivity(rm_robot_handle *handle, int grade);
+/**
+ * @brief 获取电流环拖动示教灵敏度
+ * 
+ * @param handle 机械臂控制句柄 
+ * @param grade 等级，0到100，表示0~100%，当设置为100时保持初始状态
+ * @return int 函数执行的状态码。  
+            - 0: 成功。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
+            - -1: 数据发送失败，通信过程中出现问题。
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
+            - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
+ */
+RM_SERVICESHARED_EXPORT int rm_get_drag_teach_sensitivity(rm_robot_handle *handle, int *grade);
+/**
  * @brief 运动到轨迹起点
  * @details 轨迹复现前，必须控制机械臂运动到轨迹起点，如果设置正确，机械臂将以20%的速度运动到轨迹起点
  * @param handle 机械臂控制句柄 
@@ -2361,6 +2424,20 @@ RM_SERVICESHARED_EXPORT int rm_save_trajectory(rm_robot_handle *handle, const ch
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 RM_SERVICESHARED_EXPORT int rm_set_force_position(rm_robot_handle *handle, int sensor, int mode, int direction, float N);
+/**
+ * @brief 力位混合控制-新参数
+ * @details 在笛卡尔空间轨迹规划时，使用该功能可保证机械臂末端接触力恒定，使用时力的方向与机械臂运动方向不能在同一方向。
+ * 开启力位混合控制，执行笛卡尔空间运动，接收到运动完成反馈后，需要等待2S后继续下发下一条运动指令。
+ * @param handle 机械臂控制句柄 
+ * @param param 力位混合控制参数
+ * @return int 函数执行的状态码。  
+            - 0: 成功。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
+            - -1: 数据发送失败，通信过程中出现问题。
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
+            - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
+ */
+RM_SERVICESHARED_EXPORT int rm_set_force_position(rm_robot_handle *handle, rm_force_position_t param);
 /**
  * @brief 结束力位混合控制
  * 
@@ -2795,6 +2872,19 @@ RM_SERVICESHARED_EXPORT int rm_force_position_move_joint(rm_robot_handle *handle
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 RM_SERVICESHARED_EXPORT int rm_force_position_move_pose(rm_robot_handle *handle, rm_pose_t pose,int sensor,int mode,int dir,float force, bool follow);
+/**
+ * @brief 透传力位混合补偿-新参数
+ * 
+ * @param handle 机械臂控制句柄 
+ * @param param 透传力位混合补偿参数
+ * @return int 函数执行的状态码。  
+            - 0: 成功。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
+            - -1: 数据发送失败，通信过程中出现问题。
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
+            - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
+ */
+RM_SERVICESHARED_EXPORT int rm_force_position_move(rm_robot_handle *handle, rm_force_position_move_t param);
 /** @} */ // 结束组的定义
 
 /**  
@@ -2935,6 +3025,8 @@ RM_SERVICESHARED_EXPORT int rm_set_expand_pos(rm_robot_handle *handle, int speed
             - -1: 数据发送失败，通信过程中出现问题。
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
+            - -4: 文件名称校验失败
+            - -5: 文件读取失败
  */
 RM_SERVICESHARED_EXPORT int rm_send_project(rm_robot_handle *handle, rm_send_project_t project, int *errline);
 /**
@@ -3416,6 +3508,11 @@ RM_SERVICESHARED_EXPORT int rm_get_self_collision_enable(rm_robot_handle *handle
  * @{  
  */  
 /**
+ * @brief 查询算法库版本号
+ * @return char* 返回版本号
+ */
+RM_SERVICESHARED_EXPORT char* rm_algo_version(void);
+/**
  * @brief 初始化算法依赖数据(不连接机械臂时调用)
  * 
  * @param Mode 机械臂型号
@@ -3510,6 +3607,13 @@ RM_SERVICESHARED_EXPORT void rm_algo_set_joint_max_acc(const float* const joint_
  * @param joint_alim_max 返回关节最大加速度
  */
 RM_SERVICESHARED_EXPORT void rm_algo_get_joint_max_acc(float* joint_alim_max);
+/**
+ * @brief 设置逆解求解模式
+ * 
+ * @param mode true：遍历模式，冗余参数遍历的求解策略。适于当前位姿跟要求解的位姿差别特别大的应用场景，如MOVJ_P、位姿编辑等，耗时较长
+              false：单步模式，自动调整冗余参数的求解策略。适于当前位姿跟要求解的位姿差别特别小、连续周期控制的场景，如笛卡尔空间规划的位姿求解等，耗时短
+ */
+RM_SERVICESHARED_EXPORT void rm_algo_set_redundant_parameter_traversal_mode(bool mode);
 /**
  * @brief 逆解函数
  * 

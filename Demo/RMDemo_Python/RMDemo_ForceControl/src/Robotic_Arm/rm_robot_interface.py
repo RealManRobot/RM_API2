@@ -1598,6 +1598,57 @@ class MovePlan:
 
         return tag
 
+    def rm_movej_follow(self, joint: list[float]) -> int:
+        """
+        关节空间跟随运动
+
+        Args:
+            joint (list[float]): 关节1~7目标角度数组,单位：°
+
+        Returns:
+            int: 函数执行的状态码。
+            - 0: 成功。
+            - 1: 控制器返回false，参数错误或机械臂状态发生错误。
+            - -1: 数据发送失败，通信过程中出现问题。
+        """
+        if self.arm_dof != 0 and self.arm_dof == len(joint):
+            joint_positions = (c_float * self.arm_dof)(*joint)
+        else:
+            joint_positions = (c_float * ARM_DOF)(*joint)
+
+        tag = rm_movej_follow(self.handle, joint_positions)
+
+        return tag
+
+    def rm_movep_follow(self, pose: list[float]) -> int:
+        """
+        笛卡尔空间跟随运动
+
+        Args:
+            pose (list[float]): 位姿 (若位姿列表长度为7则认为使用四元数表达位姿，长度为6则认为使用欧拉角表达位姿)
+
+        Returns:
+            int: 函数执行的状态码。
+            - 0: 成功。
+            - 1: 控制器返回false，参数错误或机械臂状态发生错误。
+            - -1: 数据发送失败，通信过程中出现问题。
+        """
+        po1 = rm_pose_t()
+
+        po1.position = rm_position_t(*pose[:3])
+        # 四元数
+        if len(pose) == 7:
+            po1.quaternion = rm_quat_t(*pose[3:])
+        # 欧拉角
+        elif len(pose) == 6:
+            po1.euler = rm_euler_t(*pose[3:])
+        else:
+            print("Error: pose length is error.")
+
+        tag = rm_movep_follow(self.handle, po1)
+
+        return tag
+
 
 class ArmTeachMove:
     """
@@ -2300,7 +2351,8 @@ class ControllerIOConfig:
             io_mode (int): 模式，0-通用输入模式，1-通用输出模式、2-输入开始功能复用模式、3-输入暂停功能复用模式、
             4-输入继续功能复用模式、5-输入急停功能复用模式、6-输入进入电流环拖动复用模式、7-输入进入力只动位置拖动模式（六维力版本可配置）、
             8-输入进入力只动姿态拖动模式（六维力版本可配置）、9-输入进入力位姿结合拖动复用模式（六维力版本可配置）、
-            10-输入外部轴最大软限位复用模式（外部轴模式可配置）、11-输入外部轴最小软限位复用模式（外部轴模式可配置）。
+            10-输入外部轴最大软限位复用模式（外部轴模式可配置）、11-输入外部轴最小软限位复用模式（外部轴模式可配置）、12-输入初始位姿功能复用模式、
+            13-输出碰撞功能复用模式。
 
         Returns:
             int: 函数执行的状态码。
@@ -2938,6 +2990,65 @@ class DragTeach:
         tag = rm_start_multi_drag_teach(self.handle, mode, singular_wall)
         return tag
 
+    def rm_start_multi_drag_teach_new(self, param: rm_multi_drag_teach_t) -> int:
+        """
+        开始复合模式拖动示教-新参数
+
+        Args:
+            param (rm_multi_drag_teach_t): 复合拖动示教参数
+
+        Returns:
+            int: 函数执行的状态码。
+            - 0: 成功。
+            - 1: 控制器返回false，参数错误或机械臂状态发生错误。
+            - -1: 数据发送失败，通信过程中出现问题。
+            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。
+            - -3: 返回值解析失败，接收到的数据格式不正确或不完整。
+        @attention 失败的可能原因:
+            - 当前机械臂非六维力版本（六维力拖动示教）。
+            - 机械臂当前处于 IO 急停状态
+            - 机械臂当前处于仿真模式
+            - 输入参数有误
+            - 使用六维力模式拖动示教时，当前已处于奇异区
+        """
+        tag = rm_start_multi_drag_teach_new(self.handle, param)
+        return tag
+
+    def rm_set_drag_teach_sensitivity(self, grade: int) -> int:
+        """
+        设置电流环拖动示教灵敏度
+
+        Args:
+            grade (int): 等级，0到100，表示0~100%，当设置为100时保持初始状态
+
+        Returns:
+            int: 函数执行的状态码。
+            - 0: 成功。
+            - 1: 控制器返回false，参数错误或机械臂状态发生错误。
+            - -1: 数据发送失败，通信过程中出现问题。
+            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。
+            - -3: 返回值解析失败，接收到的数据格式不正确或不完整。
+        """
+        tag = rm_set_drag_teach_sensitivity(self.handle, grade)
+        return tag
+
+    def rm_get_drag_teach_sensitivity(self) -> tuple[int, int]:
+        """
+        获取电流环拖动示教灵敏度
+
+        Returns:
+            tuple[int, int]: 包含两个元素的元组。
+            - int: 函数执行的状态码。
+                - 0: 成功。
+                - -1: 数据发送失败，通信过程中出现问题。
+                - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。
+                - -3: 返回值解析失败，控制器返回的数据无法识别或不完整等情况。
+            - int: 等级，0到100，表示0~100%，当设置为100时保持初始状态
+        """
+        grade = c_int()
+        tag = rm_get_drag_teach_sensitivity(self.handle, byref(grade))
+        return tag, grade.value
+    
     def rm_drag_trajectory_origin(self, block: int) -> int:
         """
         运动到轨迹起点
@@ -3720,6 +3831,23 @@ class ForcePositionControl:
             self.handle, po1, sensor, mode, dir, force, follow)
         return tag
 
+    def rm_force_position_move(self, param:rm_force_position_move_t) -> int:
+        """透传力位混合补偿-新参数
+
+        Args:
+            param (rm_force_position_move_t): 透传力位混合补偿参数
+
+        Returns:
+            int: 函数执行的状态码。
+                - 0: 成功。
+                - 1: 控制器返回false，参数错误或机械臂状态发生错误。
+                - -1: 数据发送失败，通信过程中出现问题。
+                - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。
+                - -3: 返回值解析失败，控制器返回的数据无法识别或不完整等情况。
+        """
+
+        tag = rm_force_position_move(self.handle,param)
+        return tag
 
 class LiftControl:
     """升降机构控制
@@ -3878,6 +4006,8 @@ class ProjectManagement:
                     - -1: 数据发送失败，通信过程中出现问题。
                     - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。
                     - -3: 返回值解析失败，控制器返回的数据无法识别或不完整等情况。
+                    - -4: 文件名称校验失败
+                    - -5: 文件读取失败
                 -int 若运行失败，该参数返回有问题的工程行数
                     - 0: 校验数据长度不对
                     - 其他值: 有问题的工程行数
@@ -4563,6 +4693,14 @@ class Algo:
         else:
             self.arm_dof = 6
 
+    def rm_algo_version(self) -> None:
+        """获取算法库版本
+
+        Returns:
+            str: 算法库版本号
+        """
+        return rm_algo_version()
+
     def rm_algo_set_angle(self, x: float, y: float, z: float) -> None:
         """设置安装角度
 
@@ -4585,6 +4723,18 @@ class Algo:
         rm_algo_get_angle(x, y, z)
 
         return x.value, y.value, z.value
+
+    def rm_algo_set_redundant_parameter_traversal_mode(self, mode) -> None:
+        """
+        设置逆解求解模式
+
+        Args:
+            mode (bool): 
+                - true：遍历模式，冗余参数遍历的求解策略。适于当前位姿跟要求解的位姿差别特别大的应用场景，如MOVJ_P、位姿编辑等，耗时较长
+                - false：单步模式，自动调整冗余参数的求解策略。适于当前位姿跟要求解的位姿差别特别小、连续周期控制的场景，如笛卡尔空间规划的位姿求解等，耗时短
+
+        """
+        rm_algo_set_redundant_parameter_traversal_mode(mode)
 
     def rm_algo_set_workframe(self, frame: rm_frame_t) -> None:
         """

@@ -937,32 +937,26 @@ class rm_robot_arm_model_e(IntEnum):
         RM_MODEL_ECO_65_E (int): ECO_65型号  
         RM_MODEL_ECO_62_E (int): ECO_62型号  
         RM_MODEL_GEN_72_E (int): GEN_72型号  
-
+        RM_MODEL_ECO_63_E (int): ECO_63型号  
     """
-
     # RM_65型号
     RM_MODEL_RM_65_E = 0
-
     # RM_75型号
     RM_MODEL_RM_75_E = RM_MODEL_RM_65_E + 1
-
     # RML_63I型号（已弃用）
     RM_MODEL_RM_63_I_E = RM_MODEL_RM_75_E + 1
-
     # RML_63II型号
     RM_MODEL_RM_63_II_E = RM_MODEL_RM_63_I_E + 1
-
     # RML_63III型号（已弃用）
     RM_MODEL_RM_63_III_E = RM_MODEL_RM_63_II_E + 1
-
     # ECO_65型号
     RM_MODEL_ECO_65_E = RM_MODEL_RM_63_III_E + 1
-
     # ECO_62型号
     RM_MODEL_ECO_62_E = RM_MODEL_ECO_65_E + 1
-
     # GEN_72型号
     RM_MODEL_GEN_72_E = RM_MODEL_ECO_62_E + 1
+    # ECO_63
+    RM_MODEL_ECO_63_E = RM_MODEL_GEN_72_E + 1
 
 
 class rm_force_type_e(IntEnum):
@@ -1042,20 +1036,20 @@ class rm_udp_custom_config_t(Structure):
         - joint_speed (int): 关节速度。1：上报；0：关闭上报；-1：不设置，保持之前的状态
         - lift_state (int): 升降关节信息。1：上报；0：关闭上报；-1：不设置，保持之前的状态
         - expand_state (int): 扩展关节信息（升降关节和扩展关节为二选一，优先显示升降关节）1：上报；0：关闭上报；-1：不设置，保持之前的状态
+        - hand_state (int): 灵巧手状态。1：上报；0：关闭上报；-1：不设置，保持之前的状态
     """
     _fields_ = [
         ('joint_speed', c_int),
         ('lift_state', c_int),
         ('expand_state', c_int),
+        ('hand_state', c_int),
     ]
 
-    def __init__(self, joint_speed:int = None,lift_state:int = None,expand_state:int = None) -> None:
-        if all(param is None for param in [joint_speed, lift_state, expand_state]):
-            return
-        else:
-            self.joint_speed = joint_speed
-            self.lift_state = lift_state
-            self.expand_state = expand_state
+    def __init__(self, joint_speed:int = -1,lift_state:int = -1,expand_state:int = -1,hand_state:int = -1) -> None:
+        self.joint_speed = joint_speed
+        self.lift_state = lift_state
+        self.expand_state = expand_state
+        self.hand_state = hand_state
     
     def to_dict(self, recurse=True):
         """将类的变量返回为字典，如果recurse为True，则递归处理ctypes结构字段"""
@@ -2041,6 +2035,7 @@ class rm_send_project_t(Structure):
         - save_id (c_int): 保存到控制器中的编号
         - step_flag (c_int): 设置单步运行方式模式，1-设置单步模式 0-设置正常运动模式
         - auto_start (c_int): 设置默认在线编程文件，1-设置默认  0-设置非默认
+        - project_type (c_int): 下发文件类型。0-在线编程文件，1-拖动示教轨迹文件
     """
     _fields_ = [
         ('project_path', c_char * int(300)),
@@ -2050,11 +2045,12 @@ class rm_send_project_t(Structure):
         ('save_id', c_int),
         ('step_flag', c_int),
         ('auto_start', c_int),
+        ('project_type', c_int),
     ]
 
-    def __init__(self, project_path: str = None, plan_speed: int = None, only_save: int = None, save_id: int = None, step_flag: int = None, auto_start: int = None):
+    def __init__(self, project_path: str = None, plan_speed: int = None, only_save: int = None, save_id: int = None, step_flag: int = None, auto_start: int = None, project_type: int = None):
         """
-        在线编程文件下发结构体
+        文件下发结构体
 
         @param project_path (str, optional): 下发文件路径文件路径及名称，默认为None
         @param plan_speed (int, optional): 规划速度比例系数，默认为None
@@ -2062,8 +2058,9 @@ class rm_send_project_t(Structure):
         @param save_id (int, optional): 保存到控制器中的编号，默认为None
         @param step_flag (int, optional): 设置单步运行方式模式，1-设置单步模式 0-设置正常运动模式，默认为None
         @param auto_start (int, optional): 设置默认在线编程文件，1-设置默认  0-设置非默认，默认为None
+        @param project_type (int, optional): 下发文件类型。0-在线编程文件，1-拖动示教轨迹文件
         """
-        if all(param is None for param in [project_path, plan_speed, only_save, save_id, step_flag, auto_start]):
+        if all(param is None for param in [project_path, plan_speed, only_save, save_id, step_flag, auto_start,project_type]):
             return
         else:
             if project_path is not None:
@@ -2083,6 +2080,7 @@ class rm_send_project_t(Structure):
             self.step_flag = step_flag if step_flag is not None else 0
             # 设置默认在线编程文件，1-设置默认  0-设置非默认
             self.auto_start = auto_start if auto_start is not None else 0
+            self.project_type = project_type if project_type is not None else 0
 
 
 class rm_trajectory_data_t(Structure):
@@ -2790,6 +2788,27 @@ class rm_udp_lift_state_t(Structure):
         ('en_flag', c_int),
     ]
 
+class rm_udp_hand_state_t(Structure):
+    """  
+    灵巧手状态
+
+    **Attributes**:  
+        - hand_pos (int): 表示灵巧手自由度大小，0-1000，无量纲
+        - hand_force (float): 表示灵巧手自由度电流，单位mN
+        - hand_state (int): 表示灵巧手当前状态
+            - 0: 正在松开
+            - 1: 正在抓取
+        - hand_err (int): 表示灵巧手系统错误
+    """
+    _fields_ = [
+        ('hand_pos', c_int),
+        ('hand_force', c_float),
+        ('hand_state', c_int),
+        ('hand_err', c_int),
+    ]
+
+
+
 class rm_realtime_arm_joint_state_t(Structure):
     """  
     机械臂实时状态推送信息结构体  
@@ -2804,6 +2823,7 @@ class rm_realtime_arm_joint_state_t(Structure):
         - waypoint (rm_pose_t): 当前位置姿态结构体  
         - liftState (rm_udp_lift_state_t): 升降关节数据
         - expandState (rm_udp_expand_state_t): 扩展关节数据
+        - handState (rm_udp_hand_state_t): 灵巧手数据
     """
     _fields_ = [
         ('errCode', c_int),
@@ -2815,6 +2835,7 @@ class rm_realtime_arm_joint_state_t(Structure):
         ('waypoint', rm_pose_t),
         ('liftState', rm_udp_lift_state_t),
         ('expandState', rm_udp_expand_state_t),
+        ('handState', rm_udp_hand_state_t),
     ]
 
 
@@ -2968,9 +2989,37 @@ class rm_robot_handle(Structure):
         ('id', c_int),
     ]
 
+class rm_multi_drag_teach_t(Structure):
+    _fields_ = [
+        ('free_axes', c_int * int(6)),
+        ('frame', c_int),
+        ('singular_wall', c_int),
+    ]
 
-# rm_robot_handle = struct_anon_51
-# @cond HIDE_PRIVATE_CLASSES
+
+class rm_force_position_t(Structure):
+    _fields_ = [
+        ('sensor', c_int),
+        ('mode', c_int),
+        ('control_mode', c_int * int(6)),
+        ('desired_force', c_float * int(6)),
+        ('limit_vel', c_float * int(6)),
+    ]
+
+class rm_force_position_move_t(Structure):
+    _fields_ = [
+        ('flag', c_int),
+        ('pose', rm_pose_t),
+        ('joint', c_float * int(7)),
+        ('sensor', c_int),
+        ('mode', c_int),
+        ('follow', c_bool),
+        ('control_mode', c_int * int(6)),
+        ('desired_force', c_float * int(6)),
+        ('limit_vel', c_float * int(6)),
+    ]
+
+
 if _libs[libname].has("rm_api_version", "cdecl"):
     rm_api_version = _libs[libname].get("rm_api_version", "cdecl")
     rm_api_version.argtypes = []
@@ -3446,6 +3495,17 @@ if _libs[libname].has("rm_movep_canfd", "cdecl"):
     rm_movep_canfd.argtypes = [POINTER(rm_robot_handle), rm_pose_t, c_bool]
     rm_movep_canfd.restype = c_int
 
+if _libs[libname].has("rm_movej_follow", "cdecl"):
+    rm_movej_follow = _libs[libname].get("rm_movej_follow", "cdecl")
+    rm_movej_follow.argtypes = [
+        POINTER(rm_robot_handle), POINTER(c_float)]
+    rm_movej_follow.restype = c_int
+
+if _libs[libname].has("rm_movep_follow", "cdecl"):
+    rm_movep_follow = _libs[libname].get("rm_movep_follow", "cdecl")
+    rm_movep_follow.argtypes = [POINTER(rm_robot_handle), rm_pose_t]
+    rm_movep_follow.restype = c_int
+
 if _libs[libname].has("rm_set_arm_slow_stop", "cdecl"):
     rm_set_arm_slow_stop = _libs[libname].get("rm_set_arm_slow_stop", "cdecl")
     rm_set_arm_slow_stop.argtypes = [POINTER(rm_robot_handle)]
@@ -3821,6 +3881,21 @@ if _libs[libname].has("rm_start_multi_drag_teach", "cdecl"):
         POINTER(rm_robot_handle), c_int, c_int]
     rm_start_multi_drag_teach.restype = c_int
 
+if _libs[libname].has("rm_start_multi_drag_teach_new", "cdecl"):
+    rm_start_multi_drag_teach_new = _libs[libname].get("rm_start_multi_drag_teach_new", "cdecl")
+    rm_start_multi_drag_teach_new.argtypes = [POINTER(rm_robot_handle), rm_multi_drag_teach_t]
+    rm_start_multi_drag_teach_new.restype = c_int
+
+if _libs[libname].has("rm_set_drag_teach_sensitivity", "cdecl"):
+    rm_set_drag_teach_sensitivity = _libs[libname].get("rm_set_drag_teach_sensitivity", "cdecl")
+    rm_set_drag_teach_sensitivity.argtypes = [POINTER(rm_robot_handle), c_int]
+    rm_set_drag_teach_sensitivity.restype = c_int
+
+if _libs[libname].has("rm_get_drag_teach_sensitivity", "cdecl"):
+    rm_get_drag_teach_sensitivity = _libs[libname].get("rm_get_drag_teach_sensitivity", "cdecl")
+    rm_get_drag_teach_sensitivity.argtypes = [POINTER(rm_robot_handle), POINTER(c_int)]
+    rm_get_drag_teach_sensitivity.restype = c_int
+    
 if _libs[libname].has("rm_drag_trajectory_origin", "cdecl"):
     rm_drag_trajectory_origin = _libs[libname].get(
         "rm_drag_trajectory_origin", "cdecl")
@@ -3858,6 +3933,11 @@ if _libs[libname].has("rm_set_force_position", "cdecl"):
         POINTER(rm_robot_handle), c_int, c_int, c_int, c_float]
     rm_set_force_position.restype = c_int
 
+if _libs[libname].has("rm_set_force_position_new", "cdecl"):
+    rm_set_force_position_new = _libs[libname].get("rm_set_force_position_new", "cdecl")
+    rm_set_force_position_new.argtypes = [POINTER(rm_robot_handle), rm_force_position_t]
+    rm_set_force_position_new.restype = c_int
+    
 if _libs[libname].has("rm_stop_force_position", "cdecl"):
     rm_stop_force_position = _libs[libname].get(
         "rm_stop_force_position", "cdecl")
@@ -4038,6 +4118,11 @@ if _libs[libname].has("rm_force_position_move_pose", "cdecl"):
         POINTER(rm_robot_handle), rm_pose_t, c_int, c_int, c_int, c_float, c_bool]
     rm_force_position_move_pose.restype = c_int
 
+if _libs[libname].has("rm_force_position_move", "cdecl"):
+    rm_force_position_move = _libs[libname].get("rm_force_position_move", "cdecl")
+    rm_force_position_move.argtypes = [POINTER(rm_robot_handle), rm_force_position_move_t]
+    rm_force_position_move.restype = c_int
+    
 if _libs[libname].has("rm_set_lift_speed", "cdecl"):
     rm_set_lift_speed = _libs[libname].get("rm_set_lift_speed", "cdecl")
     rm_set_lift_speed.argtypes = [POINTER(rm_robot_handle), c_int]
@@ -4292,6 +4377,15 @@ if _libs[libname].has("rm_get_self_collision_enable", "cdecl"):
         POINTER(rm_robot_handle), POINTER(c_bool)]
     rm_get_self_collision_enable.restype = c_int
 
+if _libs[libname].has("rm_algo_version", "cdecl"):
+    rm_algo_version = _libs[libname].get("rm_algo_version", "cdecl")
+    rm_algo_version.argtypes = []
+    if sizeof(c_int) == sizeof(c_void_p):
+        rm_algo_version.restype = ReturnString
+    else:
+        rm_algo_version.restype = String
+        rm_algo_version.errcheck = ReturnString
+
 if _libs[libname].has("rm_algo_init_sys_data", "cdecl"):
     rm_algo_init_sys_data = _libs[libname].get(
         "rm_algo_init_sys_data", "cdecl")
@@ -4308,6 +4402,11 @@ if _libs[libname].has("rm_algo_get_angle", "cdecl"):
     rm_algo_get_angle.argtypes = [
         POINTER(c_float), POINTER(c_float), POINTER(c_float)]
     rm_algo_get_angle.restype = None
+
+if _libs[libname].has("rm_algo_set_redundant_parameter_traversal_mode", "cdecl"):
+    rm_algo_set_redundant_parameter_traversal_mode = _libs[libname].get("rm_algo_set_redundant_parameter_traversal_mode", "cdecl")
+    rm_algo_set_redundant_parameter_traversal_mode.argtypes = [c_bool]
+    rm_algo_set_redundant_parameter_traversal_mode.restype = None
 
 if _libs[libname].has("rm_algo_set_workframe", "cdecl"):
     rm_algo_set_workframe = _libs[libname].get(

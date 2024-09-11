@@ -1,4 +1,10 @@
-api_version=1.0.2
+api_version=1.0.3.t1
+
+# python包
+cp C/linux/linux_x86_c_v$api_version/libapi_c.so Python/Robotic_Arm/libs/linux_x86/libapi_c.so
+cp C/linux/linux_arm64_c_v$api_version/libapi_c.so Python/Robotic_Arm/libs/linux_arm/libapi_c.so
+cp C/windows/win_x64_c_v$api_version/api_c.dll Python/Robotic_Arm/libs/win_64/api_c.dll
+cp C/windows/win_x86_c_v$api_version/api_c.dll Python/Robotic_Arm/libs/win_32/api_c.dll
 
 if [ ! -d lib/ ]; then  
     mkdir -p lib/  
