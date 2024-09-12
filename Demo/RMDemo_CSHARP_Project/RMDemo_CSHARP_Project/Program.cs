@@ -23,7 +23,8 @@ partial class Program
         RM_MODEL_RM_63_III_E,       // RML_63(已弃用)
         RM_MODEL_ECO_65_E,      // ECO_65
         RM_MODEL_ECO_62_E,      // ECO_62
-        RM_MODEL_GEN_72_E       // GEN_72
+        RM_MODEL_GEN_72_E,      // GEN_72
+        RM_MODEL_ECO_63_E       // ECO63
     }
 
     public enum rm_force_type_e
@@ -77,9 +78,17 @@ partial class Program
         public int handle_id;
         public rm_event_type_e event_type;
         public bool trajectory_state;
-        public rm_device_type_e device; // 使用枚举替代整数  
-        public int trajectory_connect; // 假设这个字段仍然是一个整数  
+        public rm_device_type_e device; 
+        public int trajectory_connect; 
         public int program_id;
+    }
+    // 机械臂主动上报自定义项
+    [StructLayout(LayoutKind.Sequential, Pack = 8)]
+    public struct rm_udp_custom_config_t
+    {
+        public int joint_speed;   ///< 关节速度。1：上报；0：关闭上报；-1：不设置，保持之前的状态
+        public int lift_state;    ///< 升降关节信息。1：上报；0：关闭上报；-1：不设置，保持之前的状态
+        public int expand_state;  ///< 扩展关节信息（升降关节和扩展关节为二选一，优先显示升降关节）1：上报；0：关闭上报；-1：不设置，保持之前的状态
     }
 
     // 机械臂主动上报接口配置  
@@ -90,8 +99,9 @@ partial class Program
         public bool enable; // 使能  
         public int port; // 广播的端口号  
         public int force_coordinate; // 系统外受力数据的坐标系  
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 28)] // 使用MarshalAs属性来确保字符串的固定大小  
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 28)] 
         public string ip; // 自定义的上报目标IP地址  
+        public rm_udp_custom_config_t custom_config;    // 自定义项内容
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 8)]
@@ -142,18 +152,18 @@ partial class Program
         }
     }
 
-    [StructLayout(LayoutKind.Sequential, Pack = 8)] // 确保对齐方式与C一致  
+    [StructLayout(LayoutKind.Sequential, Pack = 8)]
     public struct rm_frame_name_t
     {
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 12)]
-        public byte[] name; // 使用byte数组来保持与C中的char[12]兼容  
+        public byte[] name;
 
         // 提供一个辅助属性来方便地将byte数组转换为string  
         public string NameAsString
         {
             get
             {
-                return System.Text.Encoding.ASCII.GetString(name).TrimEnd('\0'); // 移除字符串末尾的null字符  
+                return System.Text.Encoding.ASCII.GetString(name).TrimEnd('\0');
             }
             set
             {
@@ -432,6 +442,7 @@ partial class Program
         public int save_id;        // 保存到控制器中的编号
         public int step_flag;      // 设置单步运行方式模式，1-设置单步模式 0-设置正常运动模式
         public int auto_start;     // 设置默认在线编程文件，1-设置默认  0-设置非默认
+        public int project_type;           // 下发文件类型。0-在线编程文件，1-拖动示教轨迹文件
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 8)]
@@ -594,6 +605,49 @@ partial class Program
         public int coordinate;         // 系统外受力数据的坐标系，0为传感器坐标系 1为当前工作坐标系 2为当前工具坐标系
     }
 
+
+    /***
+     * 扩展关节数据
+     *
+     */
+    [StructLayout(LayoutKind.Sequential, Pack = 8)]
+    public struct rm_udp_expand_state_t
+    {
+        public float pos;            ///< 当前角度  精度 0.001°，单位：°
+        public int current;        ///< 当前驱动电流，单位：mA，精度：1mA
+        public int err_flag;       ///< 驱动错误代码，错误代码类型参考关节错误代码
+        public int en_flag;        ///< 当前关节使能状态 ，1 为上使能，0 为掉使能
+        public int joint_id;       ///< 关节id号
+        public int mode;           ///< 当前升降状态，0-空闲，1-正方向速度运动，2-正方向位置运动，3-负方向速度运动，4-负方向位置运动
+    }
+
+    /***
+     * 升降机构状态
+     *
+     */
+    [StructLayout(LayoutKind.Sequential, Pack = 8)]
+    public struct rm_udp_lift_state_t
+    {
+        public int height;         ///< 当前升降机构高度，单位：mm，精度：1mm
+        public float pos;            ///< 当前角度  精度 0.001°，单位：°
+        public int current;        ///< 当前驱动电流，单位：mA，精度：1mA
+        public int err_flag;       ///< 驱动错误代码，错误代码类型参考关节错误代码
+        public int en_flag;        ///< 当前关节使能状态 ，1 为上使能，0 为掉使能
+    } 
+
+    /***
+     * 灵巧手状态
+     *
+     */
+    [StructLayout(LayoutKind.Sequential, Pack = 8)]
+    public struct rm_udp_hand_state_t
+    {
+        public int hand_pos;         ///< 表示灵巧手自由度大小，0-1000，无量纲
+        public float hand_force;            ///< 表示灵巧手自由度电流，单位mN
+        public int hand_state;        ///< 表示灵巧手自由度状态
+        public int hand_err;       ///< 表示灵巧手系统错误
+    }
+
     [StructLayout(LayoutKind.Sequential, Pack = 8)]
     public struct rm_realtime_arm_joint_state_t
     {
@@ -605,7 +659,9 @@ partial class Program
         public rm_force_sensor_t force_sensor;       // 力数据（六维力或一维力版本支持）
         public ushort sys_err;       // 系统错误码
         public rm_pose_t waypoint;         // 当前路点信息
-
+        rm_udp_lift_state_t liftState;      // 升降关节数据
+        rm_udp_expand_state_t expandState;      // 扩展关节数据
+        rm_udp_hand_state_t hand_state;         // 灵巧手状态
         public override string ToString()
         {
             // 将IP地址转换为字符串  
@@ -1497,7 +1553,7 @@ partial class Program
 
     private static void Demo_Send_Project(IntPtr robotHandlePtr)
     {
-        // 获取可执行文件所在目录，将轨迹文件放在该目录下
+        // 获取可执行文件所在目录，轨迹文件放在该目录下
         string currentDirectory = AppDomain.CurrentDomain.BaseDirectory;
 
         rm_send_project_t project = new();
@@ -1506,6 +1562,7 @@ partial class Program
         project.only_save = 0;
         project.save_id = 4;
         project.project_path_len = project.project_path.Length;
+        project.project_type = 0;
         Console.WriteLine("trajectory file path:" + project.project_path);
         int err_line = new();
         int ret = rm_send_project(robotHandlePtr, project, ref err_line);
@@ -1519,7 +1576,7 @@ partial class Program
         }
     }
 
-    static void Demo_Movej_CANFD(IntPtr robotHandlePtr)
+    static void Demo_Callback_ArmState(IntPtr robotHandlePtr)
     {
         // 注册回调函数
         rm_realtime_arm_state_callback_delegate callback = new(Arm_State_Realtime_Callback);
