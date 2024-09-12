@@ -73,8 +73,8 @@ int main(int argc, char *argv[]) {
         return -1;
     }
     
-    float x_step = 0.025; // 当前工作坐标系x轴方向，试管距离为0.025m
-    float y_step = 0.03; // 当前工作坐标系y轴方向，试管距离为0.03m
+    float x_step = 0.025f; // 当前工作坐标系x轴方向，试管距离为0.025m
+    float y_step = 0.03f; // 当前工作坐标系y轴方向，试管距离为0.03m
 
     // 试管架为6*4
     // 使用机械臂步进运动功能，模拟将试管移动到试管架各孔位
@@ -89,7 +89,7 @@ int main(int argc, char *argv[]) {
 
         for(int j=0;j<6;j++)
         {
-            result = rm_set_pos_step(robot_handle, RM_Z_DIR_E, 0.05, 20, 1);
+            result = rm_set_pos_step(robot_handle, RM_Z_DIR_E, 0.05f, 20, 1);
             if(result != 0)
             {
                 return -1;
@@ -109,7 +109,7 @@ int main(int argc, char *argv[]) {
                     return -1;
                 }                
             }
-            result = rm_set_pos_step(robot_handle, RM_Z_DIR_E, -0.05, 20, 1);
+            result = rm_set_pos_step(robot_handle, RM_Z_DIR_E, -0.05f, 20, 1);
             if(result != 0)
             {
                 return -1;
@@ -128,7 +128,7 @@ int main(int argc, char *argv[]) {
             SLEEP_S(1);
             
         }
-        result = rm_set_pos_step(robot_handle, RM_Z_DIR_E, 0.05, 20, 1);
+        result = rm_set_pos_step(robot_handle, RM_Z_DIR_E, 0.05f, 20, 1);
         if(result != 0)
         {
             return -1;
@@ -140,7 +140,7 @@ int main(int argc, char *argv[]) {
         }   
         if(i!=3)
         {
-            result = rm_set_pos_step(robot_handle, RM_Z_DIR_E, -0.05, 20, 1);
+            result = rm_set_pos_step(robot_handle, RM_Z_DIR_E, -0.05f, 20, 1);
             if(result != 0)
             {
                 return -1;
@@ -163,7 +163,7 @@ int main(int argc, char *argv[]) {
     {
         return -1;
     }
-    result = rm_set_pos_step(robot_handle, RM_Z_DIR_E, -0.05, 20, 1);
+    result = rm_set_pos_step(robot_handle, RM_Z_DIR_E, -0.05f, 20, 1);
     if(result != 0)
     {
         return -1;
@@ -180,7 +180,7 @@ int main(int argc, char *argv[]) {
         return -1;
     }
     SLEEP_S(1);
-    result = rm_set_pos_step(robot_handle, RM_Z_DIR_E, 0.05, 20, 1);
+    result = rm_set_pos_step(robot_handle, RM_Z_DIR_E, 0.05f, 20, 1);
     if(result != 0)
     {
         return -1;
@@ -194,7 +194,7 @@ int main(int argc, char *argv[]) {
     {
         return -1;
     }
-    result = rm_set_pos_step(robot_handle, RM_Z_DIR_E, -0.05, 20, 1);
+    result = rm_set_pos_step(robot_handle, RM_Z_DIR_E, -0.05f, 20, 1);
     if(result != 0)
     {
         return -1;
@@ -205,7 +205,7 @@ int main(int argc, char *argv[]) {
         return -1;
     }
     SLEEP_S(1);
-    result = rm_set_pos_step(robot_handle, RM_Z_DIR_E, 0.05, 20, 1);
+    result = rm_set_pos_step(robot_handle, RM_Z_DIR_E, 0.05f, 20, 1);
     if(result != 0)
     {
         return -1;
