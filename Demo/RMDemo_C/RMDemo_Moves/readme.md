@@ -1,10 +1,11 @@
-# 样条曲线运动
+# 样条曲线运动示例
 
 ## **1. 项目介绍**
+
 本项目演示了样条曲线运动的使用，项目基于Cmake构建，使用了睿尔曼提供的机械臂C语言开发包。
 
-
 ## **2. 代码结构**
+
 ```
 RMDemo_Moves
 ├── build              # CMake构建生成的输出目录（如Makefile、构建文件等）
@@ -28,7 +29,7 @@ RMDemo_Moves
 
 ## **3.项目下载**
 
-通过项目链接下载本项目工程 文件到本地：[wwwwwwwwwwwwwwwwwww]()
+通过链接下载 `RM_API2` 到本地：[开发包下载](https://github.com/RealManRobot/RM_API2.git)，进入`RM_API2\Demo\RMDemo_C`目录，可找到RMDemo_Moves。
 
 ## **4. 环境配置**
 
@@ -87,7 +88,7 @@ MSVC（Microsoft Visual C++）编译器通常随Visual Studio一起安装。可�
 
 ## **5. 使用指南**
 
-### **5.1. 快速运行**
+### **5.1 快速运行**
 
 按照以下步骤快速运行代码：
 
@@ -102,7 +103,7 @@ MSVC（Microsoft Visual C++）编译器通常随Visual Studio一起安装。可�
    ```
 
 2. **linux 命令行运行**：
-   在终端进入 `RMDemo_Moves` 目录，输入以下命令运行C程序： 
+   在终端进入 `RMDemo_Moves` 目录，输入以下命令运行C程序：
 
    ```bash
    chmod +x run.sh
@@ -111,14 +112,34 @@ MSVC（Microsoft Visual C++）编译器通常随Visual Studio一起安装。可�
 
    运行结果如下：
 
-<!-- ![alt text](image.png) -->
+```bash
+API Version: 1.0.0.
+Robot handle created successfully: 1
+Trajectory Connect Value at Step 0: 1
+Trajectory Connect Value at Step 1: 1
+Trajectory Connect Value at Step 2: 1
+Trajectory Connect Value at Step 3: 1
+Trajectory Connect Value at Step 4: 0
+moves operation succeeded
+```
 
 3. **Windows 运行**： 双击run.bat脚本运行
    运行结果如下：
 
-<!-- ![alt text](image.png) -->
+```bash
+Run...
+API Version: 1.0.0.
+Robot handle created successfully: 1
+Trajectory Connect Value at Step 0: 1
+Trajectory Connect Value at Step 1: 1
+Trajectory Connect Value at Step 2: 1
+Trajectory Connect Value at Step 3: 1
+Trajectory Connect Value at Step 4: 0
+moves operation succeeded
+请按任意键继续. . .
+```
 
-### **5.2. 关键代码说明**
+### **5.2 关键代码说明**
 
 下面是 `main.c` 文件的主要功能：
 
@@ -127,6 +148,7 @@ MSVC（Microsoft Visual C++）编译器通常随Visual Studio一起安装。可�
     ```C
     rm_robot_handle *robot_handle = rm_create_robot_arm(robot_ip_address, robot_port);
     ```
+
   连接到指定IP和端口的机械臂。
 
 - **获取API版本**
@@ -135,8 +157,8 @@ MSVC（Microsoft Visual C++）编译器通常随Visual Studio一起安装。可�
     char *api_version = rm_api_version();
     printf("API Version: %s.\n", api_version);
     ```
-  获取并显示API版本。
 
+  获取并显示API版本。
 
 - **执行movej运动**
 
@@ -175,11 +197,11 @@ MSVC（Microsoft Visual C++）编译器通常随Visual Studio一起安装。可�
     ```
   
 - 执行moves运动，沿多点轨迹进行样条曲线移动。 轨迹如下图所示
-- ![Moves_trajectoryConnect](Moves_trajectoryConnect.png)
+![Moves_trajectoryConnect](Moves_trajectoryConnect.png)
 
 - 当 trajectory_connect 为 0时候 会如下：
--   ![Moves_trajectory](Moves_trajectory.png)
-- 
+![Moves_trajectory](Moves_trajectory.png)
+
 - **断开机械臂连接**
 
     ```C
@@ -188,5 +210,4 @@ MSVC（Microsoft Visual C++）编译器通常随Visual Studio一起安装。可�
 
 ## **6. 许可证信息**
 
-* 本项目遵循MIT许可证。
-
+- 本项目遵循MIT许可证。

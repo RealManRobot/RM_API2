@@ -1,9 +1,10 @@
-#  控制器IO端口使用
+#  控制器IO端口使用示例
 
 ## **1. 项目介绍**
 本项目演示设置并使用控制器IO端口的复用功能控制机械臂在线编程文件的开始运行、暂停、继续、停止。项目基于Cmake构建，使用了睿尔曼提供的机械臂C语言开发包。
 
 ## **2. 代码结构**
+
 ```
 RMDemo_IOControl
 ├── build              # CMake构建生成的输出目录（如Makefile、构建文件等）
@@ -30,7 +31,7 @@ RMDemo_IOControl
 
 ## **3.项目下载**
 
-通过项目链接下载本项目工程 文件到本地：[wwwwwwwwwwwwwwwwwww]()
+通过链接下载 `RM_API2` 到本地：[开发包下载](https://github.com/RealManRobot/RM_API2.git)，进入`RM_API2\Demo\RMDemo_C`目录，可找到RMDemo_IOControl。
 
 ## **4. 环境配置**
 
@@ -89,7 +90,7 @@ MSVC（Microsoft Visual C++）编译器通常随Visual Studio一起安装。可�
 
 ## **5. 使用指南**
 
-### **5.1. 快速运行**
+### **5.1 快速运行**
 
 按照以下步骤快速运行代码：
 
@@ -118,9 +119,21 @@ MSVC（Microsoft Visual C++）编译器通常随Visual Studio一起安装。可�
 3. **Windows 运行**： 双击run.bat脚本运行
    运行结果如下：
 
-![alt text](image.png)
+```bash
+API Version: 1.0.0.
+Robot handle created successfully: 1
+Drag teaching started
+Drag teaching has started, complete the drag operation and press Enter to continue...
 
-### **5.2. 关键代码说明**
+Drag teaching stopped
+Trajectory saved successfully, total number of points: 682
+Please enter a Save ID for this teaching session: 1
+Save ID { 1 } for this teaching session saved to the controller
+Project sent and run successfully
+请按任意键继续. . .
+```
+
+### **5.2 关键代码说明**
 
 下面是 `main.c` 文件的主要功能：
 
@@ -141,6 +154,7 @@ MSVC（Microsoft Visual C++）编译器通常随Visual Studio一起安装。可�
 
 - **保存拖动示教的轨迹**
   调用rm_start_drag_teach接口使机械臂开始拖动示教模式，完成拖动后调用rm_stop_drag_teach退出拖动示教模式。调用rm_save_trajectory接口将拖动示教轨迹保存到data文件夹下的trajectory.txt文件。
+     
   ```C
   int result = rm_start_drag_teach(handle, trajectory_record);
   
@@ -156,6 +170,7 @@ MSVC（Microsoft Visual C++）编译器通常随Visual Studio一起安装。可�
 
 - **将拖动示教轨迹保存为在线编程文件**
   读取trajectory.txt文件，按照规则添加如下内容，并保存为在线编程文件project.txt：
+
   ```C
   // 其中file_value为当前机械臂自由度，type_value为文件行数
   char line1[50];
@@ -167,6 +182,7 @@ MSVC（Microsoft Visual C++）编译器通常随Visual Studio一起安装。可�
 
 - **将在线编程文件保存到控制器**
   将在线编程文件project.txt下发给控制器，并设置该文件为IO默认运行的在线编程文件：
+
   ```C
   // Get user input for save_id
   int save_id;
@@ -182,6 +198,7 @@ MSVC（Microsoft Visual C++）编译器通常随Visual Studio一起安装。可�
 
 - **设置IO复用模式**
   调用rm_set_IO_mode接口分别设置IO各端口的模式为输入开始功能复用模式、输入暂停功能复用模式、输入继续功能复用模式、输入急停功能复用模式
+
   ```C
   result = rm_set_IO_mode(robot_handle, 1, 2);  // Set IO mode to input start function multiplexing mode
   result = rm_set_IO_mode(robot_handle, 2, 3);  // Set IO mode to input pause function multiplexing mode
@@ -198,9 +215,8 @@ MSVC（Microsoft Visual C++）编译器通常随Visual Studio一起安装。可�
 
 ## **6. 许可证信息**
 
-* 本项目遵循MIT许可证。
+- 本项目遵循MIT许可证。
   
-
 ## 附录
 
 ### 控制器IO接口图1

@@ -1,4 +1,4 @@
-# 坐标系操作
+# 坐标系操作示例
 
 ## 1. 项目介绍
 
@@ -6,7 +6,7 @@
 
 ## **2. 代码结构**
 
-```C
+```
 RMDemo_CoordinateSystem/
 ├── build/                  # CMake构建生成的输出目录
 ├── include/                # 自定义头文件存放目录
@@ -28,7 +28,7 @@ RMDemo_CoordinateSystem/
 
 ## 3.项目下载
 
-通过项目链接下载本项目工程 文件到本地：[wwwwwwwwwwwwwwwwwww]()
+通过链接下载 `RM_API2` 到本地：[开发包下载](https://github.com/RealManRobot/RM_API2.git)，进入`RM_API2\Demo\RMDemo_C`目录，可找到RMDemo_CoordinateSystem。
 
 ## 4. 环境配置
 
@@ -89,7 +89,7 @@ MSVC（Microsoft Visual C++）编译器通常随Visual Studio一起安装。可�
 
 实现RM65-B机械臂成功完成机械臂新工作坐标系的设定。过程中包含连接机械臂，设定机械臂的工作坐标系，并进行更新保存，最后进行查询确认。
 
-### **5.1. 快速运行**
+### **5.1 快速运行**
 
 按照以下步骤快速运行代码：
 
@@ -116,8 +116,14 @@ MSVC（Microsoft Visual C++）编译器通常随Visual Studio一起安装。可�
 3. **Windows 运行**： 双击run.bat脚本运行
    运行结果如下：
 
-![alt text](image.png)
-### **5.2. 关键代码说明**
+```bash
+Run...
+API Version: 1.0.0.
+Robot handle created successfully: 1
+Coordinate demo run successfully...
+```
+
+### **5.2 关键代码说明**
 
 下面是 `main.c` 文件的主要功能：
 

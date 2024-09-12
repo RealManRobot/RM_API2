@@ -7,8 +7,8 @@
 
 本项目基于Cmake构建，使用了睿尔曼提供的机械臂C语言开发包。
 
-
 ## **2. 代码结构**
+
 ```
 
 RMDemo_Lift
@@ -32,7 +32,7 @@ RMDemo_Lift
 
 ## **3.项目下载**
 
-通过项目链接下载本项目工程 文件到本地：[wwwwwwwwwwwwwwwwwww]()
+通过链接下载 `RM_API2` 到本地：[开发包下载](https://github.com/RealManRobot/RM_API2.git)，进入`RM_API2\Demo\RMDemo_C`目录，可找到RMDemo_Lift。
 
 ## **4. 环境配置**
 
@@ -91,7 +91,7 @@ MSVC（Microsoft Visual C++）编译器通常随Visual Studio一起安装。可�
 
 ## **5. 使用指南**
 
-### **5.1. 快速运行**
+### **5.1 快速运行**
 
 按照以下步骤快速运行代码：
 
@@ -105,7 +105,7 @@ MSVC（Microsoft Visual C++）编译器通常随Visual Studio一起安装。可�
    ```
 
 2. **linux 命令行运行**：
-   在终端进入 `RMDemo_Lift` 目录，输入以下命令运行C程序： 
+   在终端进入 `RMDemo_Lift` 目录，输入以下命令运行C程序：
 
    ```bash
    chmod +x run.sh
@@ -114,16 +114,13 @@ MSVC（Microsoft Visual C++）编译器通常随Visual Studio一起安装。可�
 
    运行结果如下：
 
-
 运行效果如下图所示：
 ![demo_lift](demo_lift.gif)
-
 
 3. **Windows 运行**： 双击run.bat脚本运行
    运行结果如下：
 
-
-### **5.2. 关键代码说明**
+### **5.2 关键代码说明**
 
 下面是 `main.c` 文件的主要功能：
 
@@ -194,4 +191,4 @@ MSVC（Microsoft Visual C++）编译器通常随Visual Studio一起安装。可�
 
 ## **6. 许可证信息**
 
-* 本项目遵循MIT许可证。
+- 本项目遵循MIT许可证。

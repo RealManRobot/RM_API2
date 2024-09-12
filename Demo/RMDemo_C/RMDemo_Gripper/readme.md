@@ -1,9 +1,11 @@
-#  末端工具夹爪使用示例
+#  末端控制夹爪示例
 
 ## **1. 项目介绍**
-本项目是一个使用睿尔曼C开发包, 模拟进行物体抓取，可以进行在固定位置抓取物体，运动到指定位置，控制夹爪持续力夹取，夹取到位后，在通过运动到放置位，并控制松开，机械臂回到初始位姿。
+
+本项目使用睿尔曼提供的机械臂C语言开发包, 模拟进行物体抓取，可以进行在固定位置抓取物体，运动到指定位置，控制夹爪持续力夹取，夹取到位后，在通过运动到放置位，并控制松开，机械臂回到初始位姿。
 
 ## **2. 代码结构**
+
 ```
 RMDemo_Gripper/
 ├── build/                  # CMake构建生成的输出目录
@@ -26,7 +28,7 @@ RMDemo_Gripper/
 
 ## **3.项目下载**
 
-通过项目链接下载本项目工程 文件到本地：[wwwwwwwwwwwwwwwwwww]()
+通过链接下载 `RM_API2` 到本地：[开发包下载](https://github.com/RealManRobot/RM_API2.git)，进入`RM_API2\Demo\RMDemo_C`目录，可找到RMDemo_Gripper。
 
 ## **4. 环境配置**
 
@@ -82,10 +84,10 @@ MSVC（Microsoft Visual C++）编译器通常随Visual Studio一起安装。可�
 2. 运行安装程序，按照提示进行安装。
 3. 安装完成后，将CMake的bin目录添加到系统的PATH环境变量中（通常在安装过程中会询问是否添加）。
 4. 打开命令提示符或PowerShell，输入`cmake --version`检查CMake是否安装成功。
- 
+
 ## **5. 使用指南**
 
-### **5.1. 快速运行**
+### **5.1 快速运行**
 
 按照以下步骤快速运行代码：
 
@@ -110,29 +112,37 @@ MSVC（Microsoft Visual C++）编译器通常随Visual Studio一起安装。可�
 3. **Windows 运行**： 双击run.bat脚本运行
    运行结果如下：
 
+```bash
+Run...
+API Version: 1.0.0.
+Robot handle created successfully: 1
+请按任意键继续. . .
+```
+
 运行效果如下所示：
-![demo_gripper](./gripper.gif)
+![demo_gripper](./grippers.gif)
 
-
-
-### **5.2. 关键代码说明**
+### **5.2 关键代码说明**
 
 下面是 `main.c` 文件的主要功能：
 
 - **连接机械臂**
   连接到指定IP和端口的机械臂。
+
   ```C
   rm_robot_handle *robot_handle = rm_create_robot_arm(robot_ip_address, robot_port);
   ```
 
 - **设置工具端电源输出**
   设置工具端电源输出24V
+
   ```C
   rm_set_tool_voltage(robot_handle, 3);
   ```
 
 - **运动到夹取起始位置**
   调用movej控制机械臂运动到物料所在位置
+
   ```C
   float joint_angles_start[6] = {90.0f, 90.0f, 30.0f, 0.0f, 60.0f, 0.0f};
   result = rm_movej(robot_handle, joint_angles_start, 20, 0, 0, 1);
@@ -140,6 +150,7 @@ MSVC（Microsoft Visual C++）编译器通常随Visual Studio一起安装。可�
 
 - **控制夹爪夹取物料**
   使用力控持续夹取功能，手爪夹取速度500，力控阈值200，阻塞进行抓取，超时时间30s
+
   ```C
   rm_set_gripper_pick_on(robot_handle, 500, 200, true, 30);
   ```
@@ -160,9 +171,6 @@ MSVC（Microsoft Visual C++）编译器通常随Visual Studio一起安装。可�
   rm_delete_robot_arm(robot_handle);
   ```
 
-
 ## **6. 许可证信息**
 
-* 本项目遵循MIT许可证。
-
- 
+- 本项目遵循MIT许可证。

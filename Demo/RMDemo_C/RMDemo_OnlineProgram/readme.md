@@ -1,10 +1,11 @@
-#  在线编程
+#  在线编程示例
 
 ## **1. 项目介绍**
+
 本项目演示了读取demo下的在线编程文件，将文件发送给机械臂运行，并实时检测在线编程文件运行的状态、行数、循环数等信息。项目基于Cmake构建，使用了睿尔曼提供的机械臂C语言开发包。
 
-
 ## **2. 代码结构**
+
 ```
 RMDemo_OnlineProgram
 ├── build              # CMake构建生成的输出目录（如Makefile、构建文件等）
@@ -31,7 +32,7 @@ RMDemo_OnlineProgram
 
 ## **3.项目下载**
 
-通过项目链接下载本项目工程 文件到本地：[wwwwwwwwwwwwwwwwwww]()
+通过链接下载 `RM_API2` 到本地：[开发包下载](https://github.com/RealManRobot/RM_API2.git)，进入`RM_API2\Demo\RMDemo_C`目录，可找到RMDemo_OnlineProgram。
 
 ## **4. 环境配置**
 
@@ -105,7 +106,7 @@ MSVC（Microsoft Visual C++）编译器通常随Visual Studio一起安装。可�
    ```
 
 2. **linux 命令行运行**：
-   在终端进入 `RMDemo_OnlineProgram` 目录，输入以下命令运行C程序： 
+   在终端进入 `RMDemo_OnlineProgram` 目录，输入以下命令运行C程序：
 
    ```bash
    chmod +x run.sh
@@ -114,9 +115,60 @@ MSVC（Microsoft Visual C++）编译器通常随Visual Studio一起安装。可�
 
    运行结果如下：
 
+    ```bash
+    API Version: 1.0.0.
+    Robot handle created successfully: 1
+    Drag teaching started
+    Drag teaching has started, complete the drag operation and press Enter to continue...
+
+    Please enter a Save ID for this teaching session: 50
+    Save ID { 50 } for this teaching session saved to the controller
+    Drag teaching stopped
+    Trajectory saved successfully, total number of points: 3
+    Project sent and run successfully
+    Program running state: 0
+    Program has ended
+    Program running state: 0
+    Program has ended
+    Program running state: 0
+    Program has ended
+    ```
 
 3. **Windows 运行**： 双击run.bat脚本运行
    运行结果如下：
+
+```bash
+Run...
+API Version: 1.0.0.
+Robot handle created successfully: 1
+Drag teaching started
+Drag teaching has started, complete the drag operation and press Enter to continue...
+
+Please enter a Save ID for this teaching session: 1
+Save ID { 1 } for this teaching session saved to the controller
+Drag teaching stopped
+Trajectory saved successfully, total number of points: 1805
+Project sent and run successfully
+Program running state: 1
+Program running state: 1
+Program running state: 1
+Program running state: 1
+Program running state: 1
+Reached maximum query attempts, exiting
+Program running state: 2
+Program running state: 2
+Program running state: 2
+Program running state: 2
+Program running state: 2
+Reached maximum query attempts, exiting
+Program running state: 1
+Program running state: 1
+Program running state: 1
+Program running state: 1
+Program running state: 1
+Reached maximum query attempts, exiting
+请按任意键继续...
+```
 
 ### **5.2. 代码说明**
 
@@ -127,6 +179,7 @@ MSVC（Microsoft Visual C++）编译器通常随Visual Studio一起安装。可�
     ```C
     rm_robot_handle *robot_handle = rm_create_robot_arm(robot_ip_address, robot_port);
     ```
+  
   连接到指定IP和端口的机械臂。
 
 - **获取API版本**
@@ -135,17 +188,19 @@ MSVC（Microsoft Visual C++）编译器通常随Visual Studio一起安装。可�
     char *api_version = rm_api_version();
     printf("API Version: %s.\n", api_version);
     ```
+  
   获取并显示API版本。
-
 
 - **拖动示教**
   启动拖动示教模式，参数 `1` 表示记录轨迹。
+
     ```C
     start_drag_teach(robot_handle, 1);
     ```
 
 - **保存轨迹**
   保存记录的轨迹到指定文件。
+
     ```C
     int lines;
     result = rm_save_trajectory(robot_handle, TRAJECTORY_FILE_PATH, &lines);
@@ -153,43 +208,46 @@ MSVC（Microsoft Visual C++）编译器通常随Visual Studio一起安装。可�
 
 - **拼接在线编程文件**
   将特定行添加到轨迹文件中，形成在线编程文件。
+
     ```C
     add_lines_to_file(robot_handle, file_path_test, lines);
     ```
 
 - **下发在线编程文件**
   将在线编程文件发送到机械臂。
+
     ```C
     send_project(robot_handle, file_path_test, 20, 0, 16, 0, 0);
     ```
 
 - **查询在线编程运行状态**
   查询在线编程的运行状态，间隔 `1` 秒，最大查询次数为 `5`。
+
     ```C
     get_program_run_state(robot_handle, 1, 5);
     ```
 
 - **暂停机械臂**
   暂停机械臂运行。
+
     ```C
     set_arm_pause(robot_handle);
     ```
 
 - **继续机械臂运行**
   继续机械臂运行。
+
     ```C
     set_arm_continue(robot_handle);
     ```
 
 - **断开机械臂连接**
   断开与机械臂的连接。
+
     ```C
     disconnect_robot_arm(robot_handle);
     ```
 
 ## **6. 许可证信息**
 
-* 本项目遵循MIT许可证。
-
-
-  
+- 本项目遵循MIT许可证。

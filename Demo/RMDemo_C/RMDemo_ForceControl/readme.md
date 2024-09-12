@@ -1,8 +1,11 @@
 # 机械臂力位混合控制示例
+
 ## **1. 项目介绍**
+
 本项目演示使用RM65-6F机械臂的力位混合控制功能以保证在笛卡尔空间轨迹规划时，机械臂末端接触力恒定。项目基于Cmake构建，使用了睿尔曼提供的机械臂C语言开发包。
 
 ## **2. 代码结构**
+
 ```
 RMDemo_ForceControl/
 ├── build/                  # CMake构建生成的输出目录
@@ -26,7 +29,7 @@ RMDemo_ForceControl/
 
 ## **3.项目下载**
 
-通过项目链接下载本项目工程 文件到本地：[wwwwwwwwwwwwwwwwwww]()
+通过链接下载 `RM_API2` 到本地：[开发包下载](https://github.com/RealManRobot/RM_API2.git)，进入`RM_API2\Demo\RMDemo_C`目录，可找到RMDemo_ForceControl。
 
 ## **4. 环境配置**
 
@@ -85,7 +88,7 @@ MSVC（Microsoft Visual C++）编译器通常随Visual Studio一起安装。可�
 
 ## **5. 使用指南**
 
-### **5.1. 快速运行**
+### **5.1 快速运行**
 
 按照以下步骤快速运行代码：
 
@@ -116,9 +119,7 @@ MSVC（Microsoft Visual C++）编译器通常随Visual Studio一起安装。可�
 
 ![ForceControl_trajectory](ForceControl_trajectory.png)
 
-
-
-### **5.2. 关键代码说明**
+### **5.2 关键代码说明**
 
 下面是 `main.c` 文件的主要功能：
 

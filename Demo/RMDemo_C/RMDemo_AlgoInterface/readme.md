@@ -1,6 +1,7 @@
 # 算法示例
 
 ## 1. 项目介绍
+
 本项目演示了不连接机械臂，独立使用算法进行RM65-B机械臂在指定工作工具坐标系、指定安装角度下的正逆解，以及常用算法功能使用，如欧拉角转四元数、四元数转欧拉角等。项目基于Cmake构建，使用了睿尔曼提供的机械臂C语言开发包。
 
 ## 2. 代码结构
@@ -25,9 +26,9 @@ RMDemo_AlgoInterface
 └── run.sh               # linux快速运行脚本
 
 ```
-## 3.项目下载
+## 3. 项目下载
 
-通过项目链接下载本项目工程文件到本地：[wwwwwwwwwwwwwwwwwww]()
+通过链接下载 `RM_API2` 到本地：[开发包下载](https://github.com/RealManRobot/RM_API2.git)，进入`RM_API2\Demo\RMDemo_C`目录，可找到RMDemo_AlgoInterface。
 
 ## 4. 环境配置
 
@@ -84,7 +85,8 @@ MSVC（Microsoft Visual C++）编译器通常随Visual Studio一起安装。可�
 4. 打开命令提示符或PowerShell，输入`cmake --version`检查CMake是否安装成功。
 
 ## 5. 使用指南
-### **5.1. 快速运行**
+
+### **5.1 快速运行**
 
 **1. Linux运行**
 在终端进入 `RMDemo_AlgoInterface` 目录，输入以下命令运行C程序：
@@ -103,13 +105,29 @@ chmod +x run.sh
 
 运行结果如下：
 
-![alt text](image.png)
+```bash
+Run...
+API Version: 1.0.0.
+Set robot arm model to 0, sensor model to 0: Success
+Installation pose set successfully
+Forward kinematics calculation: Success
+Joint angles: [0.00, 0.00, 0.00, 0.00, 0.00, 0.00]
+End effector pose: Position(-0.00, 0.00, 0.85), Quaternion(0.00, -0.00, 0.00, 1.00), Euler angles(0.00, 0.00, 3.14)
 
-### **5.2. 关键代码说明**
+Inverse Kinematics: [0.043802, -21.288101, -78.314949, -0.092543, -80.397034, 0.059240]
+Euler to Quaternion:: [w: 0.000296, x: 1.000000, y: 0.000000, z: 0.000000]
+Quaternion to Euler: [rx: 0.000000, ry: -0.000000, rz: 3.141593]
+请按任意键继续. . .
+```
+
+### **5.2 关键代码说明**
 
 下面是 `main.c` 文件的主要功能：
+
 - **初始化算法接口**
+
   初始化机械臂型号RM65-B。
+
   ```c
   rm_robot_arm_model_e Mode = RM_MODEL_RM_65_E;
   rm_force_type_e Type = RM_MODEL_RM_B_E;

@@ -1,10 +1,11 @@
-#  机械臂关节角度透传
+#  机械臂关节角度透传示例
 
 ## **1. 项目介绍**
+
 本项目演示如何将已规划好的关节角度点位透传给机械臂，并在机械臂运动过程中通过回调函数接收并处理机械臂UDP主动上报的状态数据。本项目基于Cmake构建，使用了睿尔曼提供的机械臂C语言开发包。
 
-
 ## **2. 代码结构**
+
 ```
 RMDemo_MovejCANFD
 ├── build              # CMake构建生成的输出目录（如Makefile、构建文件等）
@@ -32,7 +33,7 @@ RMDemo_MovejCANFD
 
 ## **3.项目下载**
 
-通过项目链接下载本项目工程 文件到本地：[wwwwwwwwwwwwwwwwwww]()
+通过链接下载 `RM_API2` 到本地：[开发包下载](https://github.com/RealManRobot/RM_API2.git)，进入`RM_API2\Demo\RMDemo_C`目录，可找到RMDemo_MovejCANFD。
 
 ## **4. 环境配置**
 
@@ -115,12 +116,10 @@ MSVC（Microsoft Visual C++）编译器通常随Visual Studio一起安装。可�
 
    运行结果如下：
 
-
 3. **Windows 运行**： 双击run.bat脚本运行
    运行结果如下：
 
-
-### **2. 关键代码说明**
+### **5.2 关键代码说明**
 
 下面是 `main.c` 文件的主要功能：
 
@@ -152,76 +151,53 @@ MSVC（Microsoft Visual C++）编译器通常随Visual Studio一起安装。可�
     demo_movej_canfd(robot_handle)
     ```
 
-
 - **断开机械臂连接**
 
     ```C
     disconnect_robot_arm(robot_handle);
     ```
 
-### **3. 运行结果示例**
+### **5.3 运行结果示例**
 
 运行脚本后，输出结果如下所示：
 
-```
-API Version: 0.3.0.
+```bash
+Run...
+API Version: 1.0.0.
 Robot handle created successfully: 1
 Joint positions:
-0.01 -21.32 -78.51 -0.03 -80.17 0.02
+0.02 -25.82 -38.03 -0.04 -116.15 -0.00
 Joint positions:
-0.01 -21.32 -78.51 -0.03 -80.17 0.02
+...
 Joint positions:
-0.01 -21.32 -78.51 -0.03 -80.17 0.02
+0.02 -25.82 -38.03 -0.03 -116.15 0.00
 Joint positions:
-0.01 -21.32 -78.51 -0.03 -80.17 0.02
+0.02 -25.82 -38.03 -0.03 -116.15 0.00
 Joint positions:
-0.01 -21.32 -78.51 -0.03 -80.17 0.02
-Joint positions:
-0.01 -21.32 -78.51 -0.03 -80.17 0.02
-Joint positions:
-0.01 -21.32 -78.51 -0.03 -80.17 0.02
+0.02 -25.82 -38.03 -0.03 -116.15 0.00
 Successfully set realtime push configuration.
-Current state: -53.000
-Current angles: 0.013 -21.323 -78.511 -0.034 -80.170 0.020
-Current state: 0
-Current state: 0
-Error Code: 0
-Arm IP: 192.168.1.18
-Arm Error: 0
-Joint Position:
- 0.013
- -21.323
- -78.511
- -0.034
- -80.170
- 0.020
-Force Sensor:
-  Coordinate: 888729056
-System Error: 0
-Waypoint:
-  Euler: [3.141, 0.000, 0.000]
-  Position: [0.300, -0.000, 0.299]
-  Quat: [0.000, 1.000, -0.000, -0.000]
-  ....
-  176.12 -128.64 133.60 176.12 126.63 356.12
+Trying to open file: C:/Users/realman/830/RM_API2-main/RM_API2-main/Demo/RMDemo_C/RMDemo_MovejCANFD/data/RM65&RM63_canfd_data.txt
+Total points: 3600
+The motion is complete, the arm is in place.
+Motion result: 1
+Current device: 0
+Is the next trajectory connected: 0
+Moving to point 0
+Moving to point 3598
+Moving to point 3599
 Pass-through completed
-
 The motion is complete, the arm is in place.
 Motion result: 1
 Current device: 0
 Is the next trajectory connected: 0
 movej_cmd joint movement 1: 0
-...
-Joint positions:
--0.00 0.00 0.00 0.00 0.00 -0.00
-INFO: disconnect_robot_arm: Operation successful
-
+请按任意键继续...
 ```
-#### 2）运行脚本后，运行轨迹从上至下如下图所示：
+
+运行脚本后，运行轨迹从上至下如下图所示：
 
 ![moveCANFD](moveCANFD.gif)
 
-
 ## **6. 许可证信息**
 
-* 本项目遵循MIT许可证。
+- 本项目遵循MIT许可证。

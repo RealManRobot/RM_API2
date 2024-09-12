@@ -3700,7 +3700,7 @@ rm_pose_t rm_algo_base2workframe(rm_matrix_t matrix, rm_pose_t state);
  */
 rm_pose_t rm_algo_workframe2base(rm_matrix_t matrix, rm_pose_t state);
 /**
- * @brief 计算环绕运动位姿计算环绕运动位姿
+ * @brief 计算环绕运动位姿
  * 
  * @param handle 机械臂控制句柄，连接机械臂时传入机械臂控制句柄，不连接时传入NULL
  * @param curr_joint 当前关节角度 单位°
