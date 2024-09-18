@@ -16,7 +16,7 @@
 -
 """
 # python包版本
-__version__ = '1.0.2'
+__version__ = '1.0.3.t2'
 
 from .rm_ctypes_wrap import *
 import ctypes
@@ -3019,7 +3019,7 @@ class DragTeach:
         设置电流环拖动示教灵敏度
 
         Args:
-            grade (int): 等级，0到100，表示0~100%，当设置为100时保持初始状态
+            grade (int): 灵敏度等级，取值范围0~100%，数值越小越沉，当设置为100时保持原本拖动灵敏度
 
         Returns:
             int: 函数执行的状态码。
@@ -3043,7 +3043,7 @@ class DragTeach:
                 - -1: 数据发送失败，通信过程中出现问题。
                 - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。
                 - -3: 返回值解析失败，控制器返回的数据无法识别或不完整等情况。
-            - int: 等级，0到100，表示0~100%，当设置为100时保持初始状态
+            - int: 灵敏度等级，取值范围0~100%，数值越小越沉，当设置为100时保持原本拖动灵敏度
         """
         grade = c_int()
         tag = rm_get_drag_teach_sensitivity(self.handle, byref(grade))
@@ -3164,6 +3164,26 @@ class DragTeach:
         """
         tag = rm_set_force_position(
             self.handle, sensor, mode, direction, force)
+        return tag
+    
+    def rm_set_force_position_new(self, param: rm_force_position_t) -> int:
+        """
+        力位混合控制-新参数
+        @details 在笛卡尔空间轨迹规划时，使用该功能可保证机械臂末端接触力恒定，使用时力的方向与机械臂运动方向不能在同一方向。
+        开启力位混合控制，执行笛卡尔空间运动，接收到运动完成反馈后，需要等待2S后继续下发下一条运动指令。
+        Args:
+            param (rm_force_position_t): 力位混合控制参数
+
+        Returns:
+            int: 函数执行的状态码。
+            - 0: 成功。
+            - 1: 控制器返回false，参数错误或机械臂状态发生错误。
+            - -1: 数据发送失败，通信过程中出现问题。
+            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。
+            - -3: 返回值解析失败，接收到的数据格式不正确或不完整。
+        """
+        tag = rm_set_force_position_new(
+            self.handle, param)
         return tag
 
     def rm_stop_force_position(self) -> int:
@@ -4693,7 +4713,7 @@ class Algo:
         else:
             self.arm_dof = 6
 
-    def rm_algo_version(self) -> None:
+    def rm_algo_version(self) -> str:
         """获取算法库版本
 
         Returns:
@@ -4724,7 +4744,7 @@ class Algo:
 
         return x.value, y.value, z.value
 
-    def rm_algo_set_redundant_parameter_traversal_mode(self, mode) -> None:
+    def rm_algo_set_redundant_parameter_traversal_mode(self, mode: int) -> None:
         """
         设置逆解求解模式
 

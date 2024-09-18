@@ -1626,7 +1626,7 @@ class rm_current_arm_state_t(Structure):
 
     **Attributes:**  
         pose (rm_pose_t): 机械臂的当前位姿信息。  
-        joint (float[7]): 机械臂当前关节角度，单位：°。  
+        joint (list[float]): 机械臂当前关节角度，单位：°。  
         arm_err (uint8_t): 机械臂错误代码。
         sys_err (uint8_t): 控制器错误代码。
 
@@ -1663,12 +1663,12 @@ class rm_joint_status_t(Structure):
 
 
     **Attributes**:  
-        joint_current (float[7]): 关节电流，单位mA，精度：0.001mA
-        joint_en_flag (bool[7]): 当前关节使能状态 ，1为上使能，0为掉使能
-        joint_err_code (uint16_t[7]): 当前关节错误码
-        joint_position (float[7]): 关节角度，单位°，精度：0.001°
-        joint_temperature (float[7]): 当前关节温度，精度0.001℃
-        joint_voltage (float[7]): 当前关节电压，精度0.001V
+        joint_current (list[float]): 关节电流，单位mA，精度：0.001mA
+        joint_en_flag (list[bool]): 当前关节使能状态 ，1为上使能，0为掉使能
+        joint_err_code (list[int]): 当前关节错误码
+        joint_position (list[float]): 关节角度，单位°，精度：0.001°
+        joint_temperature (list[float]): 当前关节温度，精度0.001℃
+        joint_voltage (list[float]): 当前关节电压，精度0.001V
     """
     _fields_ = [
         ('joint_current', c_float * int(7)),
@@ -1767,11 +1767,11 @@ class rm_arm_all_state_t(Structure):
         无（无直接构造参数，此结构体通常由机械臂提供数据并填充，通过访问对应的属性读取信息）。  
 
     **Attributes**:  
-        - joint_current (float[7]): 关节电流，单位mA
-        - joint_en_flag (int[7]): 关节使能状态
-        - joint_temperature (float[7]): 关节温度,单位℃
-        - joint_voltage (float[7]): 关节电压，单位V
-        - joint_err_code (int[7]): 关节错误码
+        - joint_current (list[float]): 关节电流，单位mA
+        - joint_en_flag (list[int]): 关节使能状态
+        - joint_temperature (list[float]): 关节温度,单位℃
+        - joint_voltage (list[float]): 关节电压，单位V
+        - joint_err_code (list[int]): 关节错误码
         - sys_err (int): 机械臂错误代码
     """
     _fields_ = [
@@ -1854,10 +1854,10 @@ class rm_force_data_t(Structure):
         无（无直接构造参数，此结构体通常由机械臂提供数据并填充，通过访问对应的属性读取信息）。  
 
     **Attributes**:  
-        - force_data (float[6]): 当前力传感器原始数据，力的单位为N；力矩单位为Nm。
-        - zero_force_data (float[6]): 当前力传感器系统外受力数据，力的单位为N；力矩单位为Nm。
-        - work_zero_force_data (float[6]): 当前工作坐标系下系统外受力数据，力的单位为N；力矩单位为Nm。
-        - tool_zero_force_data (float[6]): 当前工具坐标系下系统外受力数据，力的单位为N；力矩单位为Nm。
+        - force_data (list[float]): 当前力传感器原始数据，力的单位为N；力矩单位为Nm。
+        - zero_force_data (list[float]): 当前力传感器系统外受力数据，力的单位为N；力矩单位为Nm。
+        - work_zero_force_data (list[float]): 当前工作坐标系下系统外受力数据，力的单位为N；力矩单位为Nm。
+        - tool_zero_force_data (list[float]): 当前工具坐标系下系统外受力数据，力的单位为N；力矩单位为Nm。
     """
     _fields_ = [
         ('force_data', c_float * int(6)),
@@ -2737,8 +2737,8 @@ class rm_force_sensor_t(Structure):
     力控数据结构体
 
     **Attributes**:
-        - force (float[6]): 当前力传感器原始数据，力的单位为N；力矩单位为Nm。
-        - zero_force (float[6]): 当前力传感器系统外受力数据，力的单位为N；力矩单位为Nm。
+        - force (list[float]): 当前力传感器原始数据，力的单位为N；力矩单位为Nm。
+        - zero_force (list[float]): 当前力传感器系统外受力数据，力的单位为N；力矩单位为Nm。
         - coordinate (int): 系统外受力数据的坐标系，0为传感器坐标系 1为当前工作坐标系 2为当前工具坐标系
     """
     _fields_ = [
@@ -2798,7 +2798,12 @@ class rm_udp_hand_state_t(Structure):
         - hand_state (int): 表示灵巧手当前状态
             - 0: 正在松开
             - 1: 正在抓取
-        - hand_err (int): 表示灵巧手系统错误
+            - 2: 位置到位停止
+            - 3: 力控到位停止
+            - 5: 电流保护停止
+            - 6: 电缸堵转停止
+            - 7: 电缸故障停止
+        - hand_err (int): 表示灵巧手系统错误，1表示有错误，0表示无错误
     """
     _fields_ = [
         ('hand_pos', c_int),
@@ -2889,7 +2894,7 @@ class rm_matrix_t(Structure):
     **Attributes:**  
         - irow (int): 矩阵的行数。  
         - iline (int): 矩阵的列数。  
-        - data (c_float * 16): 矩阵的数据部分，大小为4x4的浮点数矩阵。  
+        - data (List[float]): 矩阵的数据部分，大小为4x4的浮点数矩阵。  
     """
     _fields_ = [
         ('irow', c_short),
@@ -2926,9 +2931,9 @@ class rm_robot_info_t(Structure):
         无直接构造参数，所有字段应通过访问属性进行设置。  
 
     **Attributes:**  
-        arm_dof (c_int): 机械臂的自由度数量。  
-        arm_model (c_int): 机械臂型号。  
-        force_type (c_int): 机械臂末端力控类型。 
+        arm_dof (int): 机械臂的自由度数量。  
+        arm_model (int): 机械臂型号。  
+        force_type (int): 机械臂末端力控类型。 
     """
     _fields_ = [
         ('arm_dof', c_int),
@@ -2974,7 +2979,6 @@ class rm_robot_info_t(Structure):
         return output_dict
 
 
-# rm_robot_info_t = struct_anon_50
 
 
 class rm_robot_handle(Structure):
@@ -2990,6 +2994,13 @@ class rm_robot_handle(Structure):
     ]
 
 class rm_multi_drag_teach_t(Structure):
+    """复合拖动示教参数
+
+    **Attributes:**  
+        free_axes (list[int]): 自由驱动方向[x,y,z,rx,ry,rz]，0-在参考坐标系对应方向轴上不可拖动，1-在参考坐标系对应方向轴上可拖动  
+        frame (int): 参考坐标系，0-工作坐标系 1-工具坐标系。
+        singular_wall (int): 仅在六维力模式拖动示教中生效，用于指定是否开启拖动奇异墙，0表示关闭拖动奇异墙，1表示开启拖动奇异墙，若无配置参数，默认启动拖动奇异墙
+    """
     _fields_ = [
         ('free_axes', c_int * int(6)),
         ('frame', c_int),
@@ -2998,25 +3009,29 @@ class rm_multi_drag_teach_t(Structure):
 
 
 class rm_force_position_t(Structure):
+    """力位混合控制参数结构体
+    """
     _fields_ = [
-        ('sensor', c_int),
-        ('mode', c_int),
-        ('control_mode', c_int * int(6)),
-        ('desired_force', c_float * int(6)),
-        ('limit_vel', c_float * int(6)),
+        ('sensor', c_int),  # 传感器；0-一维力；1-六维力
+        ('mode', c_int),    # 0-工作坐标系力控；1-工具坐标系力控；
+        ('control_mode', c_int * int(6)),       # 6个方向（Fx Fy Fz Mx My Mz）的模式 0-固定模式 1-浮动模式 2-弹簧模式 3-运动模 4-力跟踪模式 8-力跟踪+姿态自适应模式（新参数，模式8只对工具坐标系的Fz方向有效）
+        ('desired_force', c_float * int(6)),    # 力控轴维持的期望力/力矩，力控轴的力控模式为力跟踪模式时，期望力/力矩设置才会生效 ，单位0.1N。
+        ('limit_vel', c_float * int(6)),    # 力控轴的最大线速度和最大角速度限制，只对开启力控方向生效。（x、y、z）轴的最大线速度，单位为0.001 m/s，（rx、ry、rz）轴的最大角速度单位为0001 °/s
     ]
 
 class rm_force_position_move_t(Structure):
+    """透传力位混合补偿参数
+    """
     _fields_ = [
-        ('flag', c_int),
-        ('pose', rm_pose_t),
-        ('joint', c_float * int(7)),
-        ('sensor', c_int),
-        ('mode', c_int),
-        ('follow', c_bool),
-        ('control_mode', c_int * int(6)),
-        ('desired_force', c_float * int(6)),
-        ('limit_vel', c_float * int(6)),
+        ('flag', c_int),    # 0-下发目标角度，1-下发目标位姿
+        ('pose', rm_pose_t),    # 当前坐标系下的目标位姿，支持四元数/欧拉角表示姿态。位置精度：0.001mm，欧拉角表示姿态，姿态精度：0.001rad，四元数方式表示姿态，姿态精度：0.000001
+        ('joint', c_float * int(7)),    # 目标关节角度，单位：°，精度：0.001°
+        ('sensor', c_int),  # 传感器，0-一维力；1-六维力
+        ('mode', c_int),    # 0-基坐标系力控；1-工具坐标系力控；
+        ('follow', c_bool), # 表示驱动器的运动跟随效果，true 为高跟随，false 为低跟随。
+        ('control_mode', c_int * int(6)),   # 6个力控方向的模式 0-固定模式 1-浮动模式 2-弹簧模式 3-运动模式 4-力跟踪模式 5-浮动+运动模式 6-弹簧+运动模式 7-力跟踪+运动模式 8-姿态自适应模式
+        ('desired_force', c_float * int(6)),    # 力控轴维持的期望力/力矩，力控轴的力控模式为力跟踪模式时，期望力/力矩设置才会生效 ，精度0.1N。
+        ('limit_vel', c_float * int(6)),    # 力控轴的最大线速度和最大角速度限制，只对开启力控方向生效。
     ]
 
 

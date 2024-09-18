@@ -102,8 +102,11 @@ chmod +x run.sh
 进入 `RMDemo_TubePickingSimulation` 目录，双击运行run.bat文件。
 
 运行结果如下：
-![alt text](image-1.png)
+
+![alt text](image-2.png)
+
 机械臂末端运行轨迹如下图所示：
+
 ![alt text](image.png)
 ### **5.2. 关键代码说明**
 

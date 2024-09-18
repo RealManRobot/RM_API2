@@ -3694,7 +3694,7 @@ RM_SERVICESHARED_EXPORT rm_pose_t rm_algo_base2workframe(rm_matrix_t matrix, rm_
  */
 RM_SERVICESHARED_EXPORT rm_pose_t rm_algo_workframe2base(rm_matrix_t matrix, rm_pose_t state);
 /**
- * @brief 计算环绕运动位姿计算环绕运动位姿
+ * @brief 计算环绕运动位姿
  * 
  * @param handle 机械臂控制句柄 
  * @param curr_joint 当前关节角度 单位°

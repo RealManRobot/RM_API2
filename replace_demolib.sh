@@ -1,4 +1,4 @@
-api_version=1.0.3.t1
+api_version=1.0.3.t2
 
 # python包
 cp C/linux/linux_x86_c_v$api_version/libapi_c.so Python/Robotic_Arm/libs/linux_x86/libapi_c.so
