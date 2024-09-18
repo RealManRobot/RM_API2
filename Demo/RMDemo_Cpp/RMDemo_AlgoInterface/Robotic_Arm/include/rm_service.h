@@ -1985,8 +1985,9 @@ RM_SERVICESHARED_EXPORT int rm_set_gripper_route(rm_robot_handle *handle, int mi
  * 
  * @param handle 机械臂控制句柄 
  * @param speed 手爪松开速度，范围 1~1000，无单位量纲
- * @param block true 表示阻塞模式，false 表示非阻塞模式
- * @param timeout 阻塞模式下超时时间设置，单位：秒
+ * @param block true 表示阻塞模式，等待控制器返回夹爪到位指令；false 表示非阻塞模式，不接收夹爪到位指令；
+ * @param timeout 阻塞模式：设置等待夹爪到位超时时间，单位：秒
+ *              非阻塞模式：0-发送后立即返回；其他值-接收设置成功指令后返回；
  * @return int 函数执行的状态码。  
             - 0: 成功。  
             - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
@@ -2002,8 +2003,9 @@ RM_SERVICESHARED_EXPORT int rm_set_gripper_release(rm_robot_handle *handle, int 
  * @param handle 机械臂控制句柄 
  * @param speed 手爪夹取速度，范围 1~1000，无单位量纲
  * @param force 力控阈值，范围：50~1000，无单位量纲
- * @param block true 表示阻塞模式，false 表示非阻塞模式
- * @param timeout 阻塞模式下超时时间设置，单位：秒
+ * @param block true 表示阻塞模式，等待控制器返回夹爪到位指令；false 表示非阻塞模式，不接收夹爪到位指令；
+ * @param timeout 阻塞模式：设置等待夹爪到位超时时间，单位：秒
+ *              非阻塞模式：0-发送后立即返回；其他值-接收设置成功指令后返回；
  * @return int 函数执行的状态码。  
             - 0: 成功。  
             - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
@@ -2019,8 +2021,9 @@ RM_SERVICESHARED_EXPORT int rm_set_gripper_pick(rm_robot_handle *handle, int spe
  * @param handle 机械臂控制句柄 
  * @param speed 手爪夹取速度，范围 1~1000，无单位量纲
  * @param force 力控阈值，范围：50~1000，无单位量纲
- * @param block true 表示阻塞模式，false 表示非阻塞模式
- * @param timeout 阻塞模式下超时时间设置，单位：秒
+ * @param block true 表示阻塞模式，等待控制器返回夹爪到位指令；false 表示非阻塞模式，不接收夹爪到位指令；
+ * @param timeout 阻塞模式：设置等待夹爪到位超时时间，单位：秒
+ *              非阻塞模式：0-发送后立即返回；其他值-接收设置成功指令后返回；
  * @return int 函数执行的状态码。  
             - 0: 成功。  
             - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
@@ -2036,8 +2039,9 @@ RM_SERVICESHARED_EXPORT int rm_set_gripper_pick_on(rm_robot_handle *handle, int 
  * 手爪以指定速度和力矩闭合往指定开口处闭合，当夹持力超过力矩阈值或者达到指定位置后，手爪停止。
  * @param handle 机械臂控制句柄 
  * @param position 手爪开口位置，范围：1~1000，无单位量纲
- * @param block true 表示阻塞模式，false 表示非阻塞模式
- * @param timeout 阻塞模式下超时时间设置，单位：秒
+ * @param block true 表示阻塞模式，等待控制器返回夹爪到位指令；false 表示非阻塞模式，不接收夹爪到位指令；
+ * @param timeout 阻塞模式：设置等待夹爪到位超时时间，单位：秒
+ *              非阻塞模式：0-发送后立即返回；其他值-接收设置成功指令后返回；
  * @return int 函数执行的状态码。  
             - 0: 成功。  
             - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
