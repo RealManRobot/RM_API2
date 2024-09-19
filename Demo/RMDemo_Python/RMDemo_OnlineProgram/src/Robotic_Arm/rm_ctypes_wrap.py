@@ -1037,19 +1037,22 @@ class rm_udp_custom_config_t(Structure):
         - lift_state (int): 升降关节信息。1：上报；0：关闭上报；-1：不设置，保持之前的状态
         - expand_state (int): 扩展关节信息（升降关节和扩展关节为二选一，优先显示升降关节）1：上报；0：关闭上报；-1：不设置，保持之前的状态
         - hand_state (int): 灵巧手状态。1：上报；0：关闭上报；-1：不设置，保持之前的状态
+        - arm_current_status (int): 机械臂当前状态。1：上报；0：关闭上报；-1：不设置，保持之前的状态
     """
     _fields_ = [
         ('joint_speed', c_int),
         ('lift_state', c_int),
         ('expand_state', c_int),
-        ('hand_state', c_int),
+        # ('hand_state', c_int),
+        ('arm_current_status', c_int),
     ]
 
-    def __init__(self, joint_speed:int = -1,lift_state:int = -1,expand_state:int = -1,hand_state:int = -1) -> None:
+    def __init__(self, joint_speed:int = -1,lift_state:int = -1,expand_state:int = -1,arm_current_status:int = -1) -> None:
         self.joint_speed = joint_speed
         self.lift_state = lift_state
         self.expand_state = expand_state
-        self.hand_state = hand_state
+        # self.hand_state = hand_state
+        self.arm_current_status = arm_current_status
     
     def to_dict(self, recurse=True):
         """将类的变量返回为字典，如果recurse为True，则递归处理ctypes结构字段"""
@@ -2813,6 +2816,25 @@ class rm_udp_hand_state_t(Structure):
     ]
 
 
+class rm_udp_arm_current_status_e(IntEnum):
+    """udp推送机械臂状态枚举 
+    """
+    RM_IDLE_E = 0       # 使能但空闲状态
+    RM_MOVE_L_E = RM_IDLE_E + 1     # move L运动中状态
+    RM_MOVE_J_E = RM_MOVE_L_E + 1       # move J运动中状态
+    RM_MOVE_C_E = RM_MOVE_J_E + 1       # move C运动中状态
+    RM_MOVE_S_E = RM_MOVE_C_E + 1       # move S运动中状态
+    RM_MOVE_THROUGH_JOINT_E = RM_MOVE_S_E + 1       # 角度透传状态
+    RM_MOVE_THROUGH_POSE_E = RM_MOVE_THROUGH_JOINT_E + 1        # 位姿透传状态
+    RM_MOVE_THROUGH_FORCE_POSE_E = RM_MOVE_THROUGH_POSE_E + 1       # 力控透传状态
+    RM_MOVE_THROUGH_CURRENT_E = RM_MOVE_THROUGH_FORCE_POSE_E + 1        # 电流环透传状态
+    RM_STOP_E = RM_MOVE_THROUGH_CURRENT_E + 1       # 急停状态
+    RM_SLOW_STOP_E = RM_STOP_E + 1      # 缓停状态
+    RM_PAUSE_E = RM_SLOW_STOP_E + 1     # 暂停状态
+    RM_CURRENT_DRAG_E = RM_PAUSE_E + 1      # 电流环拖动状态
+    RM_SENSOR_DRAG_E = RM_CURRENT_DRAG_E + 1        # 六维力拖动状态
+    RM_TECH_DEMONSTRATION_E = RM_SENSOR_DRAG_E + 1      # 示教状态
+
 
 class rm_realtime_arm_joint_state_t(Structure):
     """  
@@ -2829,6 +2851,7 @@ class rm_realtime_arm_joint_state_t(Structure):
         - liftState (rm_udp_lift_state_t): 升降关节数据
         - expandState (rm_udp_expand_state_t): 扩展关节数据
         - handState (rm_udp_hand_state_t): 灵巧手数据
+        - arm_current_status (rm_udp_arm_current_status_e): 机械臂状态
     """
     _fields_ = [
         ('errCode', c_int),
@@ -2841,6 +2864,7 @@ class rm_realtime_arm_joint_state_t(Structure):
         ('liftState', rm_udp_lift_state_t),
         ('expandState', rm_udp_expand_state_t),
         ('handState', rm_udp_hand_state_t),
+        ('arm_current_status', rm_udp_arm_current_status_e),
     ]
 
 

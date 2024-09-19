@@ -10,7 +10,7 @@ extern "C" {
 #include <stdarg.h>
 #define ARM_DOF 7
 #define  M_PI		 3.14159265358979323846
-#define  SDK_VERSION (char*)"1.0.3.t2"
+#define  SDK_VERSION (char*)"1.0.3.t3"
 
 /**
  * @brief 线程模式
@@ -89,10 +89,11 @@ typedef enum
 
 typedef struct
 {
-    int joint_speed;   ///< 关节速度。1：上报；0：关闭上报；-1：不设置，保持之前的状态
+    int joint_speed;   ///< 关节速度。
     int lift_state;    ///< 升降关节信息。1：上报；0：关闭上报；-1：不设置，保持之前的状态
     int expand_state;  ///< 扩展关节信息（升降关节和扩展关节为二选一，优先显示升降关节）1：上报；0：关闭上报；-1：不设置，保持之前的状态
-    int hand_state;          ///< 灵巧手状态。1：上报；0：关闭上报；-1：不设置，保持之前的状态
+    // int hand_state;          ///< 灵巧手状态。1：上报；0：关闭上报；-1：不设置，保持之前的状态
+    int arm_current_status;     ///< 机械臂当前状态。1：上报；0：关闭上报；-1：不设置，保持之前的状态
 }rm_udp_custom_config_t;
 
 /**
@@ -607,6 +608,28 @@ typedef struct {
 } rm_udp_hand_state_t;
 
 /**
+ * @brief 机械臂当前状态
+ * 
+ */
+typedef enum {
+    RM_IDLE_E,                     // 使能但空闲状态
+    RM_MOVE_L_E,                   // move L运动中状态
+    RM_MOVE_J_E,                   // move J运动中状态
+    RM_MOVE_C_E,                   // move C运动中状态
+    RM_MOVE_S_E,                   // move S运动中状态
+    RM_MOVE_THROUGH_JOINT_E,       // 角度透传状态
+    RM_MOVE_THROUGH_POSE_E,        // 位姿透传状态
+    RM_MOVE_THROUGH_FORCE_POSE_E,  // 力控透传状态
+    RM_MOVE_THROUGH_CURRENT_E,     // 电流环透传状态
+    RM_STOP_E,                     // 急停状态
+    RM_SLOW_STOP_E,                // 缓停状态
+    RM_PAUSE_E,                    // 暂停状态
+    RM_CURRENT_DRAG_E,             // 电流环拖动状态
+    RM_SENSOR_DRAG_E,              // 六维力拖动状态
+    RM_TECH_DEMONSTRATION_E        // 示教状态
+} rm_udp_arm_current_status_e;
+
+/**
  * @brief  udp主动上报机械臂信息
  * 
 */
@@ -622,6 +645,7 @@ typedef struct
     rm_udp_lift_state_t liftState;      ///< 升降关节数据
     rm_udp_expand_state_t expandState;      ///< 扩展关节数据
     rm_udp_hand_state_t handState;         ///< 灵巧手数据
+    rm_udp_arm_current_status_e arm_current_status;     ///< 机械臂状态
 }rm_realtime_arm_joint_state_t; 
 
 /**
