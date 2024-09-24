@@ -1184,7 +1184,7 @@ int rm_movep_canfd(rm_robot_handle *handle, rm_pose_t pose, bool follow);
  */
 int rm_movej_follow(rm_robot_handle *handle,float *joint);
 /**
- * @brief 笛卡尔空间跟随运动   
+ * @brief 笛卡尔空间跟随运动
  * @param handle 机械臂控制句柄 
  * @param pose 位姿 (优先采用四元数表达)
  * @return int 函数执行的状态码。  
@@ -2507,6 +2507,19 @@ int rm_set_hand_seq(rm_robot_handle *handle, int seq_num, bool block, int timeou
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 int rm_set_hand_angle(rm_robot_handle *handle, const int *hand_angle);
+/**
+ * @brief 设置灵巧手各自由度跟随角度（正式版本暂不支持）
+ * @details 设置灵巧手跟随角度，灵巧手有6个自由度，从1~6分别为小拇指，无名指，中指，食指，大拇指弯曲，大拇指旋转
+ * @param handle 机械臂控制句柄 
+ * @param hand_angle 手指角度数组，6个元素分别代表6个自由度的角度，范围：0~1000. 另外，-1代表该自由度不执行任何操作，保持当前状态
+ * @return int 函数执行的状态码。  
+            - 0: 成功。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
+            - -1: 数据发送失败，通信过程中出现问题。
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
+            - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
+ */
+int rm_set_hand_follow_angle(rm_robot_handle *handle, const int *hand_angle);
 /**
  * @brief 设置灵巧手速度
  * 

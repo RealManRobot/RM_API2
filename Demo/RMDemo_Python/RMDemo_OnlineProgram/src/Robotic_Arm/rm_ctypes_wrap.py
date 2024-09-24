@@ -2851,7 +2851,7 @@ class rm_realtime_arm_joint_state_t(Structure):
         - liftState (rm_udp_lift_state_t): 升降关节数据
         - expandState (rm_udp_expand_state_t): 扩展关节数据
         - handState (rm_udp_hand_state_t): 灵巧手数据
-        - arm_current_status (rm_udp_arm_current_status_e): 机械臂状态
+        - arm_current_status (int): 机械臂状态，对应rm_udp_arm_current_status_e枚举
     """
     _fields_ = [
         ('errCode', c_int),
@@ -2864,7 +2864,7 @@ class rm_realtime_arm_joint_state_t(Structure):
         ('liftState', rm_udp_lift_state_t),
         ('expandState', rm_udp_expand_state_t),
         ('handState', rm_udp_hand_state_t),
-        ('arm_current_status', rm_udp_arm_current_status_e),
+        ('arm_current_status', c_int),
     ]
 
 
@@ -3057,6 +3057,41 @@ class rm_force_position_move_t(Structure):
         ('desired_force', c_float * int(6)),    # 力控轴维持的期望力/力矩，力控轴的力控模式为力跟踪模式时，期望力/力矩设置才会生效 ，精度0.1N。
         ('limit_vel', c_float * int(6)),    # 力控轴的最大线速度和最大角速度限制，只对开启力控方向生效。
     ]
+
+    def __init__(self, flag: int = None, pose: list[float] = None, joint: list[float] = None, sensor: int = None,  mode:int = None, 
+                 follow:bool = None, control_mode:list[int] =None,desired_force:list[float] =None,limit_vel:list[float] =None):
+        """透传力位混合补偿参数初始化
+        """
+        if all(param is None for param in [flag,pose,joint,sensor,mode,follow,control_mode,desired_force,limit_vel]):
+            return
+        else:      
+            if flag is not None:  
+                self.flag = flag     
+            if flag == 1:
+                if pose is not None and len(pose) == 6:
+                    po1 = rm_pose_t()
+                    po1.position = rm_position_t(*pose[:3])
+                    po1.euler = rm_euler_t(*pose[3:])
+                if pose is not None and len(pose) == 7:
+                    po1 = rm_pose_t()
+                    po1.position = rm_position_t(*pose[:3])
+                    po1.quaternion = rm_quat_t(*pose[3:])
+                self.pose = po1
+            elif flag == 0:
+                self.joint = (c_float*7)(*joint)
+            if sensor is not None:  
+                self.sensor = sensor  
+            if mode is not None:  
+                self.mode = mode  
+            if follow is not None:  
+                self.follow = follow  
+            if control_mode is not None and len(control_mode) == 6:  
+                self.control_mode = (c_int * 6)(*control_mode)  
+            if desired_force is not None and len(desired_force) == 6:  
+                self.desired_force = (c_float * 6)(*desired_force)  
+            if limit_vel is not None and len(limit_vel) == 6:  
+                self.limit_vel = (c_float * 6)(*limit_vel)
+
 
 
 if _libs[libname].has("rm_api_version", "cdecl"):
@@ -3998,6 +4033,11 @@ if _libs[libname].has("rm_set_hand_angle", "cdecl"):
     rm_set_hand_angle = _libs[libname].get("rm_set_hand_angle", "cdecl")
     rm_set_hand_angle.argtypes = [POINTER(rm_robot_handle), POINTER(c_int)]
     rm_set_hand_angle.restype = c_int
+
+if _libs[libname].has("rm_set_hand_follow_angle", "cdecl"):
+    rm_set_hand_follow_angle = _libs[libname].get("rm_set_hand_follow_angle", "cdecl")
+    rm_set_hand_follow_angle.argtypes = [POINTER(rm_robot_handle), POINTER(c_int)]
+    rm_set_hand_follow_angle.restype = c_int
 
 if _libs[libname].has("rm_set_hand_speed", "cdecl"):
     rm_set_hand_speed = _libs[libname].get("rm_set_hand_speed", "cdecl")
