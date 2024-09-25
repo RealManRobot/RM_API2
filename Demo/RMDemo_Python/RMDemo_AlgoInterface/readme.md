@@ -22,7 +22,7 @@ RMDemo_AlgoInterface/
 
 ## 3.项目下载
 
-    通过项目链接下载本项目工程文件到本地：[wwwwwwwwwwwwwwwwwww]()
+    通过链接下载 `RM_API2` 到本地：[开发包下载](https://github.com/RealManRobot/RM_API2.git)，进入`RM_API2\Demo\RMDemo_Python`目录，可找到RMDemo_AlgoInterface。
 
 ## 4. 环境配置
 

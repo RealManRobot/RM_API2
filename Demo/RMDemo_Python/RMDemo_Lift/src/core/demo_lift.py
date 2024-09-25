@@ -41,7 +41,7 @@ class RobotArmController:
         else:
             print("\nFailed to disconnect from the robot arm\n")
 
-    def movel(self, pose, v=20, connect=0, block=1, r=0):
+    def movel(self, pose, v=20, r=0, connect=0, block=1):
         """
         Perform movel motion.
 
@@ -55,13 +55,13 @@ class RobotArmController:
         Returns:
             None
         """
-        movel_result = self.robot.rm_movel(pose, v, connect, block, r)
+        movel_result = self.robot.rm_movel(pose, v, r, connect, block)
         if movel_result == 0:
             print("\nmovel motion succeeded\n")
         else:
             print("\nmovel motion failed, Error code: ", movel_result, "\n")
 
-    def movej_p(self, pose, v=20, connect=0, block=1, r=0):
+    def movej_p(self, pose, v=20, r=0, connect=0, block=1):
         """
         Perform movej_p motion.
 
@@ -75,7 +75,7 @@ class RobotArmController:
         Returns:
             None
         """
-        movej_p_result = self.robot.rm_movej_p(pose, v, connect, block, r)
+        movej_p_result = self.robot.rm_movej_p(pose, v, r, connect, block)
         if movej_p_result == 0:
             print("\nmovej_p motion succeeded\n")
         else:

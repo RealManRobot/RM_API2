@@ -60,7 +60,7 @@ class RobotArmController:
         else:
             print("\nFailed to get arm software information, Error code: ", software_info[0], "\n")
 
-    def movej(self, joint, v=20, connect=0, block=1, r=0):
+    def movej(self, joint, v=20, r=0, connect=0, block=1):
         """
         Perform movej motion.
 
@@ -74,13 +74,13 @@ class RobotArmController:
         Returns:
             None
         """
-        movej_result = self.robot.rm_movej(joint, v, connect, block, r)
+        movej_result = self.robot.rm_movej(joint, v, r, connect, block)
         if movej_result == 0:
             print("\nmovej motion succeeded\n")
         else:
             print("\nmovej motion failed, Error code: ", movej_result, "\n")
 
-    def movel(self, pose, v=20, connect=0, block=1, r=0):
+    def movel(self, pose, v=20, r=0, connect=0, block=1):
         """
         Perform movel motion.
 
@@ -94,13 +94,13 @@ class RobotArmController:
         Returns:
             None
         """
-        movel_result = self.robot.rm_movel(pose, v, connect, block, r)
+        movel_result = self.robot.rm_movel(pose, v, r, connect, block)
         if movel_result == 0:
             print("\nmovel motion succeeded\n")
         else:
             print("\nmovel motion failed, Error code: ", movel_result, "\n")
 
-    def movec(self, pose_via, pose_to, v=20, loop=0, connect=0, block=1, r=0):
+    def movec(self, pose_via, pose_to, v=20, r=0, loop=0, connect=0, block=1):
         """
         Perform movec motion.
 
@@ -116,13 +116,13 @@ class RobotArmController:
         Returns:
             None
         """
-        movec_result = self.robot.rm_movec(pose_via, pose_to, v, loop, connect, block, r)
+        movec_result = self.robot.rm_movec(pose_via, pose_to, v, r, loop, connect, block)
         if movec_result == 0:
             print("\nmovec motion succeeded\n")
         else:
             print("\nmovec motion failed, Error code: ", movec_result, "\n")
 
-    def movej_p(self, pose, v=20, connect=0, block=1, r=0):
+    def movej_p(self, pose, v=20, r=0, connect=0, block=1):
         """
         Perform movej_p motion.
 
@@ -136,7 +136,7 @@ class RobotArmController:
         Returns:
             None
         """
-        movej_p_result = self.robot.rm_movej_p(pose, v, connect, block, r)
+        movej_p_result = self.robot.rm_movej_p(pose, v, r, connect, block)
         if movej_p_result == 0:
             print("\nmovej_p motion succeeded\n")
         else:
