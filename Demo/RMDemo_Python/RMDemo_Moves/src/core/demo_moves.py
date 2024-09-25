@@ -81,7 +81,7 @@ class RobotArmController:
         else:
             print("\nmovej_p motion failed, Error code: ", movej_p_result, "\n")
 
-    def moves(self, move_positions=None, speed=20, block=1, blending_radius=0):
+    def moves(self, move_positions=None, speed=20, blending_radius=0, block=1):
         """
         Perform a sequence of move operations.
 
@@ -105,7 +105,7 @@ class RobotArmController:
 
         for i, pos in enumerate(move_positions):
             current_connect = 1 if i < len(move_positions) - 1 else 0
-            moves_result = self.robot.rm_moves(pos, speed, current_connect, block, blending_radius)
+            moves_result = self.robot.rm_moves(pos, speed, blending_radius, current_connect, block)
             if moves_result != 0:
                 print(f"\nmoves operation failed, error code: {moves_result}, at position: {pos}\n")
                 return
