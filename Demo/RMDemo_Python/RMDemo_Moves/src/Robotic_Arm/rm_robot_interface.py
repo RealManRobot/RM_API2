@@ -16,7 +16,7 @@
 -
 """
 # python包版本
-__version__ = '1.0.3.t5'
+__version__ = '1.0.3'
 
 from .rm_ctypes_wrap import *
 import ctypes

@@ -1,4 +1,4 @@
-api_version=1.0.3.t5
+api_version=1.0.3
 
 # python包
 cp C/linux/linux_x86_c_v$api_version/libapi_c.so Python/Robotic_Arm/libs/linux_x86/libapi_c.so
@@ -101,3 +101,6 @@ for dir in "$base_dst_dir"/RMDemo_*; do
         cp -r "$python_src_dir"/* "$dst_dir"  
     fi  
 done
+
+find -type f -name "libapi_cpp.so:Zone.Identifier" -exec rm {} \;
+find -type f -name "libapi_c.so:Zone.Identifier" -exec rm {} \;

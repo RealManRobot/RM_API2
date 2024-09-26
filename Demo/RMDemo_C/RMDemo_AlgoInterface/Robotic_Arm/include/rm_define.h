@@ -10,7 +10,7 @@ extern "C" {
 #include <stdarg.h>
 #define ARM_DOF 7
 #define  M_PI		 3.14159265358979323846
-#define  SDK_VERSION (char*)"1.0.3.t5"
+#define  SDK_VERSION (char*)"1.0.3"
 
 /**
  * @brief 线程模式
