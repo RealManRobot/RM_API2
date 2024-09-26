@@ -16,7 +16,7 @@
 -
 """
 # python包版本
-__version__ = '1.0.3.t4'
+__version__ = '1.0.3.t5'
 
 from .rm_ctypes_wrap import *
 import ctypes
@@ -4698,7 +4698,7 @@ class UdpConfig:
         tag = rm_get_realtime_push(self.handle, byref(config))
         return tag, config.to_dict()
 
-    def rm_realtime_arm_state_call_back(self, arm_state_callback):
+    def rm_realtime_arm_state_call_back(self, arm_state_callback:rm_realtime_arm_state_callback_ptr):
         """
         注册UDP机械臂实时状态主动上报信息回调函数，该回调函数接收rm_realtime_arm_joint_state_t类型数据
         作为参数，没有返回值

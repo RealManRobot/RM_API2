@@ -3068,6 +3068,7 @@ class rm_force_position_move_t(Structure):
             if flag is not None:  
                 self.flag = flag     
             if flag == 1:
+                # pose长度为6时认为使用欧拉角，长度为7时认为使用四元数
                 if pose is not None and len(pose) == 6:
                     po1 = rm_pose_t()
                     po1.position = rm_position_t(*pose[:3])

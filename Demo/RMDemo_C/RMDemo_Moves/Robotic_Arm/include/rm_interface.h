@@ -11,6 +11,7 @@
 #define RM_FUNCTION_H
 
 #include "rm_define.h"
+#include "rm_interface_global.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -31,7 +32,7 @@ extern "C" {
  * printf("api version: %s\n", version);
  * @endcode
  */
-char* rm_api_version(void);
+RM_INTERFACE_EXPORT char* rm_api_version(void);
 /**
  * @brief 初始化线程模式
  * 
@@ -42,7 +43,7 @@ char* rm_api_version(void);
             - 0: 成功。  
             - -1: 创建线程失败。查看日志以获取具体错误
  */
-int rm_init(rm_thread_mode_e mode);
+RM_INTERFACE_EXPORT int rm_init(rm_thread_mode_e mode);
 
 /**
  * @brief 关闭所有连接，销毁所有线程
@@ -50,7 +51,7 @@ int rm_init(rm_thread_mode_e mode);
  * @return int 函数执行的状态码。  
             - 0: 成功。  
  */
-int rm_destory(void);
+RM_INTERFACE_EXPORT int rm_destory(void);
 
 /**
  * @brief 日志打印配置
@@ -58,14 +59,14 @@ int rm_destory(void);
  * @param LogCallback 日志打印回调函数
  * @param level 日志打印等级，0：debug级别，1：info级别，2：warn：级别，3：error级别  
  */
-void rm_set_log_call_back(void (*LogCallback)(const char* message, va_list args),int level);
+RM_INTERFACE_EXPORT void rm_set_log_call_back(void (*LogCallback)(const char* message, va_list args),int level);
 
 /**
  * @brief 保存日志到文件
  * 
  * @param path 日志保存文件路径
  */
-void rm_set_log_save(const char* path);
+RM_INTERFACE_EXPORT void rm_set_log_save(const char* path);
 
 /**
  * @brief 创建一个机械臂，用于实现对该机械臂的控制
@@ -74,7 +75,7 @@ void rm_set_log_save(const char* path);
  * @param port 机械臂的端口号
  * @return rm_robot_handle* 创建成功后，返回机械臂控制句柄，连接成功句柄id大于0，连接失败句柄id返回-1，达到最大连接数5创建失败返回空
  */
-rm_robot_handle *rm_create_robot_arm(const char *ip,int port);
+RM_INTERFACE_EXPORT rm_robot_handle *rm_create_robot_arm(const char *ip,int port);
 
 /**
  * @brief 根据句柄删除机械臂
@@ -84,7 +85,7 @@ rm_robot_handle *rm_create_robot_arm(const char *ip,int port);
             - 0: 成功。  
             - -1: 未找到对应句柄,句柄为空或已被删除。
  */
-int rm_delete_robot_arm(rm_robot_handle *handle);
+RM_INTERFACE_EXPORT int rm_delete_robot_arm(rm_robot_handle *handle);
 /**
  * @brief 机械臂仿真/真实模式设置
  * 
@@ -97,7 +98,7 @@ int rm_delete_robot_arm(rm_robot_handle *handle);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_set_arm_run_mode(rm_robot_handle *handle, int mode);
+RM_INTERFACE_EXPORT int rm_set_arm_run_mode(rm_robot_handle *handle, int mode);
 /**
  * @brief 机械臂仿真/真实模式获取
  * 
@@ -110,7 +111,7 @@ int rm_set_arm_run_mode(rm_robot_handle *handle, int mode);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_get_arm_run_mode(rm_robot_handle *handle,int *mode);
+RM_INTERFACE_EXPORT int rm_get_arm_run_mode(rm_robot_handle *handle,int *mode);
 /**
  * @brief 获取机械臂基本信息
  * 
@@ -121,7 +122,7 @@ int rm_get_arm_run_mode(rm_robot_handle *handle,int *mode);
             - -1: 未找到对应句柄,句柄为空或已被删除。
             - -2: 获取到的机械臂基本信息非法，检查句柄是否已被删除。  
  */
-int rm_get_robot_info(rm_robot_handle *handle, rm_robot_info_t *robot_info);
+RM_INTERFACE_EXPORT int rm_get_robot_info(rm_robot_handle *handle, rm_robot_info_t *robot_info);
 /**
  * @brief 机械臂事件回调函数注册
  * @details 当机械臂返回运动到位指令或者文件运行结束指令时会有数据返回
@@ -129,14 +130,14 @@ int rm_get_robot_info(rm_robot_handle *handle, rm_robot_info_t *robot_info);
  * @param handle 机械臂控制句柄
  * @param event_callback 机械臂事件回调函数，该回调函数接收rm_event_push_data_t类型的数据作为参数，没有返回值。
  */
-void rm_get_arm_event_call_back(rm_event_callback_ptr event_callback);
+RM_INTERFACE_EXPORT void rm_get_arm_event_call_back(rm_event_callback_ptr event_callback);
 /**
  * @brief UDP机械臂状态主动上报信息回调注册
  * 
  * @param handle 机械臂控制句柄
  * @param realtime_callback 机械臂状态信息回调函数
  */
-void rm_realtime_arm_state_call_back(rm_realtime_arm_state_callback_ptr realtime_callback);
+RM_INTERFACE_EXPORT void rm_realtime_arm_state_call_back(rm_realtime_arm_state_callback_ptr realtime_callback);
 /** @} */ // 结束初始化组的定义
 /**  
  * @defgroup Joint_Config 关节配置
@@ -163,7 +164,7 @@ void rm_realtime_arm_state_call_back(rm_realtime_arm_state_callback_ptr realtime
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。  
  */
-int rm_set_joint_max_speed(rm_robot_handle *handle,int joint_num,float max_speed);
+RM_INTERFACE_EXPORT int rm_set_joint_max_speed(rm_robot_handle *handle,int joint_num,float max_speed);
 /**
  * @brief 设置关节最大加速度
  * 
@@ -177,7 +178,7 @@ int rm_set_joint_max_speed(rm_robot_handle *handle,int joint_num,float max_speed
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。  
  */
-int rm_set_joint_max_acc(rm_robot_handle *handle,int joint_num,float max_acc);
+RM_INTERFACE_EXPORT int rm_set_joint_max_acc(rm_robot_handle *handle,int joint_num,float max_acc);
 /**
  * @brief 设置关节最小限位
  * 
@@ -191,7 +192,7 @@ int rm_set_joint_max_acc(rm_robot_handle *handle,int joint_num,float max_acc);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。  
  */
-int rm_set_joint_min_pos(rm_robot_handle *handle,int joint_num,float min_pos);
+RM_INTERFACE_EXPORT int rm_set_joint_min_pos(rm_robot_handle *handle,int joint_num,float min_pos);
 /**
  * @brief 设置关节最大限位
  * 
@@ -205,7 +206,7 @@ int rm_set_joint_min_pos(rm_robot_handle *handle,int joint_num,float min_pos);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。  
  */
-int rm_set_joint_max_pos(rm_robot_handle *handle,int joint_num,float max_pos);
+RM_INTERFACE_EXPORT int rm_set_joint_max_pos(rm_robot_handle *handle,int joint_num,float max_pos);
 /**
  * @brief 设置关节最大速度(驱动器)
  * 
@@ -219,7 +220,7 @@ int rm_set_joint_max_pos(rm_robot_handle *handle,int joint_num,float max_pos);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。  
  */
-int rm_set_joint_drive_max_speed(rm_robot_handle *handle,int joint_num,float max_speed);
+RM_INTERFACE_EXPORT int rm_set_joint_drive_max_speed(rm_robot_handle *handle,int joint_num,float max_speed);
 /**
  * @brief 设置关节最大加速度(驱动器)
  * 
@@ -233,7 +234,7 @@ int rm_set_joint_drive_max_speed(rm_robot_handle *handle,int joint_num,float max
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。  
  */
-int rm_set_joint_drive_max_acc(rm_robot_handle *handle,int joint_num,float max_acc);
+RM_INTERFACE_EXPORT int rm_set_joint_drive_max_acc(rm_robot_handle *handle,int joint_num,float max_acc);
 /**
  * @brief 设置关节最小限位(驱动器)
  * 
@@ -247,7 +248,7 @@ int rm_set_joint_drive_max_acc(rm_robot_handle *handle,int joint_num,float max_a
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。  
  */
-int rm_set_joint_drive_min_pos(rm_robot_handle *handle,int joint_num,float min_pos);
+RM_INTERFACE_EXPORT int rm_set_joint_drive_min_pos(rm_robot_handle *handle,int joint_num,float min_pos);
 /**
  * @brief 设置关节最大限位(驱动器)
  * 
@@ -261,7 +262,7 @@ int rm_set_joint_drive_min_pos(rm_robot_handle *handle,int joint_num,float min_p
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。  
  */
-int rm_set_joint_drive_max_pos(rm_robot_handle *handle,int joint_num,float max_pos);
+RM_INTERFACE_EXPORT int rm_set_joint_drive_max_pos(rm_robot_handle *handle,int joint_num,float max_pos);
 /**
  * @brief 设置关节使能状态
  * 
@@ -275,7 +276,7 @@ int rm_set_joint_drive_max_pos(rm_robot_handle *handle,int joint_num,float max_p
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。   
  */
-int rm_set_joint_en_state(rm_robot_handle *handle,int joint_num,int en_state);
+RM_INTERFACE_EXPORT int rm_set_joint_en_state(rm_robot_handle *handle,int joint_num,int en_state);
 /**
  * @brief 设置关节零位
  * 
@@ -288,7 +289,7 @@ int rm_set_joint_en_state(rm_robot_handle *handle,int joint_num,int en_state);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。  
  */
-int rm_set_joint_zero_pos(rm_robot_handle *handle,int joint_num);
+RM_INTERFACE_EXPORT int rm_set_joint_zero_pos(rm_robot_handle *handle,int joint_num);
 /**
  * @brief 清除关节错误代码
  * 
@@ -301,7 +302,7 @@ int rm_set_joint_zero_pos(rm_robot_handle *handle,int joint_num);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。  
  */
-int rm_set_joint_clear_err(rm_robot_handle *handle,int joint_num);
+RM_INTERFACE_EXPORT int rm_set_joint_clear_err(rm_robot_handle *handle,int joint_num);
 /**
  * @brief 一键设置关节限位
  * 
@@ -314,7 +315,7 @@ int rm_set_joint_clear_err(rm_robot_handle *handle,int joint_num);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。  
  */
-int rm_auto_set_joint_limit(rm_robot_handle *handle,int limit_mode);
+RM_INTERFACE_EXPORT int rm_auto_set_joint_limit(rm_robot_handle *handle,int limit_mode);
 /**
  * @brief 查询关节最大速度
  * 
@@ -327,7 +328,7 @@ int rm_auto_set_joint_limit(rm_robot_handle *handle,int limit_mode);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_get_joint_max_speed(rm_robot_handle *handle,float *max_speed);
+RM_INTERFACE_EXPORT int rm_get_joint_max_speed(rm_robot_handle *handle,float *max_speed);
 /**
  * @brief 查询关节最大加速度
  * 
@@ -340,7 +341,7 @@ int rm_get_joint_max_speed(rm_robot_handle *handle,float *max_speed);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_get_joint_max_acc(rm_robot_handle *handle,float *max_acc);
+RM_INTERFACE_EXPORT int rm_get_joint_max_acc(rm_robot_handle *handle,float *max_acc);
 /**
  * @brief 查询关节最小限位
  * 
@@ -353,7 +354,7 @@ int rm_get_joint_max_acc(rm_robot_handle *handle,float *max_acc);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_get_joint_min_pos(rm_robot_handle *handle,float *min_pos);
+RM_INTERFACE_EXPORT int rm_get_joint_min_pos(rm_robot_handle *handle,float *min_pos);
 /**
  * @brief 查询关节最大限位
  * 
@@ -366,7 +367,7 @@ int rm_get_joint_min_pos(rm_robot_handle *handle,float *min_pos);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_get_joint_max_pos(rm_robot_handle *handle,float *max_pos);
+RM_INTERFACE_EXPORT int rm_get_joint_max_pos(rm_robot_handle *handle,float *max_pos);
 /**
  * @brief 查询关节(驱动器)最大速度
  * 
@@ -379,7 +380,7 @@ int rm_get_joint_max_pos(rm_robot_handle *handle,float *max_pos);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_get_joint_drive_max_speed(rm_robot_handle *handle,float *max_speed);
+RM_INTERFACE_EXPORT int rm_get_joint_drive_max_speed(rm_robot_handle *handle,float *max_speed);
 /**
  * @brief 查询关节(驱动器)最大加速度
  * 
@@ -392,7 +393,7 @@ int rm_get_joint_drive_max_speed(rm_robot_handle *handle,float *max_speed);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_get_joint_drive_max_acc(rm_robot_handle *handle,float *max_acc);
+RM_INTERFACE_EXPORT int rm_get_joint_drive_max_acc(rm_robot_handle *handle,float *max_acc);
 /**
  * @brief 查询关节(驱动器)最小限位
  * 
@@ -405,7 +406,7 @@ int rm_get_joint_drive_max_acc(rm_robot_handle *handle,float *max_acc);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_get_joint_drive_min_pos(rm_robot_handle *handle,float *min_pos);
+RM_INTERFACE_EXPORT int rm_get_joint_drive_min_pos(rm_robot_handle *handle,float *min_pos);
 /**
  * @brief 查询关节(驱动器)最大限位
  * 
@@ -418,7 +419,7 @@ int rm_get_joint_drive_min_pos(rm_robot_handle *handle,float *min_pos);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_get_joint_drive_max_pos(rm_robot_handle *handle,float *max_pos);
+RM_INTERFACE_EXPORT int rm_get_joint_drive_max_pos(rm_robot_handle *handle,float *max_pos);
 /**
  * @brief 查询关节使能状态
  * 
@@ -431,7 +432,7 @@ int rm_get_joint_drive_max_pos(rm_robot_handle *handle,float *max_pos);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_get_joint_en_state(rm_robot_handle *handle,uint8_t *en_state);
+RM_INTERFACE_EXPORT int rm_get_joint_en_state(rm_robot_handle *handle,uint8_t *en_state);
 /**
  * @brief 查询关节错误代码
  * 
@@ -445,7 +446,7 @@ int rm_get_joint_en_state(rm_robot_handle *handle,uint8_t *en_state);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_get_joint_err_flag(rm_robot_handle *handle,uint16_t *err_flag,uint16_t *brake_state);
+RM_INTERFACE_EXPORT int rm_get_joint_err_flag(rm_robot_handle *handle,uint16_t *err_flag,uint16_t *brake_state);
 /** @} */ // 结束关节配置组的定义
 
 /**  
@@ -466,7 +467,7 @@ int rm_get_joint_err_flag(rm_robot_handle *handle,uint16_t *err_flag,uint16_t *b
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_set_arm_max_line_speed(rm_robot_handle *handle,float speed);
+RM_INTERFACE_EXPORT int rm_set_arm_max_line_speed(rm_robot_handle *handle,float speed);
 /**
  * @brief 设置机械臂末端最大线加速度
  * 
@@ -479,7 +480,7 @@ int rm_set_arm_max_line_speed(rm_robot_handle *handle,float speed);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_set_arm_max_line_acc(rm_robot_handle *handle,float acc);
+RM_INTERFACE_EXPORT int rm_set_arm_max_line_acc(rm_robot_handle *handle,float acc);
 /**
  * @brief 设置机械臂末端最大角速度
  * 
@@ -492,7 +493,7 @@ int rm_set_arm_max_line_acc(rm_robot_handle *handle,float acc);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_set_arm_max_angular_speed(rm_robot_handle *handle,float speed);
+RM_INTERFACE_EXPORT int rm_set_arm_max_angular_speed(rm_robot_handle *handle,float speed);
 /**
  * @brief 设置机械臂末端最大角加速度
  * 
@@ -505,7 +506,7 @@ int rm_set_arm_max_angular_speed(rm_robot_handle *handle,float speed);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_set_arm_max_angular_acc(rm_robot_handle *handle,float acc);
+RM_INTERFACE_EXPORT int rm_set_arm_max_angular_acc(rm_robot_handle *handle,float acc);
 /**
  * @brief 设置机械臂末端参数为默认值
  * 
@@ -517,7 +518,7 @@ int rm_set_arm_max_angular_acc(rm_robot_handle *handle,float acc);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_set_arm_tcp_init(rm_robot_handle *handle);
+RM_INTERFACE_EXPORT int rm_set_arm_tcp_init(rm_robot_handle *handle);
 /**
  * @brief 设置机械臂动力学碰撞检测等级
  * 
@@ -530,7 +531,7 @@ int rm_set_arm_tcp_init(rm_robot_handle *handle);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_set_collision_state(rm_robot_handle *handle,int collision_stage);
+RM_INTERFACE_EXPORT int rm_set_collision_state(rm_robot_handle *handle,int collision_stage);
 /**
  * @brief 查询碰撞防护等级
  * 
@@ -543,7 +544,7 @@ int rm_set_collision_state(rm_robot_handle *handle,int collision_stage);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_get_collision_stage(rm_robot_handle *handle,int *collision_stage);
+RM_INTERFACE_EXPORT int rm_get_collision_stage(rm_robot_handle *handle,int *collision_stage);
 /**
  * @brief 获取机械臂末端最大线速度
  * 
@@ -556,7 +557,7 @@ int rm_get_collision_stage(rm_robot_handle *handle,int *collision_stage);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_get_arm_max_line_speed(rm_robot_handle *handle, float *speed);
+RM_INTERFACE_EXPORT int rm_get_arm_max_line_speed(rm_robot_handle *handle, float *speed);
 /**
  * @brief 获取机械臂末端最大线加速度
  * 
@@ -569,7 +570,7 @@ int rm_get_arm_max_line_speed(rm_robot_handle *handle, float *speed);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_get_arm_max_line_acc(rm_robot_handle *handle, float *acc);
+RM_INTERFACE_EXPORT int rm_get_arm_max_line_acc(rm_robot_handle *handle, float *acc);
 /**
  * @brief 获取机械臂末端最大角速度
  * 
@@ -582,7 +583,7 @@ int rm_get_arm_max_line_acc(rm_robot_handle *handle, float *acc);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_get_arm_max_angular_speed(rm_robot_handle *handle, float *speed);
+RM_INTERFACE_EXPORT int rm_get_arm_max_angular_speed(rm_robot_handle *handle, float *speed);
 /**
  * @brief 获取机械臂末端最大角加速度
  * 
@@ -595,7 +596,7 @@ int rm_get_arm_max_angular_speed(rm_robot_handle *handle, float *speed);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_get_arm_max_angular_acc(rm_robot_handle *handle, float *acc);
+RM_INTERFACE_EXPORT int rm_get_arm_max_angular_acc(rm_robot_handle *handle, float *acc);
 /** @} */ // 结束组的定义
 /**  
  * @defgroup ToolCoordinateConfig 工具坐标系配置
@@ -615,7 +616,7 @@ int rm_get_arm_max_angular_acc(rm_robot_handle *handle, float *acc);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_set_auto_tool_frame(rm_robot_handle *handle,int point_num);
+RM_INTERFACE_EXPORT int rm_set_auto_tool_frame(rm_robot_handle *handle,int point_num);
 /**
  * @brief 六点法自动设置工具坐标系 提交
  * 
@@ -632,7 +633,7 @@ int rm_set_auto_tool_frame(rm_robot_handle *handle,int point_num);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_generate_auto_tool_frame(rm_robot_handle *handle, const char *name,float payload,float x,float y,float z);
+RM_INTERFACE_EXPORT int rm_generate_auto_tool_frame(rm_robot_handle *handle, const char *name,float payload,float x,float y,float z);
 /**
  * @brief 手动设置工具坐标系
  * 
@@ -645,7 +646,7 @@ int rm_generate_auto_tool_frame(rm_robot_handle *handle, const char *name,float 
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。 可能情况：要设置的坐标系名称已存在 
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_set_manual_tool_frame(rm_robot_handle *handle, rm_frame_t frame);
+RM_INTERFACE_EXPORT int rm_set_manual_tool_frame(rm_robot_handle *handle, rm_frame_t frame);
 /**
  * @brief 切换当前工具坐标系
  * 
@@ -658,7 +659,7 @@ int rm_set_manual_tool_frame(rm_robot_handle *handle, rm_frame_t frame);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_change_tool_frame(rm_robot_handle *handle, const char* tool_name);
+RM_INTERFACE_EXPORT int rm_change_tool_frame(rm_robot_handle *handle, const char* tool_name);
 /**
  * @brief 删除指定工具坐标系
  * 
@@ -671,7 +672,7 @@ int rm_change_tool_frame(rm_robot_handle *handle, const char* tool_name);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_delete_tool_frame(rm_robot_handle *handle, const char* tool_name);
+RM_INTERFACE_EXPORT int rm_delete_tool_frame(rm_robot_handle *handle, const char* tool_name);
 /**
  * @brief 修改指定工具坐标系
  * 
@@ -684,7 +685,7 @@ int rm_delete_tool_frame(rm_robot_handle *handle, const char* tool_name);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_update_tool_frame(rm_robot_handle *handle, rm_frame_t frame);
+RM_INTERFACE_EXPORT int rm_update_tool_frame(rm_robot_handle *handle, rm_frame_t frame);
 /**
  * @brief 获取所有工具坐标系名称
  * 
@@ -698,7 +699,7 @@ int rm_update_tool_frame(rm_robot_handle *handle, rm_frame_t frame);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_get_total_tool_frame(rm_robot_handle *handle, rm_frame_name_t *frame_names, int *len);
+RM_INTERFACE_EXPORT int rm_get_total_tool_frame(rm_robot_handle *handle, rm_frame_name_t *frame_names, int *len);
 /**
  * @brief  获取指定工具坐标系
  * 
@@ -712,7 +713,7 @@ int rm_get_total_tool_frame(rm_robot_handle *handle, rm_frame_name_t *frame_name
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。可能情况：查询的工具坐标系不存在  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_get_given_tool_frame(rm_robot_handle *handle, const char *name, rm_frame_t *frame);
+RM_INTERFACE_EXPORT int rm_get_given_tool_frame(rm_robot_handle *handle, const char *name, rm_frame_t *frame);
 /**
  * @brief 获取当前工具坐标系
  * 
@@ -725,7 +726,7 @@ int rm_get_given_tool_frame(rm_robot_handle *handle, const char *name, rm_frame_
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_get_current_tool_frame(rm_robot_handle *handle, rm_frame_t *tool_frame);
+RM_INTERFACE_EXPORT int rm_get_current_tool_frame(rm_robot_handle *handle, rm_frame_t *tool_frame);
 /**
  * @brief 设置工具坐标系的包络参数
  * 
@@ -738,7 +739,7 @@ int rm_get_current_tool_frame(rm_robot_handle *handle, rm_frame_t *tool_frame);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_set_tool_envelope(rm_robot_handle *handle, rm_envelope_balls_list_t envelope);
+RM_INTERFACE_EXPORT int rm_set_tool_envelope(rm_robot_handle *handle, rm_envelope_balls_list_t envelope);
 /**
  * @brief 获取工具坐标系的包络参数
  * 
@@ -752,7 +753,7 @@ int rm_set_tool_envelope(rm_robot_handle *handle, rm_envelope_balls_list_t envel
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_get_tool_envelope(rm_robot_handle *handle, const char* tool_name, rm_envelope_balls_list_t *envelope);
+RM_INTERFACE_EXPORT int rm_get_tool_envelope(rm_robot_handle *handle, const char* tool_name, rm_envelope_balls_list_t *envelope);
 /** @} */ // 结束组的定义
 
 /**  
@@ -774,7 +775,7 @@ int rm_get_tool_envelope(rm_robot_handle *handle, const char* tool_name, rm_enve
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_set_auto_work_frame(rm_robot_handle *handle,const char *workname, int point_num);
+RM_INTERFACE_EXPORT int rm_set_auto_work_frame(rm_robot_handle *handle,const char *workname, int point_num);
 /**
  * @brief 手动设置工作坐标系
  * 
@@ -788,7 +789,7 @@ int rm_set_auto_work_frame(rm_robot_handle *handle,const char *workname, int poi
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。
  */
-int rm_set_manual_work_frame(rm_robot_handle *handle, const char* work_name, rm_pose_t pose);
+RM_INTERFACE_EXPORT int rm_set_manual_work_frame(rm_robot_handle *handle, const char* work_name, rm_pose_t pose);
 /**
  * @brief 切换当前工作坐标系
  * 
@@ -801,7 +802,7 @@ int rm_set_manual_work_frame(rm_robot_handle *handle, const char* work_name, rm_
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_change_work_frame(rm_robot_handle *handle, const char* work_name);
+RM_INTERFACE_EXPORT int rm_change_work_frame(rm_robot_handle *handle, const char* work_name);
 /**
  * @brief 删除指定工作坐标系
  * 
@@ -814,7 +815,7 @@ int rm_change_work_frame(rm_robot_handle *handle, const char* work_name);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_delete_work_frame(rm_robot_handle *handle, const char* work_name);
+RM_INTERFACE_EXPORT int rm_delete_work_frame(rm_robot_handle *handle, const char* work_name);
 /**
  * @brief 修改指定工作坐标系
  * 
@@ -828,7 +829,7 @@ int rm_delete_work_frame(rm_robot_handle *handle, const char* work_name);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_update_work_frame(rm_robot_handle *handle, const char* work_name, rm_pose_t pose);
+RM_INTERFACE_EXPORT int rm_update_work_frame(rm_robot_handle *handle, const char* work_name, rm_pose_t pose);
 /**
  * @brief 获取所有工作坐标系名称
  * 
@@ -842,7 +843,7 @@ int rm_update_work_frame(rm_robot_handle *handle, const char* work_name, rm_pose
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_get_total_work_frame(rm_robot_handle *handle, rm_frame_name_t *frame_names, int *len);
+RM_INTERFACE_EXPORT int rm_get_total_work_frame(rm_robot_handle *handle, rm_frame_name_t *frame_names, int *len);
 /**
  * @brief 获取指定工作坐标系
  * 
@@ -856,7 +857,7 @@ int rm_get_total_work_frame(rm_robot_handle *handle, rm_frame_name_t *frame_name
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。例如：查询的工具坐标系不存在  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_get_given_work_frame(rm_robot_handle *handle, const char *name, rm_pose_t *pose);
+RM_INTERFACE_EXPORT int rm_get_given_work_frame(rm_robot_handle *handle, const char *name, rm_pose_t *pose);
 /**
  * @brief 获取当前工作坐标系
  * 
@@ -869,7 +870,7 @@ int rm_get_given_work_frame(rm_robot_handle *handle, const char *name, rm_pose_t
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_get_current_work_frame(rm_robot_handle *handle, rm_frame_t *work_frame);
+RM_INTERFACE_EXPORT int rm_get_current_work_frame(rm_robot_handle *handle, rm_frame_t *work_frame);
 /** @} */ // 结束组的定义
 
 /**  
@@ -890,7 +891,7 @@ int rm_get_current_work_frame(rm_robot_handle *handle, rm_frame_t *work_frame);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_get_current_arm_state(rm_robot_handle *handle,rm_current_arm_state_t *state);
+RM_INTERFACE_EXPORT int rm_get_current_arm_state(rm_robot_handle *handle,rm_current_arm_state_t *state);
 /**
  * @brief 获取关节当前温度
  * 
@@ -903,7 +904,7 @@ int rm_get_current_arm_state(rm_robot_handle *handle,rm_current_arm_state_t *sta
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_get_current_joint_temperature(rm_robot_handle *handle, float *temperature);
+RM_INTERFACE_EXPORT int rm_get_current_joint_temperature(rm_robot_handle *handle, float *temperature);
 /**
  * @brief 获取关节当前电流
  * 
@@ -916,7 +917,7 @@ int rm_get_current_joint_temperature(rm_robot_handle *handle, float *temperature
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_get_current_joint_current(rm_robot_handle *handle, float *current);
+RM_INTERFACE_EXPORT int rm_get_current_joint_current(rm_robot_handle *handle, float *current);
 /**
  * @brief 获取关节当前电压
  * 
@@ -929,7 +930,7 @@ int rm_get_current_joint_current(rm_robot_handle *handle, float *current);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_get_current_joint_voltage(rm_robot_handle *handle, float *voltage);
+RM_INTERFACE_EXPORT int rm_get_current_joint_voltage(rm_robot_handle *handle, float *voltage);
 /**
  * @brief 获取当前关节角度
  * 
@@ -942,7 +943,7 @@ int rm_get_current_joint_voltage(rm_robot_handle *handle, float *voltage);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_get_joint_degree(rm_robot_handle *handle, float *joint);
+RM_INTERFACE_EXPORT int rm_get_joint_degree(rm_robot_handle *handle, float *joint);
 /**
  * @brief 获取机械臂所有状态信息
  * 
@@ -955,7 +956,7 @@ int rm_get_joint_degree(rm_robot_handle *handle, float *joint);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_get_arm_all_state(rm_robot_handle *handle, rm_arm_all_state_t *state);
+RM_INTERFACE_EXPORT int rm_get_arm_all_state(rm_robot_handle *handle, rm_arm_all_state_t *state);
 /** @} */ // 结束组的定义
 
 /**  
@@ -976,7 +977,7 @@ int rm_get_arm_all_state(rm_robot_handle *handle, rm_arm_all_state_t *state);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_set_init_pose(rm_robot_handle *handle, float *joint);
+RM_INTERFACE_EXPORT int rm_set_init_pose(rm_robot_handle *handle, float *joint);
 /**
  * @brief 获取机械臂初始位置角度
  * 
@@ -989,7 +990,7 @@ int rm_set_init_pose(rm_robot_handle *handle, float *joint);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_get_init_pose(rm_robot_handle *handle, float *joint);
+RM_INTERFACE_EXPORT int rm_get_init_pose(rm_robot_handle *handle, float *joint);
 /** @} */ // 结束组的定义
 
 /**  
@@ -1025,7 +1026,7 @@ int rm_get_init_pose(rm_robot_handle *handle, float *joint);
             - -4: 当前到位设备校验失败，即当前到位设备不为关节。
             - -5: 单线程模式超时未接收到返回，请确保超时时间设置合理。
  */
-int rm_movej(rm_robot_handle *handle, const float *joint, int v, int r,int trajectory_connect,int block);
+RM_INTERFACE_EXPORT int rm_movej(rm_robot_handle *handle, const float *joint, int v, int r,int trajectory_connect,int block);
 /**
  * @brief 笛卡尔空间直线运动
  * 
@@ -1053,7 +1054,7 @@ int rm_movej(rm_robot_handle *handle, const float *joint, int v, int r,int traje
             - -4: 当前到位设备校验失败，即当前到位设备不为关节。
             - -5: 单线程模式超时未接收到返回，请确保超时时间设置合理。
  */
-int rm_movel(rm_robot_handle *handle,rm_pose_t pose, int v, int r, int trajectory_connect, int block);
+RM_INTERFACE_EXPORT int rm_movel(rm_robot_handle *handle,rm_pose_t pose, int v, int r, int trajectory_connect, int block);
 /**
  * @brief 样条曲线运动
  * 
@@ -1082,7 +1083,7 @@ int rm_movel(rm_robot_handle *handle,rm_pose_t pose, int v, int r, int trajector
             - -4: 当前到位设备校验失败，即当前到位设备不为关节。
             - -5: 单线程模式超时未接收到返回，请确保超时时间设置合理。
  */
-int rm_moves(rm_robot_handle *handle,rm_pose_t pose, int v, int r, int trajectory_connect, int block);
+RM_INTERFACE_EXPORT int rm_moves(rm_robot_handle *handle,rm_pose_t pose, int v, int r, int trajectory_connect, int block);
 /**
  * @brief 笛卡尔空间圆弧运动
  * 
@@ -1112,7 +1113,7 @@ int rm_moves(rm_robot_handle *handle,rm_pose_t pose, int v, int r, int trajector
             - -4: 当前到位设备校验失败，即当前到位设备不为关节。 
             - -5: 单线程模式超时未接收到返回，请确保超时时间设置合理。
  */
-int rm_movec(rm_robot_handle *handle,rm_pose_t pose_via, rm_pose_t pose_to, int v, int r, int loop, int trajectory_connect, int block);
+RM_INTERFACE_EXPORT int rm_movec(rm_robot_handle *handle,rm_pose_t pose_via, rm_pose_t pose_to, int v, int r, int loop, int trajectory_connect, int block);
 /**
  * @brief 该函数用于关节空间运动到目标位姿
  * 
@@ -1140,7 +1141,7 @@ int rm_movec(rm_robot_handle *handle,rm_pose_t pose_via, rm_pose_t pose_to, int 
             - -4: 当前到位设备校验失败，即当前到位设备不为关节。 
             - -5: 单线程模式超时未接收到返回，请确保超时时间设置合理。
  */
-int rm_movej_p(rm_robot_handle *handle,rm_pose_t pose, int v, int r, int trajectory_connect, int block);
+RM_INTERFACE_EXPORT int rm_movej_p(rm_robot_handle *handle,rm_pose_t pose, int v, int r, int trajectory_connect, int block);
 /**
  * @brief 角度不经规划，直接通过CANFD透传给机械臂
  * @details 角度透传到 CANFD，若指令正确，机械臂立即执行  
@@ -1156,7 +1157,7 @@ int rm_movej_p(rm_robot_handle *handle,rm_pose_t pose, int v, int r, int traject
             - 0: 成功。  
             - -1: 数据发送失败，通信过程中出现问题。
  */
-int rm_movej_canfd(rm_robot_handle *handle,float *joint, bool follow, float expand);
+RM_INTERFACE_EXPORT int rm_movej_canfd(rm_robot_handle *handle,float *joint, bool follow, float expand);
 /**
  * @brief 位姿不经规划，直接通过CANFD透传给机械臂
  * @details 当目标位姿被透传到机械臂控制器时，控制器首先尝试进行逆解计算。
@@ -1173,7 +1174,7 @@ int rm_movej_canfd(rm_robot_handle *handle,float *joint, bool follow, float expa
             - 0: 成功。  
             - -1: 数据发送失败，通信过程中出现问题。
  */
-int rm_movep_canfd(rm_robot_handle *handle, rm_pose_t pose, bool follow);
+RM_INTERFACE_EXPORT int rm_movep_canfd(rm_robot_handle *handle, rm_pose_t pose, bool follow);
 /**
  * @brief 关节空间跟随运动
  * @param handle 机械臂控制句柄 
@@ -1182,7 +1183,7 @@ int rm_movep_canfd(rm_robot_handle *handle, rm_pose_t pose, bool follow);
             - 0: 成功。  
             - -1: 数据发送失败，通信过程中出现问题。
  */
-int rm_movej_follow(rm_robot_handle *handle,float *joint);
+RM_INTERFACE_EXPORT int rm_movej_follow(rm_robot_handle *handle,float *joint);
 /**
  * @brief 笛卡尔空间跟随运动
  * @param handle 机械臂控制句柄 
@@ -1191,7 +1192,7 @@ int rm_movej_follow(rm_robot_handle *handle,float *joint);
             - 0: 成功。  
             - -1: 数据发送失败，通信过程中出现问题。
  */
-int rm_movep_follow(rm_robot_handle *handle, rm_pose_t pose);
+RM_INTERFACE_EXPORT int rm_movep_follow(rm_robot_handle *handle, rm_pose_t pose);
 /** @} */ // 结束组的定义
 
 /**  
@@ -1211,7 +1212,7 @@ int rm_movep_follow(rm_robot_handle *handle, rm_pose_t pose);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_set_arm_slow_stop(rm_robot_handle *handle);
+RM_INTERFACE_EXPORT int rm_set_arm_slow_stop(rm_robot_handle *handle);
 /**
  * @brief 轨迹急停，关节最快速度停止，轨迹不可恢复
  * 
@@ -1223,7 +1224,7 @@ int rm_set_arm_slow_stop(rm_robot_handle *handle);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。
  */
-int rm_set_arm_stop(rm_robot_handle *handle);
+RM_INTERFACE_EXPORT int rm_set_arm_stop(rm_robot_handle *handle);
 /**
  * @brief 轨迹暂停，暂停在规划轨迹上，轨迹可恢复
  * 
@@ -1235,7 +1236,7 @@ int rm_set_arm_stop(rm_robot_handle *handle);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_set_arm_pause(rm_robot_handle *handle);
+RM_INTERFACE_EXPORT int rm_set_arm_pause(rm_robot_handle *handle);
 /**
  * @brief 轨迹暂停后，继续当前轨迹运动
  * 
@@ -1247,7 +1248,7 @@ int rm_set_arm_pause(rm_robot_handle *handle);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_set_arm_continue(rm_robot_handle *handle);
+RM_INTERFACE_EXPORT int rm_set_arm_continue(rm_robot_handle *handle);
 /**
  * @brief 清除当前轨迹
  * 
@@ -1260,7 +1261,7 @@ int rm_set_arm_continue(rm_robot_handle *handle);
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。
  * @attention 必须在暂停后使用，否则机械臂会发生意外！！！！ 
  */
-int rm_set_delete_current_trajectory(rm_robot_handle *handle);
+RM_INTERFACE_EXPORT int rm_set_delete_current_trajectory(rm_robot_handle *handle);
 /**
  * @brief 清除所有轨迹
  * 
@@ -1273,7 +1274,7 @@ int rm_set_delete_current_trajectory(rm_robot_handle *handle);
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  * @attention 必须在暂停后使用，否则机械臂会发生意外！！！！
  */
-int rm_set_arm_delete_trajectory(rm_robot_handle *handle);
+RM_INTERFACE_EXPORT int rm_set_arm_delete_trajectory(rm_robot_handle *handle);
 /**
  * @brief 获取当前正在规划的轨迹信息
  * 
@@ -1287,7 +1288,7 @@ int rm_set_arm_delete_trajectory(rm_robot_handle *handle);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_get_arm_current_trajectory(rm_robot_handle *handle,rm_arm_current_trajectory_e *type,float *data);
+RM_INTERFACE_EXPORT int rm_get_arm_current_trajectory(rm_robot_handle *handle,rm_arm_current_trajectory_e *type,float *data);
 /** @} */ // 结束组的定义
 
 /**  
@@ -1320,7 +1321,7 @@ int rm_get_arm_current_trajectory(rm_robot_handle *handle,rm_arm_current_traject
             - -4: 当前到位设备校验失败，即当前到位设备不为关节。 
             - -5: 单线程模式超时未接收到返回，请确保超时时间设置合理。 
  */
-int rm_set_joint_step(rm_robot_handle *handle,int joint_num, float step, int v, int block);
+RM_INTERFACE_EXPORT int rm_set_joint_step(rm_robot_handle *handle,int joint_num, float step, int v, int block);
 /**
  * @brief 当前工作坐标系下，位置步进
  * 
@@ -1346,7 +1347,7 @@ int rm_set_joint_step(rm_robot_handle *handle,int joint_num, float step, int v, 
             - -5: 单线程模式超时未接收到返回，请确保超时时间设置合理。
  * @attention 参考坐标系默认为当前工作坐标系，可调用rm_set_teach_frame修改为工具坐标系，
  */
-int rm_set_pos_step(rm_robot_handle *handle, rm_pos_teach_type_e type, float step, int v, int block);
+RM_INTERFACE_EXPORT int rm_set_pos_step(rm_robot_handle *handle, rm_pos_teach_type_e type, float step, int v, int block);
 /**
  * @brief 当前工作坐标系下，姿态步进
  * 
@@ -1372,7 +1373,7 @@ int rm_set_pos_step(rm_robot_handle *handle, rm_pos_teach_type_e type, float ste
             - -5: 单线程模式超时未接收到返回，请确保超时时间设置合理。
  * @attention 参考坐标系默认为当前工作坐标系，可调用rm_set_teach_frame修改为工具坐标系，
  */
-int rm_set_ort_step(rm_robot_handle *handle, rm_ort_teach_type_e type, float step, int v, int block);
+RM_INTERFACE_EXPORT int rm_set_ort_step(rm_robot_handle *handle, rm_ort_teach_type_e type, float step, int v, int block);
 /**
  * @brief 切换示教运动坐标系
  * 
@@ -1385,7 +1386,7 @@ int rm_set_ort_step(rm_robot_handle *handle, rm_ort_teach_type_e type, float ste
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_set_teach_frame(rm_robot_handle *handle, int frame_type);
+RM_INTERFACE_EXPORT int rm_set_teach_frame(rm_robot_handle *handle, int frame_type);
 /**
  * @brief 获取示教参考坐标系
  * 
@@ -1398,7 +1399,7 @@ int rm_set_teach_frame(rm_robot_handle *handle, int frame_type);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_get_teach_frame(rm_robot_handle *handle,int *frame_type);
+RM_INTERFACE_EXPORT int rm_get_teach_frame(rm_robot_handle *handle,int *frame_type);
 /**
  * @brief 关节示教
  * 
@@ -1413,7 +1414,7 @@ int rm_get_teach_frame(rm_robot_handle *handle,int *frame_type);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_set_joint_teach(rm_robot_handle *handle,int joint_num, int direction, int v);
+RM_INTERFACE_EXPORT int rm_set_joint_teach(rm_robot_handle *handle,int joint_num, int direction, int v);
 /**
  * @brief 当前工作坐标系下，笛卡尔空间位置示教
  * 
@@ -1429,7 +1430,7 @@ int rm_set_joint_teach(rm_robot_handle *handle,int joint_num, int direction, int
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  * @attention 参考坐标系默认为当前工作坐标系，可调用rm_set_teach_frame修改为工具坐标系，
  */
-int rm_set_pos_teach(rm_robot_handle *handle,rm_pos_teach_type_e type, int direction, int v);
+RM_INTERFACE_EXPORT int rm_set_pos_teach(rm_robot_handle *handle,rm_pos_teach_type_e type, int direction, int v);
 /**
  * @brief 当前工作坐标系下，笛卡尔空间姿态示教
  * 
@@ -1445,7 +1446,7 @@ int rm_set_pos_teach(rm_robot_handle *handle,rm_pos_teach_type_e type, int direc
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  * @attention 参考坐标系默认为当前工作坐标系，可调用rm_set_teach_frame修改为工具坐标系，
  */
-int rm_set_ort_teach(rm_robot_handle *handle,rm_ort_teach_type_e type, int direction, int v);
+RM_INTERFACE_EXPORT int rm_set_ort_teach(rm_robot_handle *handle,rm_ort_teach_type_e type, int direction, int v);
 /**
  * @brief 示教停止
  * 
@@ -1457,7 +1458,7 @@ int rm_set_ort_teach(rm_robot_handle *handle,rm_ort_teach_type_e type, int direc
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_set_stop_teach(rm_robot_handle *handle);
+RM_INTERFACE_EXPORT int rm_set_stop_teach(rm_robot_handle *handle);
 /** @} */ // 结束组的定义
 
 /**  
@@ -1481,7 +1482,7 @@ int rm_set_stop_teach(rm_robot_handle *handle);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_get_controller_state(rm_robot_handle *handle, float *voltage, float *current, float *temperature, int *err_flag);
+RM_INTERFACE_EXPORT int rm_get_controller_state(rm_robot_handle *handle, float *voltage, float *current, float *temperature, int *err_flag);
 /**
  * @brief 设置机械臂电源
  * 
@@ -1494,7 +1495,7 @@ int rm_get_controller_state(rm_robot_handle *handle, float *voltage, float *curr
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_set_arm_power(rm_robot_handle *handle, int arm_power);
+RM_INTERFACE_EXPORT int rm_set_arm_power(rm_robot_handle *handle, int arm_power);
 /**
  * @brief 读取机械臂电源状态
  * 
@@ -1507,7 +1508,7 @@ int rm_set_arm_power(rm_robot_handle *handle, int arm_power);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_get_arm_power_state(rm_robot_handle *handle, int *power_state);
+RM_INTERFACE_EXPORT int rm_get_arm_power_state(rm_robot_handle *handle, int *power_state);
 /**
  * @brief 读取控制器的累计运行时间
  * 
@@ -1523,7 +1524,7 @@ int rm_get_arm_power_state(rm_robot_handle *handle, int *power_state);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_get_system_runtime(rm_robot_handle *handle, int *day, int *hour, int *min, int *sec);
+RM_INTERFACE_EXPORT int rm_get_system_runtime(rm_robot_handle *handle, int *day, int *hour, int *min, int *sec);
 /**
  * @brief 清零控制器的累计运行时间
  * 
@@ -1535,7 +1536,7 @@ int rm_get_system_runtime(rm_robot_handle *handle, int *day, int *hour, int *min
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_clear_system_runtime(rm_robot_handle *handle);
+RM_INTERFACE_EXPORT int rm_clear_system_runtime(rm_robot_handle *handle);
 /**
  * @brief 读取关节的累计转动角度
  * 
@@ -1548,7 +1549,7 @@ int rm_clear_system_runtime(rm_robot_handle *handle);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_get_joint_odom(rm_robot_handle *handle, float *joint_odom);
+RM_INTERFACE_EXPORT int rm_get_joint_odom(rm_robot_handle *handle, float *joint_odom);
 /**
  * @brief 清零关节累计转动的角度
  * 
@@ -1560,7 +1561,7 @@ int rm_get_joint_odom(rm_robot_handle *handle, float *joint_odom);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_clear_joint_odom(rm_robot_handle *handle);
+RM_INTERFACE_EXPORT int rm_clear_joint_odom(rm_robot_handle *handle);
 /**
  * @brief 配置有线网口 IP 地址
  * 
@@ -1573,7 +1574,7 @@ int rm_clear_joint_odom(rm_robot_handle *handle);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_set_NetIP(rm_robot_handle *handle, const char* ip);
+RM_INTERFACE_EXPORT int rm_set_NetIP(rm_robot_handle *handle, const char* ip);
 /**
  * @brief 清除系统错误
  * 
@@ -1585,7 +1586,7 @@ int rm_set_NetIP(rm_robot_handle *handle, const char* ip);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_clear_system_err(rm_robot_handle *handle);
+RM_INTERFACE_EXPORT int rm_clear_system_err(rm_robot_handle *handle);
 /**
  * @brief 读取机械臂软件信息
  * 
@@ -1598,7 +1599,7 @@ int rm_clear_system_err(rm_robot_handle *handle);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_get_arm_software_info(rm_robot_handle *handle,rm_arm_software_version_t *software_info);
+RM_INTERFACE_EXPORT int rm_get_arm_software_info(rm_robot_handle *handle,rm_arm_software_version_t *software_info);
 /**
  * @brief 查询控制器RS485模式
  * 
@@ -1613,7 +1614,7 @@ int rm_get_arm_software_info(rm_robot_handle *handle,rm_arm_software_version_t *
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_get_controller_RS485_mode(rm_robot_handle *handle, int* mode, int* baudrate, int* timeout);
+RM_INTERFACE_EXPORT int rm_get_controller_RS485_mode(rm_robot_handle *handle, int* mode, int* baudrate, int* timeout);
 /**
  * @brief 查询工具端 RS485 模式
  * 
@@ -1628,7 +1629,7 @@ int rm_get_controller_RS485_mode(rm_robot_handle *handle, int* mode, int* baudra
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_get_tool_RS485_mode(rm_robot_handle *handle, int* mode, int* baudrate, int* timeout);
+RM_INTERFACE_EXPORT int rm_get_tool_RS485_mode(rm_robot_handle *handle, int* mode, int* baudrate, int* timeout);
 /**
  * @brief 查询关节软件版本号
  * 
@@ -1642,7 +1643,7 @@ int rm_get_tool_RS485_mode(rm_robot_handle *handle, int* mode, int* baudrate, in
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  * @attention 获取到的关节软件版本号需转换为十六进制，例如获取某关节版本为54536，转换为十六进制为D508，则当前关节的版本号为 Vd5.0.8
  */
-int rm_get_joint_software_version(rm_robot_handle *handle,int *version);
+RM_INTERFACE_EXPORT int rm_get_joint_software_version(rm_robot_handle *handle,int *version);
 /**
  * @brief 查询末端接口板软件版本号
  * 
@@ -1656,7 +1657,7 @@ int rm_get_joint_software_version(rm_robot_handle *handle,int *version);
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  * @attention 获取到的末端接口板软件版本号需转换为十六进制，例如获取到版本号393，转换为十六进制为189，则当前关节的版本号为 V1.8.9
  */
-int rm_get_tool_software_version(rm_robot_handle *handle, int *version);
+RM_INTERFACE_EXPORT int rm_get_tool_software_version(rm_robot_handle *handle, int *version);
 /** @} */ // 结束组的定义
 
 /**  
@@ -1677,7 +1678,7 @@ int rm_get_tool_software_version(rm_robot_handle *handle, int *version);
             - -1: 数据发送失败，通信过程中出现问题。
  * @attention 设置成功后蜂鸣器响，手动重启控制器进入 WIFIAP 模式。
  */
-int rm_set_wifi_ap(rm_robot_handle *handle, const char* wifi_name, const char* password);
+RM_INTERFACE_EXPORT int rm_set_wifi_ap(rm_robot_handle *handle, const char* wifi_name, const char* password);
 /**
  * @brief 配置WiFi STA模式
  * 
@@ -1689,7 +1690,7 @@ int rm_set_wifi_ap(rm_robot_handle *handle, const char* wifi_name, const char* p
             - -1: 数据发送失败，通信过程中出现问题。
  * @attention 设置成功后蜂鸣器响，手动重启控制器进入 WIFISTA 模式。
  */
-int rm_set_wifi_sta(rm_robot_handle *handle, const char* router_name, const char* password);
+RM_INTERFACE_EXPORT int rm_set_wifi_sta(rm_robot_handle *handle, const char* router_name, const char* password);
 
 /**
  * @brief 控制器RS485接口波特率设置，设置成功后蜂鸣器响
@@ -1701,7 +1702,7 @@ int rm_set_wifi_sta(rm_robot_handle *handle, const char* router_name, const char
             - -1: 数据发送失败，通信过程中出现问题。
  * @attention 该指令下发后控制器会记录当前波特率，断电重启后仍会使用该波特率对外通信。
  */
-int rm_set_RS485(rm_robot_handle *handle, int baudrate);
+RM_INTERFACE_EXPORT int rm_set_RS485(rm_robot_handle *handle, int baudrate);
 /**
  * @brief 获取有线网卡信息，未连接有线网卡则会返回无效数据
  * 
@@ -1716,7 +1717,7 @@ int rm_set_RS485(rm_robot_handle *handle, int baudrate);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_get_wired_net(rm_robot_handle *handle, char * ip, char * mask, char * mac);
+RM_INTERFACE_EXPORT int rm_get_wired_net(rm_robot_handle *handle, char * ip, char * mask, char * mac);
 /**
  * @brief 查询无线网卡网络信息
  * 
@@ -1730,7 +1731,7 @@ int rm_get_wired_net(rm_robot_handle *handle, char * ip, char * mask, char * mac
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  * @attention 结构体中的channel值只有在AP模式时才可获取到，标识 wifi 热点的物理信道号
  */
-int rm_get_wifi_net(rm_robot_handle *handle, rm_wifi_net_t *wifi_net);
+RM_INTERFACE_EXPORT int rm_get_wifi_net(rm_robot_handle *handle, rm_wifi_net_t *wifi_net);
 /**
  * @brief 恢复网络出厂设置
  * 
@@ -1742,7 +1743,7 @@ int rm_get_wifi_net(rm_robot_handle *handle, rm_wifi_net_t *wifi_net);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_set_net_default(rm_robot_handle *handle);
+RM_INTERFACE_EXPORT int rm_set_net_default(rm_robot_handle *handle);
 /**
  * @brief 配置关闭 wifi 功能，需要重启后生效
  * 
@@ -1754,7 +1755,7 @@ int rm_set_net_default(rm_robot_handle *handle);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_set_wifi_close(rm_robot_handle *handle);
+RM_INTERFACE_EXPORT int rm_set_wifi_close(rm_robot_handle *handle);
 /** @} */ // 结束组的定义
 
 /**  
@@ -1782,7 +1783,7 @@ int rm_set_wifi_close(rm_robot_handle *handle);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_set_IO_mode(rm_robot_handle *handle, int io_num, int io_mode);
+RM_INTERFACE_EXPORT int rm_set_IO_mode(rm_robot_handle *handle, int io_num, int io_mode);
 /**
  * @brief 设置数字IO输出
  * 
@@ -1796,7 +1797,7 @@ int rm_set_IO_mode(rm_robot_handle *handle, int io_num, int io_mode);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_set_DO_state(rm_robot_handle *handle, int io_num, int state);
+RM_INTERFACE_EXPORT int rm_set_DO_state(rm_robot_handle *handle, int io_num, int state);
 /**
  * @brief 获取数字 IO 状态
  * 
@@ -1813,7 +1814,7 @@ int rm_set_DO_state(rm_robot_handle *handle, int io_num, int state);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_get_IO_state(rm_robot_handle *handle, int io_num, int* state, int* mode);
+RM_INTERFACE_EXPORT int rm_get_IO_state(rm_robot_handle *handle, int io_num, int* state, int* mode);
 /**
  * @brief 获取所有 IO 输入状态
  * 
@@ -1826,7 +1827,7 @@ int rm_get_IO_state(rm_robot_handle *handle, int io_num, int* state, int* mode);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_get_IO_input(rm_robot_handle *handle, int *DI_state);
+RM_INTERFACE_EXPORT int rm_get_IO_input(rm_robot_handle *handle, int *DI_state);
 /**
  * @brief 获取所有 IO 输出状态
  * 
@@ -1839,7 +1840,7 @@ int rm_get_IO_input(rm_robot_handle *handle, int *DI_state);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_get_IO_output(rm_robot_handle *handle, int *DO_state);
+RM_INTERFACE_EXPORT int rm_get_IO_output(rm_robot_handle *handle, int *DO_state);
 /**
  * @brief 设置控制器电源输出
  * 
@@ -1852,7 +1853,7 @@ int rm_get_IO_output(rm_robot_handle *handle, int *DO_state);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_set_voltage(rm_robot_handle *handle, int voltage_type);
+RM_INTERFACE_EXPORT int rm_set_voltage(rm_robot_handle *handle, int voltage_type);
 /**
  * @brief 获取控制器电源输出类
  * 
@@ -1865,7 +1866,7 @@ int rm_set_voltage(rm_robot_handle *handle, int voltage_type);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_get_voltage(rm_robot_handle *handle, int *voltage_type);
+RM_INTERFACE_EXPORT int rm_get_voltage(rm_robot_handle *handle, int *voltage_type);
 /** @} */ // 结束组的定义
 
 /**  
@@ -1888,7 +1889,7 @@ int rm_get_voltage(rm_robot_handle *handle, int *voltage_type);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_set_tool_DO_state(rm_robot_handle *handle, int io_num, int state);
+RM_INTERFACE_EXPORT int rm_set_tool_DO_state(rm_robot_handle *handle, int io_num, int state);
 /**
  * @brief 设置工具端数字 IO 模式
  * 
@@ -1902,7 +1903,7 @@ int rm_set_tool_DO_state(rm_robot_handle *handle, int io_num, int state);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_set_tool_IO_mode(rm_robot_handle *handle, int io_num, int io_mode);
+RM_INTERFACE_EXPORT int rm_set_tool_IO_mode(rm_robot_handle *handle, int io_num, int io_mode);
 /**
  * @brief 获取数字 IO 状态
  * 
@@ -1916,7 +1917,7 @@ int rm_set_tool_IO_mode(rm_robot_handle *handle, int io_num, int io_mode);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_get_tool_IO_state(rm_robot_handle *handle, int* mode, int* state);
+RM_INTERFACE_EXPORT int rm_get_tool_IO_state(rm_robot_handle *handle, int* mode, int* state);
 /**
  * @brief 设置工具端电源输出
  * 
@@ -1930,7 +1931,7 @@ int rm_get_tool_IO_state(rm_robot_handle *handle, int* mode, int* state);
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  * @attention 电源输出设置为 5V 时，工具端的IO 暂不支持输入输出功能
  */
-int rm_set_tool_voltage(rm_robot_handle *handle, int voltage_type);
+RM_INTERFACE_EXPORT int rm_set_tool_voltage(rm_robot_handle *handle, int voltage_type);
 /**
  * @brief 获取工具端电源输出
  * 
@@ -1943,7 +1944,7 @@ int rm_set_tool_voltage(rm_robot_handle *handle, int voltage_type);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_get_tool_voltage(rm_robot_handle *handle, int *voltage_type);
+RM_INTERFACE_EXPORT int rm_get_tool_voltage(rm_robot_handle *handle, int *voltage_type);
 /** @} */ // 结束组的定义
 
 /**  
@@ -1966,7 +1967,7 @@ int rm_get_tool_voltage(rm_robot_handle *handle, int *voltage_type);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_set_gripper_route(rm_robot_handle *handle, int min_limit, int max_limit);
+RM_INTERFACE_EXPORT int rm_set_gripper_route(rm_robot_handle *handle, int min_limit, int max_limit);
 /**
  * @brief 松开手爪，即手爪以指定的速度运动到开口最大处
  * 
@@ -1984,7 +1985,7 @@ int rm_set_gripper_route(rm_robot_handle *handle, int min_limit, int max_limit);
             - -4: 超时
             - -5: 到位设备检验失败
  */
-int rm_set_gripper_release(rm_robot_handle *handle, int speed, bool block, int timeout);
+RM_INTERFACE_EXPORT int rm_set_gripper_release(rm_robot_handle *handle, int speed, bool block, int timeout);
 /**
  * @brief 手爪力控夹取，手爪以设定的速度和力夹取，当夹持力超过设定的力阈值后，停止夹取
  * 
@@ -2003,7 +2004,7 @@ int rm_set_gripper_release(rm_robot_handle *handle, int speed, bool block, int t
             - -4: 超时
             - -5: 到位设备检验失败
  */
-int rm_set_gripper_pick(rm_robot_handle *handle, int speed, int force, bool block, int timeout);
+RM_INTERFACE_EXPORT int rm_set_gripper_pick(rm_robot_handle *handle, int speed, int force, bool block, int timeout);
 /**
  * @brief 手爪持续力控夹取
  * 
@@ -2022,7 +2023,7 @@ int rm_set_gripper_pick(rm_robot_handle *handle, int speed, int force, bool bloc
             - -4: 超时
             - -5: 到位设备检验失败
  */
-int rm_set_gripper_pick_on(rm_robot_handle *handle, int speed, int force, bool block, int timeout);
+RM_INTERFACE_EXPORT int rm_set_gripper_pick_on(rm_robot_handle *handle, int speed, int force, bool block, int timeout);
 /**
  * @brief 设置手爪达到指定位置
  * @details 手爪到达指定位置，当当前开口小于指定开口时，手爪以指定速度松开到指定开口位置；当当前开口大于指定开口时，
@@ -2041,7 +2042,7 @@ int rm_set_gripper_pick_on(rm_robot_handle *handle, int speed, int force, bool b
             - -4: 超时
             - -5: 到位设备检验失败
  */
-int rm_set_gripper_position(rm_robot_handle *handle, int position, bool block, int timeout);
+RM_INTERFACE_EXPORT int rm_set_gripper_position(rm_robot_handle *handle, int position, bool block, int timeout);
 /**
  * @brief 查询夹爪状态
  * 
@@ -2055,7 +2056,7 @@ int rm_set_gripper_position(rm_robot_handle *handle, int position, bool block, i
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  * @attention 此接口默认不更新数据，从首次控制夹爪开始后，使能更新状态，如果此时控制灵巧手或打开末端modbus功能，将不再更新数据。另外夹爪需要支持最新的固件，方可支持此功能
  */
-int rm_get_gripper_state(rm_robot_handle *handle, rm_gripper_state_t *state);
+RM_INTERFACE_EXPORT int rm_get_gripper_state(rm_robot_handle *handle, rm_gripper_state_t *state);
 /** @} */ // 结束组的定义
 
 /**  
@@ -2082,7 +2083,7 @@ int rm_get_gripper_state(rm_robot_handle *handle, rm_gripper_state_t *state);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。可能情况：当前机械臂不是六维力版本。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_get_force_data(rm_robot_handle *handle, rm_force_data_t *data);
+RM_INTERFACE_EXPORT int rm_get_force_data(rm_robot_handle *handle, rm_force_data_t *data);
 /**
  * @brief 将六维力数据清零，标定当前状态下的零位
  * 
@@ -2094,7 +2095,7 @@ int rm_get_force_data(rm_robot_handle *handle, rm_force_data_t *data);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_clear_force_data(rm_robot_handle *handle);
+RM_INTERFACE_EXPORT int rm_clear_force_data(rm_robot_handle *handle);
 /**
  * @brief 自动设置六维力重心参数
  * @details 设置六维力重心参数，六维力重新安装后，必须重新计算六维力所受到的初始力和重心。分别在不同姿态下，获取六维力的数据，
@@ -2115,7 +2116,7 @@ int rm_clear_force_data(rm_robot_handle *handle);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_set_force_sensor(rm_robot_handle *handle, bool block);
+RM_INTERFACE_EXPORT int rm_set_force_sensor(rm_robot_handle *handle, bool block);
 /**
  * @brief 手动标定六维力数据
  * @details 六维力重新安装后，必须重新计算六维力所受到的初始力和重心。该手动标定流程，适用于空间狭窄工作区域，以防自动标定过程中
@@ -2132,7 +2133,7 @@ int rm_set_force_sensor(rm_robot_handle *handle, bool block);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_manual_set_force(rm_robot_handle *handle, int count, float *joint, bool block);
+RM_INTERFACE_EXPORT int rm_manual_set_force(rm_robot_handle *handle, int count, float *joint, bool block);
 /**
  * @brief 停止标定力传感器重心
  * @details 在标定力传感器过程中，如果发生意外，发送该指令，停止机械臂运动，退出标定流程
@@ -2144,7 +2145,7 @@ int rm_manual_set_force(rm_robot_handle *handle, int count, float *joint, bool b
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_stop_set_force_sensor(rm_robot_handle *handle);
+RM_INTERFACE_EXPORT int rm_stop_set_force_sensor(rm_robot_handle *handle);
 /** @} */ // 结束组的定义
 
 /**  
@@ -2166,7 +2167,7 @@ int rm_stop_set_force_sensor(rm_robot_handle *handle);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_get_Fz(rm_robot_handle *handle, rm_fz_data_t *data);
+RM_INTERFACE_EXPORT int rm_get_Fz(rm_robot_handle *handle, rm_fz_data_t *data);
 /**
  * @brief 清零末端一维力数据，清空一维力数据后，后续所有获取到的数据都是基于当前的偏置。
  * 
@@ -2178,7 +2179,7 @@ int rm_get_Fz(rm_robot_handle *handle, rm_fz_data_t *data);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_clear_Fz(rm_robot_handle *handle);
+RM_INTERFACE_EXPORT int rm_clear_Fz(rm_robot_handle *handle);
 /**
  * @brief 自动标定一维力数据
  * @details 设置一维力重心参数，一维力重新安装后，必须重新计算一维力所受到的初始力和重心。
@@ -2192,7 +2193,7 @@ int rm_clear_Fz(rm_robot_handle *handle);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_auto_set_Fz(rm_robot_handle *handle, bool block);
+RM_INTERFACE_EXPORT int rm_auto_set_Fz(rm_robot_handle *handle, bool block);
 /**
  * @brief 手动标定一维力数据
  * @details 设置一维力重心参数，一维力重新安装后，必须重新计算一维力所受到的初始力和重心。该手动标定流程，
@@ -2209,7 +2210,7 @@ int rm_auto_set_Fz(rm_robot_handle *handle, bool block);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_manual_set_Fz(rm_robot_handle *handle, float *joint1, float *joint2, bool block);
+RM_INTERFACE_EXPORT int rm_manual_set_Fz(rm_robot_handle *handle, float *joint1, float *joint2, bool block);
 /** @} */ // 结束组的定义
 
 /**  
@@ -2230,7 +2231,7 @@ int rm_manual_set_Fz(rm_robot_handle *handle, float *joint1, float *joint2, bool
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_start_drag_teach(rm_robot_handle *handle, int trajectory_record);
+RM_INTERFACE_EXPORT int rm_start_drag_teach(rm_robot_handle *handle, int trajectory_record);
 /**
  * @brief 拖动示教结束
  * 
@@ -2242,7 +2243,7 @@ int rm_start_drag_teach(rm_robot_handle *handle, int trajectory_record);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_stop_drag_teach(rm_robot_handle *handle);
+RM_INTERFACE_EXPORT int rm_stop_drag_teach(rm_robot_handle *handle);
 /**
  * @brief 开始复合模式拖动示教
  * 
@@ -2262,7 +2263,7 @@ int rm_stop_drag_teach(rm_robot_handle *handle);
             - 输入参数有误
             - 使用六维力模式拖动示教时，当前已处于奇异区
  */
-int rm_start_multi_drag_teach(rm_robot_handle *handle, int mode, int singular_wall);
+RM_INTERFACE_EXPORT int rm_start_multi_drag_teach(rm_robot_handle *handle, int mode, int singular_wall);
 /**
  * @brief 开始复合模式拖动示教-新参数
  * 
@@ -2281,7 +2282,7 @@ int rm_start_multi_drag_teach(rm_robot_handle *handle, int mode, int singular_wa
             - 输入参数有误
             - 使用六维力模式拖动示教时，当前已处于奇异区
  */
-int rm_start_multi_drag_teach_new(rm_robot_handle *handle,rm_multi_drag_teach_t teach_state);
+RM_INTERFACE_EXPORT int rm_start_multi_drag_teach_new(rm_robot_handle *handle,rm_multi_drag_teach_t teach_state);
 /**
  * @brief 设置电流环拖动示教灵敏度
  * 
@@ -2294,7 +2295,7 @@ int rm_start_multi_drag_teach_new(rm_robot_handle *handle,rm_multi_drag_teach_t 
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_set_drag_teach_sensitivity(rm_robot_handle *handle, int grade);
+RM_INTERFACE_EXPORT int rm_set_drag_teach_sensitivity(rm_robot_handle *handle, int grade);
 /**
  * @brief 获取电流环拖动示教灵敏度
  * 
@@ -2307,7 +2308,7 @@ int rm_set_drag_teach_sensitivity(rm_robot_handle *handle, int grade);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_get_drag_teach_sensitivity(rm_robot_handle *handle, int *grade);
+RM_INTERFACE_EXPORT int rm_get_drag_teach_sensitivity(rm_robot_handle *handle, int *grade);
 /**
  * @brief 运动到轨迹起点
  * @details 轨迹复现前，必须控制机械臂运动到轨迹起点，如果设置正确，机械臂将以20%的速度运动到轨迹起点
@@ -2330,7 +2331,7 @@ int rm_get_drag_teach_sensitivity(rm_robot_handle *handle, int *grade);
             - -5: 单线程模式超时未接收到返回，请确保超时时间设置合理。 
  * @see rm_run_drag_trajectory
  */
-int rm_drag_trajectory_origin(rm_robot_handle *handle, int block);
+RM_INTERFACE_EXPORT int rm_drag_trajectory_origin(rm_robot_handle *handle, int block);
 /**
  * @brief 轨迹复现开始
  * 
@@ -2354,7 +2355,7 @@ int rm_drag_trajectory_origin(rm_robot_handle *handle, int block);
  * @attention 必须在拖动示教结束后才能使用，同时保证机械臂位于拖动示教的起点位置，可调用rm_drag_trajectory_origin接口运动至起点位置
  * @see rm_drag_trajectory_origin
  */
-int rm_run_drag_trajectory(rm_robot_handle *handle, int block);
+RM_INTERFACE_EXPORT int rm_run_drag_trajectory(rm_robot_handle *handle, int block);
 /**
  * @brief 控制机械臂在轨迹复现过程中的暂停
  * 
@@ -2366,7 +2367,7 @@ int rm_run_drag_trajectory(rm_robot_handle *handle, int block);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_pause_drag_trajectory(rm_robot_handle *handle);
+RM_INTERFACE_EXPORT int rm_pause_drag_trajectory(rm_robot_handle *handle);
 /**
  * @brief 控制机械臂在轨迹复现过程中暂停之后的继续，
  * 
@@ -2378,7 +2379,7 @@ int rm_pause_drag_trajectory(rm_robot_handle *handle);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_continue_drag_trajectory(rm_robot_handle *handle);
+RM_INTERFACE_EXPORT int rm_continue_drag_trajectory(rm_robot_handle *handle);
 /**
  * @brief 控制机械臂在轨迹复现过程中的停止
  * 
@@ -2390,7 +2391,7 @@ int rm_continue_drag_trajectory(rm_robot_handle *handle);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_stop_drag_trajectory(rm_robot_handle *handle);
+RM_INTERFACE_EXPORT int rm_stop_drag_trajectory(rm_robot_handle *handle);
 /**
  * @brief 保存拖动示教轨迹
  * 
@@ -2407,7 +2408,7 @@ int rm_stop_drag_trajectory(rm_robot_handle *handle);
             - -5: 文件名称截取失败
             - -6: 获取到的点位解析错误，保存失败
  */
-int rm_save_trajectory(rm_robot_handle *handle,const char* name, int *num);
+RM_INTERFACE_EXPORT int rm_save_trajectory(rm_robot_handle *handle,const char* name, int *num);
 /**
  * @brief 力位混合控制
  * @details 在笛卡尔空间轨迹规划时，使用该功能可保证机械臂末端接触力恒定，使用时力的方向与机械臂运动方向不能在同一方向。
@@ -2424,7 +2425,7 @@ int rm_save_trajectory(rm_robot_handle *handle,const char* name, int *num);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_set_force_position(rm_robot_handle *handle, int sensor, int mode, int direction, float N);
+RM_INTERFACE_EXPORT int rm_set_force_position(rm_robot_handle *handle, int sensor, int mode, int direction, float N);
 /**
  * @brief 力位混合控制-新参数
  * @details 在笛卡尔空间轨迹规划时，使用该功能可保证机械臂末端接触力恒定，使用时力的方向与机械臂运动方向不能在同一方向。
@@ -2438,7 +2439,7 @@ int rm_set_force_position(rm_robot_handle *handle, int sensor, int mode, int dir
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_set_force_position_new(rm_robot_handle *handle, rm_force_position_t param);
+RM_INTERFACE_EXPORT int rm_set_force_position_new(rm_robot_handle *handle, rm_force_position_t param);
 
 /**
  * @brief 结束力位混合控制
@@ -2451,7 +2452,7 @@ int rm_set_force_position_new(rm_robot_handle *handle, rm_force_position_t param
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_stop_force_position(rm_robot_handle *handle);
+RM_INTERFACE_EXPORT int rm_stop_force_position(rm_robot_handle *handle);
 /** @} */ // 结束组的定义
 
 /**  
@@ -2476,7 +2477,7 @@ int rm_stop_force_position(rm_robot_handle *handle);
             - -4: 当前到位设备校验失败，即当前到位设备不为灵巧手
             - -5: 超时未返回。 
  */
-int rm_set_hand_posture(rm_robot_handle *handle, int posture_num, bool block, int timeout);
+RM_INTERFACE_EXPORT int rm_set_hand_posture(rm_robot_handle *handle, int posture_num, bool block, int timeout);
 /**
  * @brief 设置灵巧手目标手势序列号
  * 
@@ -2493,7 +2494,7 @@ int rm_set_hand_posture(rm_robot_handle *handle, int posture_num, bool block, in
             - -4: 当前到位设备校验失败，即当前到位设备不为灵巧手
             - -5: 超时未返回。 
  */
-int rm_set_hand_seq(rm_robot_handle *handle, int seq_num, bool block, int timeout);
+RM_INTERFACE_EXPORT int rm_set_hand_seq(rm_robot_handle *handle, int seq_num, bool block, int timeout);
 /**
  * @brief 设置灵巧手各自由度角度
  * @details 设置灵巧手角度，灵巧手有6个自由度，从1~6分别为小拇指，无名指，中指，食指，大拇指弯曲，大拇指旋转
@@ -2506,7 +2507,7 @@ int rm_set_hand_seq(rm_robot_handle *handle, int seq_num, bool block, int timeou
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_set_hand_angle(rm_robot_handle *handle, const int *hand_angle);
+RM_INTERFACE_EXPORT int rm_set_hand_angle(rm_robot_handle *handle, const int *hand_angle);
 /**
  * @brief 设置灵巧手各自由度跟随角度（正式版本暂不支持）
  * @details 设置灵巧手跟随角度，灵巧手有6个自由度，从1~6分别为小拇指，无名指，中指，食指，大拇指弯曲，大拇指旋转
@@ -2519,7 +2520,7 @@ int rm_set_hand_angle(rm_robot_handle *handle, const int *hand_angle);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_set_hand_follow_angle(rm_robot_handle *handle, const int *hand_angle);
+RM_INTERFACE_EXPORT int rm_set_hand_follow_angle(rm_robot_handle *handle, const int *hand_angle);
 /**
  * @brief 设置灵巧手速度
  * 
@@ -2532,7 +2533,7 @@ int rm_set_hand_follow_angle(rm_robot_handle *handle, const int *hand_angle);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_set_hand_speed(rm_robot_handle *handle, int speed);
+RM_INTERFACE_EXPORT int rm_set_hand_speed(rm_robot_handle *handle, int speed);
 /**
  * @brief 设置灵巧手力阈值
  * 
@@ -2545,7 +2546,7 @@ int rm_set_hand_speed(rm_robot_handle *handle, int speed);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_set_hand_force(rm_robot_handle *handle, int hand_force);
+RM_INTERFACE_EXPORT int rm_set_hand_force(rm_robot_handle *handle, int hand_force);
 /** @} */ // 结束组的定义
 
 /**  
@@ -2579,7 +2580,7 @@ int rm_set_hand_force(rm_robot_handle *handle, int hand_force);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_set_modbus_mode(rm_robot_handle *handle, int port, int baudrate, int timeout);
+RM_INTERFACE_EXPORT int rm_set_modbus_mode(rm_robot_handle *handle, int port, int baudrate, int timeout);
 /**
  * @brief 关闭通讯端口 Modbus RTU 模式
  * 
@@ -2592,7 +2593,7 @@ int rm_set_modbus_mode(rm_robot_handle *handle, int port, int baudrate, int time
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_close_modbus_mode(rm_robot_handle *handle, int port);
+RM_INTERFACE_EXPORT int rm_close_modbus_mode(rm_robot_handle *handle, int port);
 /**
  * @brief 配置连接 ModbusTCP 从站
  * 
@@ -2607,7 +2608,7 @@ int rm_close_modbus_mode(rm_robot_handle *handle, int port);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_set_modbustcp_mode(rm_robot_handle *handle, const char *ip, int port, int timeout);
+RM_INTERFACE_EXPORT int rm_set_modbustcp_mode(rm_robot_handle *handle, const char *ip, int port, int timeout);
 /**
  * @brief 配置关闭 ModbusTCP 从站
  * 
@@ -2619,7 +2620,7 @@ int rm_set_modbustcp_mode(rm_robot_handle *handle, const char *ip, int port, int
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_close_modbustcp_mode(rm_robot_handle *handle);
+RM_INTERFACE_EXPORT int rm_close_modbustcp_mode(rm_robot_handle *handle);
 /**
  * @brief 读线圈
  * 
@@ -2633,7 +2634,7 @@ int rm_close_modbustcp_mode(rm_robot_handle *handle);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_read_coils(rm_robot_handle *handle, rm_peripheral_read_write_params_t params, int *data);
+RM_INTERFACE_EXPORT int rm_read_coils(rm_robot_handle *handle, rm_peripheral_read_write_params_t params, int *data);
 /**
  * @brief 读离散量输入
  * 
@@ -2647,7 +2648,7 @@ int rm_read_coils(rm_robot_handle *handle, rm_peripheral_read_write_params_t par
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_read_input_status(rm_robot_handle *handle, rm_peripheral_read_write_params_t params, int *data);
+RM_INTERFACE_EXPORT int rm_read_input_status(rm_robot_handle *handle, rm_peripheral_read_write_params_t params, int *data);
 /**
  * @brief 读保持寄存器
  * 
@@ -2662,7 +2663,7 @@ int rm_read_input_status(rm_robot_handle *handle, rm_peripheral_read_write_param
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_read_holding_registers(rm_robot_handle *handle, rm_peripheral_read_write_params_t params, int *data);
+RM_INTERFACE_EXPORT int rm_read_holding_registers(rm_robot_handle *handle, rm_peripheral_read_write_params_t params, int *data);
 /**
  * @brief 读输入寄存器
  * 
@@ -2677,7 +2678,7 @@ int rm_read_holding_registers(rm_robot_handle *handle, rm_peripheral_read_write_
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_read_input_registers(rm_robot_handle *handle, rm_peripheral_read_write_params_t params, int *data);
+RM_INTERFACE_EXPORT int rm_read_input_registers(rm_robot_handle *handle, rm_peripheral_read_write_params_t params, int *data);
 /**
  * @brief 写单圈数据
  * 
@@ -2691,7 +2692,7 @@ int rm_read_input_registers(rm_robot_handle *handle, rm_peripheral_read_write_pa
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_write_single_coil(rm_robot_handle *handle, rm_peripheral_read_write_params_t params, int data);
+RM_INTERFACE_EXPORT int rm_write_single_coil(rm_robot_handle *handle, rm_peripheral_read_write_params_t params, int data);
 /**
  * @brief 写单个寄存器
  * 
@@ -2705,7 +2706,7 @@ int rm_write_single_coil(rm_robot_handle *handle, rm_peripheral_read_write_param
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_write_single_register(rm_robot_handle *handle, rm_peripheral_read_write_params_t params, int data);
+RM_INTERFACE_EXPORT int rm_write_single_register(rm_robot_handle *handle, rm_peripheral_read_write_params_t params, int data);
 /**
  * @brief 写多个寄存器
  * 
@@ -2719,7 +2720,7 @@ int rm_write_single_register(rm_robot_handle *handle, rm_peripheral_read_write_p
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_write_registers(rm_robot_handle *handle, rm_peripheral_read_write_params_t params, int *data);
+RM_INTERFACE_EXPORT int rm_write_registers(rm_robot_handle *handle, rm_peripheral_read_write_params_t params, int *data);
 /**
  * @brief 写多圈数据
  * 
@@ -2733,7 +2734,7 @@ int rm_write_registers(rm_robot_handle *handle, rm_peripheral_read_write_params_
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_write_coils(rm_robot_handle *handle, rm_peripheral_read_write_params_t params, int *data);
+RM_INTERFACE_EXPORT int rm_write_coils(rm_robot_handle *handle, rm_peripheral_read_write_params_t params, int *data);
 /**
  * @brief 读多圈数据
  * 
@@ -2747,7 +2748,7 @@ int rm_write_coils(rm_robot_handle *handle, rm_peripheral_read_write_params_t pa
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_read_multiple_coils(rm_robot_handle *handle, rm_peripheral_read_write_params_t params, int *data);
+RM_INTERFACE_EXPORT int rm_read_multiple_coils(rm_robot_handle *handle, rm_peripheral_read_write_params_t params, int *data);
 /**
  * @brief 读多个保存寄存器
  * 
@@ -2761,7 +2762,7 @@ int rm_read_multiple_coils(rm_robot_handle *handle, rm_peripheral_read_write_par
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_read_multiple_holding_registers(rm_robot_handle *handle, rm_peripheral_read_write_params_t params, int *data);
+RM_INTERFACE_EXPORT int rm_read_multiple_holding_registers(rm_robot_handle *handle, rm_peripheral_read_write_params_t params, int *data);
 /**
  * @brief 读多个输入寄存器
  * 
@@ -2775,7 +2776,7 @@ int rm_read_multiple_holding_registers(rm_robot_handle *handle, rm_peripheral_re
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_read_multiple_input_registers(rm_robot_handle *handle, rm_peripheral_read_write_params_t params, int *data);
+RM_INTERFACE_EXPORT int rm_read_multiple_input_registers(rm_robot_handle *handle, rm_peripheral_read_write_params_t params, int *data);
 /** @} */ // 结束组的定义
 
 /**  
@@ -2798,7 +2799,7 @@ int rm_read_multiple_input_registers(rm_robot_handle *handle, rm_peripheral_read
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_set_install_pose(rm_robot_handle *handle, float x, float y, float z);
+RM_INTERFACE_EXPORT int rm_set_install_pose(rm_robot_handle *handle, float x, float y, float z);
 /**
  * @brief 获取安装方式参数
  * 
@@ -2813,7 +2814,7 @@ int rm_set_install_pose(rm_robot_handle *handle, float x, float y, float z);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_get_install_pose(rm_robot_handle *handle, float *x, float *y, float *z);
+RM_INTERFACE_EXPORT int rm_get_install_pose(rm_robot_handle *handle, float *x, float *y, float *z);
 /** @} */ // 结束组的定义
 
 /**  
@@ -2841,7 +2842,7 @@ int rm_get_install_pose(rm_robot_handle *handle, float *x, float *y, float *z);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_start_force_position_move(rm_robot_handle *handle);
+RM_INTERFACE_EXPORT int rm_start_force_position_move(rm_robot_handle *handle);
 /**
  * @brief 停止透传力位混合控制补偿模式
  * 
@@ -2853,7 +2854,7 @@ int rm_start_force_position_move(rm_robot_handle *handle);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_stop_force_position_move(rm_robot_handle *handle);
+RM_INTERFACE_EXPORT int rm_stop_force_position_move(rm_robot_handle *handle);
 /**
  * @brief 透传力位混合补偿-角度方式
  * 
@@ -2871,7 +2872,7 @@ int rm_stop_force_position_move(rm_robot_handle *handle);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_force_position_move_joint(rm_robot_handle *handle,const float *joint,int sensor,int mode,int dir,float force, bool follow);
+RM_INTERFACE_EXPORT int rm_force_position_move_joint(rm_robot_handle *handle,const float *joint,int sensor,int mode,int dir,float force, bool follow);
 /**
  * @brief 透传力位混合补偿-位姿方式
  * 
@@ -2889,7 +2890,7 @@ int rm_force_position_move_joint(rm_robot_handle *handle,const float *joint,int 
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_force_position_move_pose(rm_robot_handle *handle, rm_pose_t pose,int sensor,int mode,int dir,float force, bool follow);
+RM_INTERFACE_EXPORT int rm_force_position_move_pose(rm_robot_handle *handle, rm_pose_t pose,int sensor,int mode,int dir,float force, bool follow);
 /**
  * @brief 透传力位混合补偿-新参数
  * 
@@ -2902,7 +2903,7 @@ int rm_force_position_move_pose(rm_robot_handle *handle, rm_pose_t pose,int sens
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_force_position_move(rm_robot_handle *handle, rm_force_position_move_t param);
+RM_INTERFACE_EXPORT int rm_force_position_move(rm_robot_handle *handle, rm_force_position_move_t param);
 /** @} */ // 结束组的定义
 
 /**  
@@ -2926,7 +2927,7 @@ int rm_force_position_move(rm_robot_handle *handle, rm_force_position_move_t par
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_set_lift_speed(rm_robot_handle *handle, int speed);
+RM_INTERFACE_EXPORT int rm_set_lift_speed(rm_robot_handle *handle, int speed);
 /**
  * @brief 升降机构位置闭环控制
  * 
@@ -2949,7 +2950,7 @@ int rm_set_lift_speed(rm_robot_handle *handle, int speed);
             - -4: 当前到位设备校验失败，即当前到位设备不为升降机构。
             - -5: 单线程模式超时未接收到返回，请确保超时时间设置合理。
  */
-int rm_set_lift_height(rm_robot_handle *handle, int speed, int height, int block);
+RM_INTERFACE_EXPORT int rm_set_lift_height(rm_robot_handle *handle, int speed, int height, int block);
 /**
  * @brief 获取升降机构状态
  * 
@@ -2962,7 +2963,7 @@ int rm_set_lift_height(rm_robot_handle *handle, int speed, int height, int block
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_get_lift_state(rm_robot_handle *handle, rm_expand_state_t *state);
+RM_INTERFACE_EXPORT int rm_get_lift_state(rm_robot_handle *handle, rm_expand_state_t *state);
 /** @} */ // 结束组的定义
 
 /**  
@@ -2983,7 +2984,7 @@ int rm_get_lift_state(rm_robot_handle *handle, rm_expand_state_t *state);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_get_expand_state(rm_robot_handle *handle, rm_expand_state_t *state);
+RM_INTERFACE_EXPORT int rm_get_expand_state(rm_robot_handle *handle, rm_expand_state_t *state);
 /**
  * @brief 扩展关节速度环控制
  * 
@@ -2999,7 +3000,7 @@ int rm_get_expand_state(rm_robot_handle *handle, rm_expand_state_t *state);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_set_expand_speed(rm_robot_handle *handle, int speed);
+RM_INTERFACE_EXPORT int rm_set_expand_speed(rm_robot_handle *handle, int speed);
 /**
  * @brief 扩展关节位置环控制
  * 
@@ -3022,7 +3023,7 @@ int rm_set_expand_speed(rm_robot_handle *handle, int speed);
             - -4: 当前到位设备校验失败，即当前到位设备不为扩展关节。
             - -5: 单线程模式超时未接收到返回，请确保超时时间设置合理。
  */
-int rm_set_expand_pos(rm_robot_handle *handle, int speed, int pos, int block);
+RM_INTERFACE_EXPORT int rm_set_expand_pos(rm_robot_handle *handle, int speed, int pos, int block);
 /** @} */ // 结束组的定义
 
 /**  
@@ -3046,7 +3047,7 @@ int rm_set_expand_pos(rm_robot_handle *handle, int speed, int pos, int block);
             - -4: 文件名称校验失败
             - -5: 文件读取失败
  */
-int rm_send_project(rm_robot_handle *handle, rm_send_project_t project, int *errline);
+RM_INTERFACE_EXPORT int rm_send_project(rm_robot_handle *handle, rm_send_project_t project, int *errline);
 /**
  * @brief 轨迹规划中改变速度比例系数
  * 
@@ -3059,7 +3060,7 @@ int rm_send_project(rm_robot_handle *handle, rm_send_project_t project, int *err
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。
  */
-int rm_set_plan_speed(rm_robot_handle *handle, int speed);
+RM_INTERFACE_EXPORT int rm_set_plan_speed(rm_robot_handle *handle, int speed);
 
 /**
  * @brief 获取在线编程列表
@@ -3076,7 +3077,7 @@ int rm_set_plan_speed(rm_robot_handle *handle, int speed);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_get_program_trajectory_list(rm_robot_handle *handle, int page_num, int page_size, const char *vague_search,rm_program_trajectorys_t *trajectorys);
+RM_INTERFACE_EXPORT int rm_get_program_trajectory_list(rm_robot_handle *handle, int page_num, int page_size, const char *vague_search,rm_program_trajectorys_t *trajectorys);
 
 /**
  * @brief 开始运行指定编号轨迹
@@ -3100,7 +3101,7 @@ int rm_get_program_trajectory_list(rm_robot_handle *handle, int page_num, int pa
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
             - -4: 运行状态已停止但未接收到运行成功，是否在外部停止了轨迹。
  */ 
-int rm_set_program_id_run(rm_robot_handle *handle, int id, int speed, int block);
+RM_INTERFACE_EXPORT int rm_set_program_id_run(rm_robot_handle *handle, int id, int speed, int block);
 /**
  * @brief 查询在线编程运行状态
  * 
@@ -3113,7 +3114,7 @@ int rm_set_program_id_run(rm_robot_handle *handle, int id, int speed, int block)
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_get_program_run_state(rm_robot_handle *handle, rm_program_run_state_t *run_state);
+RM_INTERFACE_EXPORT int rm_get_program_run_state(rm_robot_handle *handle, rm_program_run_state_t *run_state);
 /**
  * @brief 删除指定编号轨迹
  * 
@@ -3126,7 +3127,7 @@ int rm_get_program_run_state(rm_robot_handle *handle, rm_program_run_state_t *ru
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_delete_program_trajectory(rm_robot_handle *handle, int id);
+RM_INTERFACE_EXPORT int rm_delete_program_trajectory(rm_robot_handle *handle, int id);
 /**
  * @brief 修改指定编号的轨迹信息
  * 
@@ -3141,7 +3142,7 @@ int rm_delete_program_trajectory(rm_robot_handle *handle, int id);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_update_program_trajectory(rm_robot_handle *handle, int id, int speed, const char* name);
+RM_INTERFACE_EXPORT int rm_update_program_trajectory(rm_robot_handle *handle, int id, int speed, const char* name);
 /**
  * @brief 设置 IO 默认运行编号
  * 
@@ -3154,7 +3155,7 @@ int rm_update_program_trajectory(rm_robot_handle *handle, int id, int speed, con
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_set_default_run_program(rm_robot_handle *handle, int id);
+RM_INTERFACE_EXPORT int rm_set_default_run_program(rm_robot_handle *handle, int id);
 /**
  * @brief 获取 IO 默认运行编号
  * 
@@ -3167,7 +3168,7 @@ int rm_set_default_run_program(rm_robot_handle *handle, int id);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_get_default_run_program(rm_robot_handle *handle, int *id);
+RM_INTERFACE_EXPORT int rm_get_default_run_program(rm_robot_handle *handle, int *id);
 /**
  * @brief 新增全局路点
  * 
@@ -3180,7 +3181,7 @@ int rm_get_default_run_program(rm_robot_handle *handle, int *id);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_add_global_waypoint(rm_robot_handle *handle, rm_waypoint_t waypoint);
+RM_INTERFACE_EXPORT int rm_add_global_waypoint(rm_robot_handle *handle, rm_waypoint_t waypoint);
 /**
  * @brief 更新全局路点
  * 
@@ -3193,7 +3194,7 @@ int rm_add_global_waypoint(rm_robot_handle *handle, rm_waypoint_t waypoint);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_update_global_waypoint(rm_robot_handle *handle, rm_waypoint_t waypoint);
+RM_INTERFACE_EXPORT int rm_update_global_waypoint(rm_robot_handle *handle, rm_waypoint_t waypoint);
 /**
  * @brief 删除全局路点
  * 
@@ -3206,7 +3207,7 @@ int rm_update_global_waypoint(rm_robot_handle *handle, rm_waypoint_t waypoint);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_delete_global_waypoint(rm_robot_handle *handle, const char* point_name);
+RM_INTERFACE_EXPORT int rm_delete_global_waypoint(rm_robot_handle *handle, const char* point_name);
 /**
  * @brief 查询指定全局路点
  * 
@@ -3220,7 +3221,7 @@ int rm_delete_global_waypoint(rm_robot_handle *handle, const char* point_name);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_get_given_global_waypoint(rm_robot_handle *handle, const char* name, rm_waypoint_t *point);
+RM_INTERFACE_EXPORT int rm_get_given_global_waypoint(rm_robot_handle *handle, const char* name, rm_waypoint_t *point);
 /**
  * @brief 查询多个全局路点
  * 
@@ -3236,7 +3237,7 @@ int rm_get_given_global_waypoint(rm_robot_handle *handle, const char* name, rm_w
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_get_global_waypoints_list(rm_robot_handle *handle, int page_num, int page_size, const char *vague_search,rm_waypoint_list_t *point_list);
+RM_INTERFACE_EXPORT int rm_get_global_waypoints_list(rm_robot_handle *handle, int page_num, int page_size, const char *vague_search,rm_waypoint_list_t *point_list);
 /** @} */ // 结束在线编程组的定义
 
 /**  
@@ -3258,7 +3259,7 @@ int rm_get_global_waypoints_list(rm_robot_handle *handle, int page_num, int page
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_set_realtime_push(rm_robot_handle *handle, rm_realtime_push_config_t config);
+RM_INTERFACE_EXPORT int rm_set_realtime_push(rm_robot_handle *handle, rm_realtime_push_config_t config);
 /**
  * @brief 查询 UDP 机械臂状态主动上报配置
  * 
@@ -3271,7 +3272,7 @@ int rm_set_realtime_push(rm_robot_handle *handle, rm_realtime_push_config_t conf
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_get_realtime_push(rm_robot_handle *handle, rm_realtime_push_config_t *config);
+RM_INTERFACE_EXPORT int rm_get_realtime_push(rm_robot_handle *handle, rm_realtime_push_config_t *config);
 /** @} */ // 结束组的定义
 
 /**  
@@ -3306,7 +3307,7 @@ int rm_get_realtime_push(rm_robot_handle *handle, rm_realtime_push_config_t *con
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 -4:form设置有误
  */
-int rm_add_electronic_fence_config(rm_robot_handle *handle, rm_fence_config_t config);
+RM_INTERFACE_EXPORT int rm_add_electronic_fence_config(rm_robot_handle *handle, rm_fence_config_t config);
 /**
  * @brief 更新几何模型参数
  * 
@@ -3319,7 +3320,7 @@ int rm_add_electronic_fence_config(rm_robot_handle *handle, rm_fence_config_t co
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_update_electronic_fence_config(rm_robot_handle *handle, rm_fence_config_t config);
+RM_INTERFACE_EXPORT int rm_update_electronic_fence_config(rm_robot_handle *handle, rm_fence_config_t config);
 /**
  * @brief 删除指定几何模型
  * 
@@ -3332,7 +3333,7 @@ int rm_update_electronic_fence_config(rm_robot_handle *handle, rm_fence_config_t
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_delete_electronic_fence_config(rm_robot_handle *handle, const char* form_name);
+RM_INTERFACE_EXPORT int rm_delete_electronic_fence_config(rm_robot_handle *handle, const char* form_name);
 /**
  * @brief 查询所有几何模型名称
  * 
@@ -3346,7 +3347,7 @@ int rm_delete_electronic_fence_config(rm_robot_handle *handle, const char* form_
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_get_electronic_fence_list_names(rm_robot_handle *handle, rm_fence_names_t *names, int *len);
+RM_INTERFACE_EXPORT int rm_get_electronic_fence_list_names(rm_robot_handle *handle, rm_fence_names_t *names, int *len);
 /**
  * @brief 查询指定几何模型参数
  * 
@@ -3360,7 +3361,7 @@ int rm_get_electronic_fence_list_names(rm_robot_handle *handle, rm_fence_names_t
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_get_given_electronic_fence_config(rm_robot_handle *handle, const char* name, rm_fence_config_t *config);
+RM_INTERFACE_EXPORT int rm_get_given_electronic_fence_config(rm_robot_handle *handle, const char* name, rm_fence_config_t *config);
 /**
  * @brief 查询所有几何模型参数
  * 
@@ -3374,7 +3375,7 @@ int rm_get_given_electronic_fence_config(rm_robot_handle *handle, const char* na
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_get_electronic_fence_list_infos(rm_robot_handle *handle, rm_fence_config_list_t *config_list, int *len);
+RM_INTERFACE_EXPORT int rm_get_electronic_fence_list_infos(rm_robot_handle *handle, rm_fence_config_list_t *config_list, int *len);
 /**
  * @brief 设置电子围栏使能状态
  * 
@@ -3390,7 +3391,7 @@ int rm_get_electronic_fence_list_infos(rm_robot_handle *handle, rm_fence_config_
  * 系统会立即返回相应的错误码，并自动中止运动，从而有效保障机械臂的安全运行。需要注意的是，电子围栏目前仅支持长方体和点面矢量平面这两种形状，并
  * 且其仅在仿真模式下生效，为用户提供一个预演轨迹与进行轨迹优化的安全环境
  */
-int rm_set_electronic_fence_enable(rm_robot_handle *handle, rm_electronic_fence_enable_t state);
+RM_INTERFACE_EXPORT int rm_set_electronic_fence_enable(rm_robot_handle *handle, rm_electronic_fence_enable_t state);
 /**
  * @brief 获取电子围栏使能状态
  * 
@@ -3403,7 +3404,7 @@ int rm_set_electronic_fence_enable(rm_robot_handle *handle, rm_electronic_fence_
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_get_electronic_fence_enable(rm_robot_handle *handle,rm_electronic_fence_enable_t *state);
+RM_INTERFACE_EXPORT int rm_get_electronic_fence_enable(rm_robot_handle *handle,rm_electronic_fence_enable_t *state);
 /**
  * @brief 设置当前电子围栏参数配置
  * 
@@ -3416,7 +3417,7 @@ int rm_get_electronic_fence_enable(rm_robot_handle *handle,rm_electronic_fence_e
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_set_electronic_fence_config(rm_robot_handle *handle, rm_fence_config_t config);
+RM_INTERFACE_EXPORT int rm_set_electronic_fence_config(rm_robot_handle *handle, rm_fence_config_t config);
 /**
  * @brief 获取当前电子围栏参数
  * 
@@ -3429,7 +3430,7 @@ int rm_set_electronic_fence_config(rm_robot_handle *handle, rm_fence_config_t co
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_get_electronic_fence_config(rm_robot_handle *handle, rm_fence_config_t *config);
+RM_INTERFACE_EXPORT int rm_get_electronic_fence_config(rm_robot_handle *handle, rm_fence_config_t *config);
 /**
  * @brief 设置虚拟墙使能状态
  * 
@@ -3442,7 +3443,7 @@ int rm_get_electronic_fence_config(rm_robot_handle *handle, rm_fence_config_t *c
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_set_virtual_wall_enable(rm_robot_handle *handle, rm_electronic_fence_enable_t state);
+RM_INTERFACE_EXPORT int rm_set_virtual_wall_enable(rm_robot_handle *handle, rm_electronic_fence_enable_t state);
 /**
  * @brief 获取虚拟墙使能状态
  * 
@@ -3455,7 +3456,7 @@ int rm_set_virtual_wall_enable(rm_robot_handle *handle, rm_electronic_fence_enab
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_get_virtual_wall_enable(rm_robot_handle *handle,rm_electronic_fence_enable_t *state);
+RM_INTERFACE_EXPORT int rm_get_virtual_wall_enable(rm_robot_handle *handle,rm_electronic_fence_enable_t *state);
 /**
  * @brief 设置当前虚拟墙参数
  * 
@@ -3468,7 +3469,7 @@ int rm_get_virtual_wall_enable(rm_robot_handle *handle,rm_electronic_fence_enabl
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_set_virtual_wall_config(rm_robot_handle *handle, rm_fence_config_t config);
+RM_INTERFACE_EXPORT int rm_set_virtual_wall_config(rm_robot_handle *handle, rm_fence_config_t config);
 /**
  * @brief 获取当前虚拟墙参数
  * 
@@ -3481,7 +3482,7 @@ int rm_set_virtual_wall_config(rm_robot_handle *handle, rm_fence_config_t config
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_get_virtual_wall_config(rm_robot_handle *handle, rm_fence_config_t *config);
+RM_INTERFACE_EXPORT int rm_get_virtual_wall_config(rm_robot_handle *handle, rm_fence_config_t *config);
 /** @} */ // 结束电子围栏组的定义
 
 /**  
@@ -3503,7 +3504,7 @@ int rm_get_virtual_wall_config(rm_robot_handle *handle, rm_fence_config_t *confi
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_set_self_collision_enable(rm_robot_handle *handle, bool state);
+RM_INTERFACE_EXPORT int rm_set_self_collision_enable(rm_robot_handle *handle, bool state);
 /**
  * @brief 获取自碰撞安全检测使能状态
  * 
@@ -3516,7 +3517,7 @@ int rm_set_self_collision_enable(rm_robot_handle *handle, bool state);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-int rm_get_self_collision_enable(rm_robot_handle *handle,bool *state);
+RM_INTERFACE_EXPORT int rm_get_self_collision_enable(rm_robot_handle *handle,bool *state);
 /** @} */ // 结束组的定义
 
 /******************************************算法接口*******************************************************/
@@ -3534,14 +3535,14 @@ int rm_get_self_collision_enable(rm_robot_handle *handle,bool *state);
  * printf("algo version: %s\n", version);
  * @endcode
  */
-char* rm_algo_version(void);
+RM_INTERFACE_EXPORT char* rm_algo_version(void);
 /**
  * @brief 初始化算法依赖数据(不连接机械臂时调用)
  * 
  * @param Mode 机械臂型号
  * @param Type 传感器型号
  */
-void rm_algo_init_sys_data(rm_robot_arm_model_e Mode, rm_force_type_e Type);
+RM_INTERFACE_EXPORT void rm_algo_init_sys_data(rm_robot_arm_model_e Mode, rm_force_type_e Type);
 /**
  * @brief 设置安装角度
  * 
@@ -3549,7 +3550,7 @@ void rm_algo_init_sys_data(rm_robot_arm_model_e Mode, rm_force_type_e Type);
  * @param y Y轴安装角度 单位°
  * @param z z轴安装角度 单位°
  */
-void rm_algo_set_angle(float x, float y, float z);
+RM_INTERFACE_EXPORT void rm_algo_set_angle(float x, float y, float z);
 /**
  * @brief 获取安装角度
  * 
@@ -3557,86 +3558,86 @@ void rm_algo_set_angle(float x, float y, float z);
  * @param y Y轴安装角度 单位°
  * @param z z轴安装角度 单位°
  */
-void rm_algo_get_angle(float* x, float* y, float* z);
+RM_INTERFACE_EXPORT void rm_algo_get_angle(float* x, float* y, float* z);
 /**
  * @brief 设置工作坐标系
  * 
  * @param coord_work 坐标系数据(无需设置名称)
  */
-void rm_algo_set_workframe(const rm_frame_t* const coord_work);
+RM_INTERFACE_EXPORT void rm_algo_set_workframe(const rm_frame_t* const coord_work);
 /**
  * @brief 获取当前工作坐标系
  * 
  * @param coord_work 当前工作坐标系(获取到的坐标系参数，不包括坐标系名称)
  */
-void rm_algo_get_curr_workframe(rm_frame_t* coord_work);
+RM_INTERFACE_EXPORT void rm_algo_get_curr_workframe(rm_frame_t* coord_work);
 /**
  * @brief 设置工具坐标系
  * 
  * @param coord_tool 坐标系数据(无需设置名称)
  */
-void rm_algo_set_toolframe(const rm_frame_t* const coord_tool);
+RM_INTERFACE_EXPORT void rm_algo_set_toolframe(const rm_frame_t* const coord_tool);
 /**
  * @brief 获取算法当前工具坐标系
  * 
  * @param coord_tool 当前工具坐标系(获取到的坐标系参数，不包括坐标系名称)
  */
-void rm_algo_get_curr_toolframe(rm_frame_t* coord_tool);
+RM_INTERFACE_EXPORT void rm_algo_get_curr_toolframe(rm_frame_t* coord_tool);
 /**
  * @brief 设置算法关节最大限位
  * 
  * @param joint_limit 单位°
  */
-void rm_algo_set_joint_max_limit(const float* const joint_limit);
+RM_INTERFACE_EXPORT void rm_algo_set_joint_max_limit(const float* const joint_limit);
 /**
  * @brief 获取算法关节最大限位
  * 
  * @param joint_limit 返回关节最大限位
  */
-void rm_algo_get_joint_max_limit(float* joint_limit);
+RM_INTERFACE_EXPORT void rm_algo_get_joint_max_limit(float* joint_limit);
 /**
  * @brief 设置算法关节最小限位
  * 
  * @param joint_limit 单位°
  */
-void rm_algo_set_joint_min_limit(const float* const joint_limit);
+RM_INTERFACE_EXPORT void rm_algo_set_joint_min_limit(const float* const joint_limit);
 /**
  * @brief 获取算法关节最小限位
  * 
  * @param joint_limit 返回关节最小限位
  */
-void rm_algo_get_joint_min_limit(float* joint_limit);
+RM_INTERFACE_EXPORT void rm_algo_get_joint_min_limit(float* joint_limit);
 /**
  * @brief 设置算法关节最大速度
  * 
  * @param joint_slim_max RPM
  */
-void rm_algo_set_joint_max_speed(const float* const joint_slim_max);
+RM_INTERFACE_EXPORT void rm_algo_set_joint_max_speed(const float* const joint_slim_max);
 /**
  * @brief 获取算法关节最大速度
  * 
  * @param joint_slim_max 返回关节最大速度
  */
-void rm_algo_get_joint_max_speed(float* joint_slim_max);
+RM_INTERFACE_EXPORT void rm_algo_get_joint_max_speed(float* joint_slim_max);
 /**
  * @brief 设置算法关节最大加速度
  * 
  * @param joint_alim_max RPM/s
  */
-void rm_algo_set_joint_max_acc(const float* const joint_alim_max);
+RM_INTERFACE_EXPORT void rm_algo_set_joint_max_acc(const float* const joint_alim_max);
 /**
  * @brief 获取算法关节最大加速度
  * 
  * @param joint_alim_max 返回关节最大加速度
  */
-void rm_algo_get_joint_max_acc(float* joint_alim_max);
+RM_INTERFACE_EXPORT void rm_algo_get_joint_max_acc(float* joint_alim_max);
 /**
  * @brief 设置逆解求解模式
  * 
  * @param mode true：遍历模式，冗余参数遍历的求解策略。适于当前位姿跟要求解的位姿差别特别大的应用场景，如MOVJ_P、位姿编辑等，耗时较长
               false：单步模式，自动调整冗余参数的求解策略。适于当前位姿跟要求解的位姿差别特别小、连续周期控制的场景，如笛卡尔空间规划的位姿求解等，耗时短
  */
-void rm_algo_set_redundant_parameter_traversal_mode(bool mode);
+RM_INTERFACE_EXPORT void rm_algo_set_redundant_parameter_traversal_mode(bool mode);
 /**
  * @brief 逆解函数，默认单步模式，可使用Algo_Set_Redundant_Parameter_Traversal_Mode接口设置逆解求解模式
  * 
@@ -3652,7 +3653,7 @@ void rm_algo_set_redundant_parameter_traversal_mode(bool mode);
  * 未连接机械臂时，需首先调用初始化算法依赖数据接口，并按照实际需求设置使用的坐标系、安装方式及关节速度位置等限制
  *（不设置则按照出厂默认的参数进行计算），此时机械臂控制句柄设置为NULL即可
  */
-int rm_algo_inverse_kinematics(rm_robot_handle *handle, rm_inverse_kinematics_params_t params, float *q_out);
+RM_INTERFACE_EXPORT int rm_algo_inverse_kinematics(rm_robot_handle *handle, rm_inverse_kinematics_params_t params, float *q_out);
 /**
  * @brief 正解算法接口
  *
@@ -3664,42 +3665,42 @@ int rm_algo_inverse_kinematics(rm_robot_handle *handle, rm_inverse_kinematics_pa
  * 未连接机械臂时，需首先调用初始化算法依赖数据接口，并按照实际需求设置使用的坐标系、安装方式及关节速度位置等限制
  *（不设置则按照出厂默认的参数进行计算），此时机械臂控制句柄设置为NULL即可
  */
-rm_pose_t rm_algo_forward_kinematics(rm_robot_handle *handle,const float* const joint);
+RM_INTERFACE_EXPORT rm_pose_t rm_algo_forward_kinematics(rm_robot_handle *handle,const float* const joint);
 /**
  * @brief 欧拉角转四元数
  * 
  * @param eu 欧拉角，单位：rad 
  * @return rm_quat_t 四元数
  */
-rm_quat_t rm_algo_euler2quaternion(rm_euler_t eu);
+RM_INTERFACE_EXPORT rm_quat_t rm_algo_euler2quaternion(rm_euler_t eu);
 /**
  * @brief 四元数转欧拉角
  * 
  * @param qua 四元数
  * @return rm_euler_t 欧拉角
  */
-rm_euler_t rm_algo_quaternion2euler(rm_quat_t qua);
+RM_INTERFACE_EXPORT rm_euler_t rm_algo_quaternion2euler(rm_quat_t qua);
 /**
  * @brief 欧拉角转旋转矩阵
  * 
  * @param state 欧拉角，单位：rad
  * @return rm_matrix_t 旋转矩阵
  */
-rm_matrix_t rm_algo_euler2matrix(rm_euler_t state);
+RM_INTERFACE_EXPORT rm_matrix_t rm_algo_euler2matrix(rm_euler_t state);
 /**
  * @brief 位姿转旋转矩阵
  * 
  * @param state 位姿
  * @return rm_matrix_t 旋转矩阵
  */
-rm_matrix_t rm_algo_pos2matrix(rm_pose_t state);
+RM_INTERFACE_EXPORT rm_matrix_t rm_algo_pos2matrix(rm_pose_t state);
 /**
  * @brief 旋转矩阵转位姿
  * 
  * @param matrix 旋转矩阵
  * @return rm_pose_t 位姿
  */
-rm_pose_t rm_algo_matrix2pos(rm_matrix_t matrix);
+RM_INTERFACE_EXPORT rm_pose_t rm_algo_matrix2pos(rm_matrix_t matrix);
 /**
  * @brief 基坐标系转工作坐标系
  * 
@@ -3707,7 +3708,7 @@ rm_pose_t rm_algo_matrix2pos(rm_matrix_t matrix);
  * @param state 工具端坐标在基坐标系下位姿
  * @return rm_pose_t 基坐标系在工作坐标系下的位姿
  */
-rm_pose_t rm_algo_base2workframe(rm_matrix_t matrix, rm_pose_t state);
+RM_INTERFACE_EXPORT rm_pose_t rm_algo_base2workframe(rm_matrix_t matrix, rm_pose_t state);
 /**
  * @brief 工作坐标系转基坐标系
  * 
@@ -3715,7 +3716,7 @@ rm_pose_t rm_algo_base2workframe(rm_matrix_t matrix, rm_pose_t state);
  * @param state 工具端坐标在工作坐标系下位姿
  * @return rm_pose_t 工作坐标系在基坐标系下的位姿
  */
-rm_pose_t rm_algo_workframe2base(rm_matrix_t matrix, rm_pose_t state);
+RM_INTERFACE_EXPORT rm_pose_t rm_algo_workframe2base(rm_matrix_t matrix, rm_pose_t state);
 /**
  * @brief 计算环绕运动位姿
  * 
@@ -3726,7 +3727,7 @@ rm_pose_t rm_algo_workframe2base(rm_matrix_t matrix, rm_pose_t state);
  * @param choose_axis 指定计算时使用的坐标系
  * @return rm_pose_t 计算位姿结果
  */
-rm_pose_t rm_algo_rotate_move(rm_robot_handle *handle,const float* const curr_joint, int rotate_axis, float rotate_angle, rm_pose_t choose_axis);
+RM_INTERFACE_EXPORT rm_pose_t rm_algo_rotate_move(rm_robot_handle *handle,const float* const curr_joint, int rotate_axis, float rotate_angle, rm_pose_t choose_axis);
 /**
  * @brief 计算沿工具坐标系运动位姿
  * 
@@ -3737,7 +3738,7 @@ rm_pose_t rm_algo_rotate_move(rm_robot_handle *handle,const float* const curr_jo
  * @param move_lengthz 沿Z轴移动长度，单位：米
  * @return rm_pose_t 工作坐标系下的位姿
  */
-rm_pose_t rm_algo_cartesian_tool(rm_robot_handle *handle,const float* const curr_joint, float move_lengthx,
+RM_INTERFACE_EXPORT rm_pose_t rm_algo_cartesian_tool(rm_robot_handle *handle,const float* const curr_joint, float move_lengthx,
                          float move_lengthy, float move_lengthz);
 /**
  * @brief 计算Pos和Rot沿某坐标系有一定的位移和旋转角度后，所得到的位姿数据
@@ -3748,7 +3749,7 @@ rm_pose_t rm_algo_cartesian_tool(rm_robot_handle *handle,const float* const curr
  * @param frameMode 坐标系模式选择 0:Work（work即可任意设置坐标系），1:Tool
  * @return rm_pose_t 平移旋转后的位姿
  */
-rm_pose_t rm_algo_pose_move(rm_robot_handle *handle,rm_pose_t poseCurrent, const float *deltaPosAndRot, int frameMode);
+RM_INTERFACE_EXPORT rm_pose_t rm_algo_pose_move(rm_robot_handle *handle,rm_pose_t poseCurrent, const float *deltaPosAndRot, int frameMode);
 /**
  * @brief 末端位姿转成工具位姿
  * 
@@ -3756,7 +3757,7 @@ rm_pose_t rm_algo_pose_move(rm_robot_handle *handle,rm_pose_t poseCurrent, const
  * @param eu_end 基于世界坐标系和默认工具坐标系的末端位姿
  * @return rm_pose_t 基于工作坐标系和工具坐标系的末端位姿
  */
-rm_pose_t rm_algo_end2tool(rm_robot_handle *handle,rm_pose_t eu_end);
+RM_INTERFACE_EXPORT rm_pose_t rm_algo_end2tool(rm_robot_handle *handle,rm_pose_t eu_end);
 /**
  * @brief 工具位姿转末端位姿
  * 
@@ -3764,7 +3765,7 @@ rm_pose_t rm_algo_end2tool(rm_robot_handle *handle,rm_pose_t eu_end);
  * @param eu_tool 基于工作坐标系和工具坐标系的末端位姿
  * @return rm_pose_t 基于世界坐标系和默认工具坐标系的末端位姿
  */
-rm_pose_t rm_algo_tool2end(rm_robot_handle *handle,rm_pose_t eu_tool);
+RM_INTERFACE_EXPORT rm_pose_t rm_algo_tool2end(rm_robot_handle *handle,rm_pose_t eu_tool);
 /** @} */ // 结束算法组的定义
 
 
