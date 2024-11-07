@@ -115,7 +115,51 @@ RMDemo_AlgoInterface
 ### **2. 代码说明**
 
 下面是 `main.c` 文件的主要功能：
+- **机械臂各型号初始化参数数组**
+  
+  ```c
+  ArmModelData arm_data[9] = {
+    {
+        {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},
+        {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},
+        {{0.3, 0, 0.3}, {0,0,0,0},{3.14, 0, 0} }
+    },
+    {
+        {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},  
+        {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},
+        {{0.3, 0, 0.3}, {0,0,0,0},{3.14, 0, 3.14} } 
+    }, 
+    {
 
+    },
+    {  
+        {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},  
+        {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},
+        {{0.3, 0, 0.3}, {0,0,0,0},{3.14, 0, 0} }
+    },
+    {
+
+    },
+    {  
+        {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},  
+        {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}, 
+        {{0.3, 0, 0.3}, {0,0,0,0},{3.14, 0, 0} } 
+    },
+    {
+
+    },
+    {  
+        {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},  
+        {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},  
+        {{0.3, 0, 0.3}, {0,0,0,0},{3.14, 0, 0} } 
+    },
+    {  
+        {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},  
+        {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},  
+        {{0.3, 0, 0.3}, {0,0,0,0},{3.14, 0, 0} }
+    }
+  };
+  ```
 
 - **手动设置工作坐标系**
 
@@ -140,19 +184,9 @@ RMDemo_AlgoInterface
 - **逆解函数**
     ```C
     rm_inverse_kinematics_params_t inverse_params;
-    float q_in_joint[6] = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
     float q_in_pose[6] = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
     memcpy(inverse_params.q_in, q_in_joint, sizeof(q_in_joint));
-    inverse_params.q_pose.position.x = 0.3f;
-    inverse_params.q_pose.position.y = 0.0f;
-    inverse_params.q_pose.position.z = 0.3f;
-    inverse_params.q_pose.quaternion.w = 0.0f;
-    inverse_params.q_pose.quaternion.x = 0.0f;
-    inverse_params.q_pose.quaternion.y = 0.0f;
-    inverse_params.q_pose.quaternion.z = 0.0f;
-    inverse_params.q_pose.euler.rx = 3.14f;
-    inverse_params.q_pose.euler.ry = 0.0f;
-    inverse_params.q_pose.euler.rz = 0.0f;
+    inverse_params.q_pose = arm_data[Mode].pose;
     inverse_params.flag = 1;
     result = rm_algo_inverse_kinematics(&handle, inverse_params, q_in_pose);
     ```

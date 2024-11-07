@@ -142,6 +142,66 @@ moves operation succeeded
 ### **5.2 关键代码说明**
 
 下面是 `main.c` 文件的主要功能：
+- **定义各型号机械臂初始化参数数组**
+
+    ```C
+    ArmModelData arm_data[9] = {
+        [RM_MODEL_RM_65_E] = {
+            .joint_angles = {0, 0, 0, 0, 0, 0}, 
+            .pose = { .position = {-0.3, 0, 0.3}, .euler = {3.14, 0, 0}},
+            .point_list = { {.position = {-0.3, 0, 0.3}, .euler = {3.14, 0, 0}},
+                            {.position = {-0.27, -0.22,0.3}, .euler = {3.14, 0, 0}},
+                            {.position = {-0.314, -0.25, 0.2}, .euler = {3.14, 0, 0}},
+                            {.position = {-0.239, 0.166, 0.276}, .euler = {3.14, 0, 0}},
+                            {.position = {-0.239, 0.264, 0.126}, .euler = {3.14, 0, 0}},}
+        },
+        [RM_MODEL_RM_75_E] = {
+            .joint_angles = {0, 20, 0, 70, 0, 90, 0},  
+            .pose = { .position = {0.297557, 0, 0.337061}, .euler = {3.142, 0, 3.142} } ,
+            .point_list = { {.position = {0.3, 0.1, 0.337061}, .euler = {3.142, 0, 3.142}},
+                            {.position = {0.2, 0.3, 0.237061}, .euler = {3.142, 0, 3.142}},
+                            {.position = {0.2, 0.25, 0.037061}, .euler = {3.142, 0, 3.142}},
+                            {.position = {0.1, 0.3, 0.137061}, .euler = {3.142, 0, 3.142}},
+                            {.position = {0.2, 0.25, 0.337061}, .euler = {3.142, 0, 3.142}}, }
+        }, 
+        [RM_MODEL_RM_63_II_E] = {  
+            .joint_angles = {0, 20, 70, 0, 90, 0},
+            .pose = { .position = {0.448968, 0, 0.345083}, .euler = {3.14, 0, 3.142} },
+            .point_list = { {.position = {0.3, 0.3, 0.345083}, .euler = {3.142, 0, 3.142}},
+                            {.position = {0.3, 0.4, 0.145083}, .euler = {3.142, 0, 3.142}},
+                            {.position = {0.3, 0.2, 0.045083}, .euler = {3.142, 0, 3.142}},
+                            {.position = {0.4, 0.1, 0.145083}, .euler = {3.142, 0, 3.142}},
+                            {.position = {0.5, 0, 0.345083}, .euler = {3.142, 0, 3.142}}, }
+        },
+        [RM_MODEL_ECO_65_E] = {  
+            .joint_angles = {0, 20, 70, 0, -90, 0},
+            .pose = { .position = {0.352925, -0.058880, 0.327320}, .euler = {3.141, 0, -1.57} } ,
+            .point_list = { {.position = {0.3, 0.3, 0.327320}, .euler = {3.141, 0, -1.57}},
+                            {.position = {0.2, 0.4, 0.127320}, .euler = {3.141, 0, -1.57}},
+                            {.position = {0.2, 0.2, 0.027320}, .euler = {3.141, 0, -1.57}},
+                            {.position = {0.3, 0.1, 0.227320}, .euler = {3.141, 0, -1.57}},
+                            {.position = {0.4, 0, 0.327320}, .euler = {3.141, 0, -1.57}}, }
+        },
+        [RM_MODEL_GEN_72_E] = {  
+            .joint_angles = {0, 0, 0, -90, 0, 0, 0},
+            .pose = { .position = {0.359500, 0, 0.426500}, .euler = {3.142, 0, 0} } ,
+            .point_list = { {.position = {0.359500, 0, 0.426500}, .euler = {3.142, 0, 0}},
+                            {.position = {0.2, 0.3, 0.426500}, .euler = {3.142, 0, 0}},
+                            {.position = {0.2, 0.3, 0.3}, .euler = {3.142, 0, 0}},
+                            {.position = {0.3, 0.3, 0.3}, .euler = {3.142, 0, 0}},
+                            {.position = {0.3, -0.1, 0.4}, .euler = {3.142, 0, 0}} }
+        },
+        [RM_MODEL_ECO_63_E] = {  
+            .joint_angles = {0, 20, 70, 0, -90, 0},
+            .pose = { .position = {0.544228, -0.058900, 0.468274}, .euler = {3.142, 0, -1.571} },
+            .point_list = { {.position = {0.3, 0.3, 0.468274}, .euler = {3.142, 0, -1.571}},
+                            {.position = {0.3, 0.4, 0.168274}, .euler = {3.142, 0, -1.571}},
+                            {.position = {0.3, 0.2, 0.268274}, .euler = {3.142, 0, -1.571}},
+                            {.position = {0.4, 0.1, 0.368274}, .euler = {3.142, 0, -1.571}},
+                            {.position = {0.5, 0, 0.468274}, .euler = {3.142, 0, -1.571}} }
+        }
+    };
+    ```
 
 - **连接机械臂**
 
@@ -163,37 +223,19 @@ moves operation succeeded
 - **执行movej运动**
 
     ```C
-    float joint_angles_start[6] = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
-    movej(robot_handle, joint_angles_start, 20, 0, 1, 0);
+    rm_movej(robot_handle, arm_data[arm_info.arm_model].joint_angles, 20, 0, 0, 1);
     ```
 
 - **执行movej_p运动**
 
     ```C
-    rm_pose_t pose;
-    pose.position.x = -0.3f;
-    pose.position.y = 0.0f;
-    pose.position.z = 0.3f;
-    pose.euler.rx = 3.14f;
-    pose.euler.ry = 0.0f;
-    pose.euler.rz = 0.0f;
-    movej_p(robot_handle, pose, 20, 0, 1, 0);
+    rm_movej_p(robot_handle, arm_data[arm_info.arm_model].pose, 20, 0, 0, 1);
     ```
 
 - **执行moves运动**
 
     ```C
-    rm_pose_t move_positions[] = {
-            {{-0.3f, 0.0f, 0.3f}, {0, 0, 0, 0}, {3.14f, 0.0f, 0.0f}},
-            {{-0.27f, -0.22f, 0.3f}, {0, 0, 0, 0}, {3.14f, 0.0f, 0.0f}},
-            {{-0.314f, -0.25f, 0.2f}, {0, 0, 0, 0}, {3.14f, 0.0f, 0.0f}},
-            {{-0.239f, 0.166f, 0.276f}, {0, 0, 0, 0}, {3.14f, 0.0f, 0.0f}},
-            {{-0.239f, 0.264f, 0.126f}, {0, 0, 0, 0}, {3.14f, 0.0f, 0.0f}}
-    };
-    int num_positions = sizeof(move_positions) / sizeof(move_positions[0]);
-
-    execute_moves(robot_handle, move_positions, num_positions, 20, 1);
-  
+    execute_moves(robot_handle, arm_data[arm_info.arm_model].point_list, POINT_NUM, 20, 1);
     ```
   
 - 执行moves运动，沿多点轨迹进行样条曲线移动。 轨迹如下图所示

@@ -6,6 +6,75 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '.
 
 from src.Robotic_Arm.rm_robot_interface import *
 
+# 定义机械臂型号到点位的映射  
+arm_models_to_points = {  
+    "RM_65": [  
+        [0, 0, 0, 0, 0, 0],
+        [-0.3, 0, 0.3, 3.14, 0, 0],
+        [
+            [-0.3, 0, 0.3, 3.14, 0, 0],
+            [-0.27, -0.22, 0.3, 3.14, 0, 0],
+            [-0.314, -0.25, 0.2, 3.14, 0, 0],
+            [-0.239, 0.166, 0.276, 3.14, 0, 0],
+            [-0.239, 0.264, 0.126, 3.14, 0, 0]
+        ]  
+    ],  
+    "RM_75": [  
+        [0, 20, 0, 70, 0, 90, 0],    
+        [0.297557, 0, 0.337061, 3.142, 0, 3.142],    
+        [
+            [0.3, 0.1, 0.337061, 3.142, 0, 3.142],
+            [0.2, 0.3, 0.237061, 3.142, 0, 3.142],
+            [0.2, 0.25, 0.037061, 3.142, 0, 3.142],
+            [0.1, 0.3, 0.137061, 3.142, 0, 3.142],
+            [0.2, 0.25, 0.337061, 3.142, 0, 3.142]
+        ]
+    ], 
+    "RML_63": [  
+        [0, 20, 70, 0, 90, 0],
+        [0.448968, 0, 0.345083, 3.142, 0, 3.142],
+        [
+            [0.3, 0.3, 0.345083, 3.142, 0, 3.142],
+            [0.3, 0.4, 0.145083, 3.142, 0, 3.142],
+            [0.3, 0.2, 0.045083, 3.142, 0, 3.142],
+            [0.4, 0.1, 0.145083, 3.142, 0, 3.142],
+            [0.5, 0, 0.345083, 3.142, 0, 3.142]
+        ]  
+    ], 
+    "ECO_65": [  
+        [0, 20, 70, 0, -90, 0],
+        [0.352925, -0.058880, 0.327320, 3.141, 0, -1.57],
+        [
+            [0.3, 0.3, 0.327320, 3.141, 0, -1.57],
+            [0.2, 0.4, 0.127320, 3.141, 0, -1.57],
+            [0.2, 0.2, 0.027320, 3.141, 0, -1.57],
+            [0.3, 0.1, 0.227320, 3.141, 0, -1.57],
+            [0.4, 0, 0.327320, 3.141, 0, -1.57]
+        ]
+    ],
+    "GEN_72": [  
+        [0, 0, 0, -90, 0, 0, 0],
+        [0.359500, 0, 0.426500, 3.142, 0, 0],
+        [
+            [0.359500, 0, 0.426500, 3.142, 0, 0],
+            [0.2, 0.3, 0.426500, 3.142, 0, 0],
+            [0.2, 0.3, 0.3, 3.142, 0, 0],
+            [0.3, 0.3, 0.3, 3.142, 0, 0],
+            [0.3, -0.1, 0.4, 3.142, 0, 0]
+        ] 
+    ],
+    "ECO_63": [  
+        [0, 20, 70, 0, -90, 0],
+        [0.544228, -0.058900, 0.468274, 3.142, 0, -1.571],
+        [
+            [0.3, 0.3, 0.468274, 3.142, 0, -1.571],
+            [0.3, 0.4, 0.168274, 3.142, 0, -1.571],
+            [0.3, 0.2, 0.268274, 3.142, 0, -1.571],
+            [0.4, 0.1, 0.368274, 3.142, 0, -1.571],
+            [0.5, 0, 0.468274, 3.142, 0, -1.571]
+        ]  
+    ],
+}
 
 class RobotArmController:
     def __init__(self, ip, port, level=3, mode=2):
@@ -27,6 +96,15 @@ class RobotArmController:
             exit(1)
         else:
             print(f"\nSuccessfully connected to the robot arm: {self.handle.id}\n")
+
+    def get_arm_model(self):
+        """Get robotic arm mode.
+        """
+        res, model = self.robot.rm_get_robot_info()
+        if res == 0:
+            return model["arm_model"]
+        else:
+            print("\nFailed to get robot arm model\n")
 
     def disconnect(self):
         """
@@ -120,23 +198,17 @@ def main():
     # Get API version
     print("\nAPI Version: ", rm_api_version(), "\n")
 
-    # Perform movej_p motion
-    robot_controller.movej([0, 0, 0, 0, 0, 0])
+    arm_model = robot_controller.get_arm_model()
+    points = arm_models_to_points.get(arm_model, [])
 
     # Perform movej_p motion
-    robot_controller.movej_p([-0.3, 0, 0.3, 3.14, 0, 0])
+    robot_controller.movej(points[0])
 
-    # Define custom move positions
-    custom_positions = [
-        [-0.3, 0, 0.3, 3.14, 0, 0],
-        [-0.27, -0.22, 0.3, 3.14, 0, 0],
-        [-0.314, -0.25, 0.2, 3.14, 0, 0],
-        [-0.239, 0.166, 0.276, 3.14, 0, 0],
-        [-0.239, 0.264, 0.126, 3.14, 0, 0]
-    ]
+    # Perform movej_p motion
+    robot_controller.movej_p(points[1])
 
     # Perform move operations
-    robot_controller.moves(custom_positions)
+    robot_controller.moves(points[2])
 
     # Disconnect the robot arm
     robot_controller.disconnect()

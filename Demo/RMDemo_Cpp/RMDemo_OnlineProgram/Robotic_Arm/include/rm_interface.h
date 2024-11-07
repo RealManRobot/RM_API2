@@ -2509,10 +2509,11 @@ RM_INTERFACE_EXPORT int rm_set_hand_seq(rm_robot_handle *handle, int seq_num, bo
  */
 RM_INTERFACE_EXPORT int rm_set_hand_angle(rm_robot_handle *handle, const int *hand_angle);
 /**
- * @brief 设置灵巧手各自由度跟随角度（正式版本暂不支持）
- * @details 设置灵巧手跟随角度，灵巧手有6个自由度，从1~6分别为小拇指，无名指，中指，食指，大拇指弯曲，大拇指旋转
+ * @brief 设置灵巧手角度跟随控制
+ * @details 设置灵巧手跟随角度，灵巧手有6个自由度，从1~6分别为小拇指，无名指，中指，食指，大拇指弯曲，大拇指旋转，最高50Hz的控制频率
  * @param handle 机械臂控制句柄 
- * @param hand_angle 手指角度数组，6个元素分别代表6个自由度的角度，范围：0~1000. 另外，-1代表该自由度不执行任何操作，保持当前状态
+ * @param hand_angle 手指角度数组，最大表示范围为-32768到+32767，按照灵巧手厂商定义的角度做控制，例如因时的范围为0-2000
+ * @param block 设置等待机械臂返回状态超时时间，设置0时为非阻塞模式。单位为毫秒。
  * @return int 函数执行的状态码。  
             - 0: 成功。  
             - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
@@ -2520,7 +2521,21 @@ RM_INTERFACE_EXPORT int rm_set_hand_angle(rm_robot_handle *handle, const int *ha
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-RM_INTERFACE_EXPORT int rm_set_hand_follow_angle(rm_robot_handle *handle, const int *hand_angle);
+RM_INTERFACE_EXPORT int rm_set_hand_follow_angle(rm_robot_handle *handle, const int *hand_angle, int block);
+/**
+ * @brief 灵巧手位置跟随控制
+ * @details 设置灵巧手跟随位置，灵巧手有6个自由度，从1~6分别为小拇指，无名指，中指，食指，大拇指弯曲，大拇指旋转，最高50Hz的控制频率
+ * @param handle 机械臂控制句柄 
+ * @param hand_pos 手指位置数组，最大范围为0-65535，按照灵巧手厂商定义的角度做控制，例如因时的范围为0-1000
+ * @param block 设置等待机械臂返回状态超时时间，设置0时为非阻塞模式。单位为毫秒。
+ * @return int 函数执行的状态码。  
+            - 0: 成功。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
+            - -1: 数据发送失败，通信过程中出现问题。
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
+            - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
+ */
+RM_INTERFACE_EXPORT int rm_set_hand_follow_pos(rm_robot_handle *handle, const int *hand_pos, int block);
 /**
  * @brief 设置灵巧手速度
  * 
@@ -3639,7 +3654,7 @@ RM_INTERFACE_EXPORT void rm_algo_get_joint_max_acc(float* joint_alim_max);
  */
 RM_INTERFACE_EXPORT void rm_algo_set_redundant_parameter_traversal_mode(bool mode);
 /**
- * @brief 逆解函数，默认单步模式，可使用Algo_Set_Redundant_Parameter_Traversal_Mode接口设置逆解求解模式
+ * @brief 逆解函数，默认遍历模式，可使用Algo_Set_Redundant_Parameter_Traversal_Mode接口设置逆解求解模式
  * 
  * @param handle 机械臂控制句柄 
  * @param params 逆解输入参数结构体

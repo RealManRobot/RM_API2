@@ -3,6 +3,55 @@
 #include "string.h"
 #include <stdarg.h>
 
+
+typedef struct
+{
+    float joint_angles[ARM_DOF];    // 正解关节角度
+    float q_in_joint[ARM_DOF];      //逆解上一时刻关节角度
+    rm_pose_t pose;     // 逆解目标位姿
+}ArmModelData;
+ArmModelData arm_data[9] = {
+    {
+        {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},
+        {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},
+        {{0.3, 0, 0.3}, {0,0,0,0},{3.14, 0, 0} }
+    },
+    {
+        {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},  
+        {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},
+        {{0.3, 0, 0.3}, {0,0,0,0},{3.14, 0, 3.14} } 
+    }, 
+    {
+
+    },
+    {  
+        {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},  
+        {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},
+        {{0.3, 0, 0.3}, {0,0,0,0},{3.14, 0, 0} }
+    },
+    {
+
+    },
+    {  
+        {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},  
+        {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}, 
+        {{0.3, 0, 0.3}, {0,0,0,0},{3.14, 0, 0} } 
+    },
+    {
+
+    },
+    {  
+        {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},  
+        {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},  
+        {{0.3, 0, 0.3}, {0,0,0,0},{3.14, 0, 0} } 
+    },
+    {  
+        {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},  
+        {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},  
+        {{0.3, 0, 0.3}, {0,0,0,0},{3.14, 0, 0} }
+    }
+};
+
 int main(int argc, char *argv[]) {
     RM_Service robotic_arm;
     int result = -1;
@@ -51,11 +100,11 @@ int main(int argc, char *argv[]) {
     robotic_arm.rm_algo_set_toolframe(&coord_tool);
 
     // Perform forward kinematics
-    float joint_angles[6] = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
-    rm_pose_t pose = robotic_arm.rm_algo_forward_kinematics(&handle, joint_angles);
+    rm_pose_t pose = robotic_arm.rm_algo_forward_kinematics(&handle, arm_data[Mode].joint_angles);
     printf("Forward kinematics calculation: Success\n");
-    printf("Joint angles: [%.2f, %.2f, %.2f, %.2f, %.2f, %.2f]\n", joint_angles[0], joint_angles[1], joint_angles[2], joint_angles[3], joint_angles[4], joint_angles[5]);
-    printf("End effector pose: Position(%.2f, %.2f, %.2f), Quaternion(%.2f, %.2f, %.2f, %.2f), Euler angles(%.2f, %.2f, %.2f)\n",
+    printf("Joint angles: [%.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f]\n", arm_data[Mode].joint_angles[0], arm_data[Mode].joint_angles[1],
+            arm_data[Mode].joint_angles[2], arm_data[Mode].joint_angles[3], 
+            arm_data[Mode].joint_angles[4], arm_data[Mode].joint_angles[5], arm_data[Mode].joint_angles[5]);    printf("End effector pose: Position(%.2f, %.2f, %.2f), Quaternion(%.2f, %.2f, %.2f, %.2f), Euler angles(%.2f, %.2f, %.2f)\n",
            pose.position.x, pose.position.y, pose.position.z,
            pose.quaternion.w, pose.quaternion.x, pose.quaternion.y, pose.quaternion.z,
            pose.euler.rx, pose.euler.ry, pose.euler.rz);
@@ -63,19 +112,9 @@ int main(int argc, char *argv[]) {
 
     // Perform inverse kinematics Attitude parameter category: 0-quaternion; 1-Euler angle
     rm_inverse_kinematics_params_t inverse_params;
-    float q_in_joint[6] = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
     float q_in_pose[6] = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
-    memcpy(inverse_params.q_in, q_in_joint, sizeof(q_in_joint));
-    inverse_params.q_pose.position.x = 0.3f;
-    inverse_params.q_pose.position.y = 0.0f;
-    inverse_params.q_pose.position.z = 0.3f;
-    inverse_params.q_pose.quaternion.w = 0.0f;
-    inverse_params.q_pose.quaternion.x = 0.0f;
-    inverse_params.q_pose.quaternion.y = 0.0f;
-    inverse_params.q_pose.quaternion.z = 0.0f;
-    inverse_params.q_pose.euler.rx = 3.14f;
-    inverse_params.q_pose.euler.ry = 0.0f;
-    inverse_params.q_pose.euler.rz = 0.0f;
+    memcpy(inverse_params.q_in, arm_data[Mode].q_in_joint, sizeof(arm_data[Mode].q_in_joint));
+    inverse_params.q_pose = arm_data[Mode].pose;
     inverse_params.flag = 1;
     result = robotic_arm.rm_algo_inverse_kinematics(&handle, inverse_params, q_in_pose);
     if (result == 0) {

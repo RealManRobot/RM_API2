@@ -142,6 +142,59 @@ Planning Layer Software Version:  V1.6.1
 ### **5.2 关键代码说明**
 
 下面是 `main.c` 文件的主要功能：
+- **定义各型号机械臂参数数组**
+    ```C
+    ArmModelData arm_data[9] = {
+        [RM_MODEL_RM_65_E] = {
+            .joint_angles = {0, 20, 70, 0, 90, 0},
+            .movej_pose1 = { .position = {0.3, 0, 0.3}, .euler = {3.14, 0, 0} },
+            .movel_pose = { .position = {0.3, 0, 0.3}, .euler = {3.14, 0, 0} },
+            .movej_pose2 = { .position = {0.3, 0, 0.3}, .euler = {3.14, 0, 0} },
+            .movec_pose_via = { .position = {0.2, 0.05, 0.3}, .euler = {3.14, 0, 0} },
+            .movec_pose_to = { .position = {0.2, -0.05, 0.3}, .euler = {3.14, 0, 0} }
+        },
+        [RM_MODEL_RM_75_E] = {
+            .joint_angles = {0, 20, 0, 70, 0, 90, 0},  
+            .movej_pose1 = { .position = {0.297557, 0, 0.337061}, .euler = {3.142, 0, 3.142} } ,
+            .movel_pose = { .position = {0.097557, 0, 0.337061}, .euler = {3.142, 0, 3.142} } ,
+            .movej_pose2 = { .position = {0.297557, 0, 0.337061}, .euler = {3.142, 0, 3.142} } ,
+            .movec_pose_via = { .position = {0.257557, -0.08, 0.337061}, .euler = {3.142, 0, 3.142} } ,
+            .movec_pose_to = { .position = {0.257557, 0.08, 0.337061}, .euler = {3.142, 0, 3.142} } 
+        }, 
+        [RM_MODEL_RM_63_II_E] = {  
+            .joint_angles = {0, 20, 70, 0, 90, 0},  
+            .movej_pose1 = { .position = {0.448968, 0, 0.345083}, .euler = {3.142, 0, 3.142} },
+            .movel_pose = { .position = {0.248968, 0, 0.345083}, .euler = {3.142, 0, 3.142} },
+            .movej_pose2 = { .position = {0.448968, 0, 0.345083}, .euler = {3.142, 0, 3.142} },
+            .movec_pose_via = { .position = {0.408968, -0.1, 0.345083}, .euler = {3.142, 0, 3.142} },
+            .movec_pose_to = { .position = {0.408968, 0.1, 0.345083}, .euler = {3.142, 0, 3.142} }
+        },
+        [RM_MODEL_ECO_65_E] = {  
+            .joint_angles = {0, 20, 70, 0, -90, 0},  
+            .movej_pose1 = { .position = {0.352925, -0.058880, 0.327320}, .euler = {3.141, 0, -1.57} } ,
+            .movel_pose = { .position = {0.152925, -0.058880, 0.327320}, .euler = {3.141, 0, -1.57} } ,
+            .movej_pose2 = { .position = {0.352925, -0.058880, 0.327320}, .euler = {3.141, 0, -1.57} } ,
+            .movec_pose_via = { .position = {0.302925, -0.158880, 0.327320}, .euler = {3.141, 0, -1.57} } ,
+            .movec_pose_to = { .position = {0.302925, 0.058880, 0.327320}, .euler = {3.141, 0, -1.57} } 
+        },
+        [RM_MODEL_GEN_72_E] = {  
+            .joint_angles = {0, 0, 0, -90, 0, 0, 0},  
+            .movej_pose1 = { .position = {0.1, 0, 0.4}, .euler = {3.14, 0, 0} } ,
+            .movel_pose = { .position = {0.3, 0, 0.4}, .euler = {3.14, 0, 0} } ,
+            .movej_pose2 = { .position = {0.3595, 0, 0.4265}, .euler = {3.14, 0, 0} } ,
+            .movec_pose_via = { .position = {0.3595, 0.03, 0.4265}, .euler = {3.14, 0, 0} } ,
+            .movec_pose_to = { .position = {0.3595, 0.03, 0.4665}, .euler = {3.14, 0, 0} } 
+        },
+        [RM_MODEL_ECO_63_E] = {  
+            .joint_angles = {0, 20, 70, 0, -90, 0},  
+            .movej_pose1 = { .position = {0.544228, -0.058900, 0.468274}, .euler = {3.14, 0, -1.571} },
+            .movel_pose = { .position = {0.344228, -0.058900, 0.468274}, .euler = {3.14, 0, -1.571} },
+            .movej_pose2 = { .position = {0.544228, -0.058900, 0.468274}, .euler = {3.14, 0, -1.571} },
+            .movec_pose_via = { .position = {0.504228, -0.108900, 0.468274}, .euler = {3.14, 0, -1.571} },
+            .movec_pose_to = { .position = {0.504228, -0.008900, 0.468274}, .euler = {3.14, 0, -1.571} }
+        }
+    };
+    ```
 
 - **连接机械臂**
 
@@ -171,30 +224,27 @@ Planning Layer Software Version:  V1.6.1
 - **执行movej运动**
 
     ```C
-    float joint_angles_start[6] = {0.0, 20, 70.0, 0.0, 90.0, 0.0};
-    rm_movej(robot_handle, joint_angles_start, 20, 0, 0, 1);
+    rm_movej(robot_handle, arm_data[arm_info.arm_model].joint_angles, 20, 0, 0, 1);
     ```
 
 - **执行movej_p运动**
 
     ```C
-    rm_pose_t pose_movej_p = {{0.3, 0, 0.3}, {0, 0, 0, 0}, {3.14, 0, 0}};
-    rm_movej_p(robot_handle, pose_movej_p, 20, 0, 0, 1);
+    rm_movej_p(robot_handle, arm_data[arm_info.arm_model].movej_pose1, 20, 0, 0, 1);
     ```
 
 - **执行movel运动**
 
     ```C
-    rm_pose_t pose = {{0.2, 0, 0.3}, {0, 0, 0, 0}, {3.14, 0, 0}};
-    rm_movel(robot_handle, pose, 20, 0, 0, 1);
+    rm_movel(robot_handle, arm_data[arm_info.arm_model].movel_pose, 20, 0, 0, 1);
+
     ```
 
 - **执行movec运动**
 
     ```C
-    rm_pose_t pose_via = {{0.2, 0.05, 0.3}, {0, 0, 0, 0}, {3.14, 0, 0}};
-    rm_pose_t pose_to = {{0.2, -0.05, 0.3}, {0, 0, 0, 0}, {3.14, 0, 0}};
-    rm_movec(robot_handle, pose_via, pose_to, 20, 2, 0, 0, 1);
+    rm_movec(robot_handle, arm_data[arm_info.arm_model].movec_pose_via, arm_data[arm_info.arm_model].movec_pose_to, 20, 2, 0, 0, 1);
+
     ```
 
 - **断开机械臂连接**

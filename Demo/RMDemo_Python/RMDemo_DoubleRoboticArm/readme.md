@@ -56,8 +56,7 @@ pip install -r requirements.txt
 
 ## 5. 注意事项
 
-1. 该Demo以RM65-B型号机械臂为例，请根据实际情况修改代码中的数据。
-2. 多机械臂连接，只需要第一个机械臂初始化线程模式，后续初始化无需填写线程参数，如：
+1. 多机械臂连接，只需要第一个机械臂初始化线程模式，后续初始化无需填写线程参数，如：
 
     ```python
     arm = RoboticArm(rm_thread_mode_e.RM_TRIPLE_MODE_E)

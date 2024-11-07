@@ -1,5 +1,69 @@
 #include <stdio.h>
 #include "rm_interface.h"
+#define POINT_NUM 5
+
+typedef struct
+{
+    float joint_angles[ARM_DOF];        // 初始关节角度
+    rm_pose_t pose;                     // movej_p位姿
+    rm_pose_t point_list[POINT_NUM];    // moves执行多轨迹点列表
+}ArmModelData;// 不同型号机械臂数据
+ArmModelData arm_data[9] = {
+    [RM_MODEL_RM_65_E] = {
+        .joint_angles = {0, 0, 0, 0, 0, 0}, 
+        .pose = { .position = {-0.3, 0, 0.3}, .euler = {3.14, 0, 0}},
+        .point_list = { {.position = {-0.3, 0, 0.3}, .euler = {3.14, 0, 0}},
+                        {.position = {-0.27, -0.22,0.3}, .euler = {3.14, 0, 0}},
+                        {.position = {-0.314, -0.25, 0.2}, .euler = {3.14, 0, 0}},
+                        {.position = {-0.239, 0.166, 0.276}, .euler = {3.14, 0, 0}},
+                        {.position = {-0.239, 0.264, 0.126}, .euler = {3.14, 0, 0}},}
+    },
+    [RM_MODEL_RM_75_E] = {
+        .joint_angles = {0, 20, 0, 70, 0, 90, 0},  
+        .pose = { .position = {0.297557, 0, 0.337061}, .euler = {3.142, 0, 3.142} } ,
+        .point_list = { {.position = {0.3, 0.1, 0.337061}, .euler = {3.142, 0, 3.142}},
+                        {.position = {0.2, 0.3, 0.237061}, .euler = {3.142, 0, 3.142}},
+                        {.position = {0.2, 0.25, 0.037061}, .euler = {3.142, 0, 3.142}},
+                        {.position = {0.1, 0.3, 0.137061}, .euler = {3.142, 0, 3.142}},
+                        {.position = {0.2, 0.25, 0.337061}, .euler = {3.142, 0, 3.142}}, }
+    }, 
+    [RM_MODEL_RM_63_II_E] = {  
+        .joint_angles = {0, 20, 70, 0, 90, 0},
+        .pose = { .position = {0.448968, 0, 0.345083}, .euler = {3.14, 0, 3.142} },
+        .point_list = { {.position = {0.3, 0.3, 0.345083}, .euler = {3.142, 0, 3.142}},
+                        {.position = {0.3, 0.4, 0.145083}, .euler = {3.142, 0, 3.142}},
+                        {.position = {0.3, 0.2, 0.045083}, .euler = {3.142, 0, 3.142}},
+                        {.position = {0.4, 0.1, 0.145083}, .euler = {3.142, 0, 3.142}},
+                        {.position = {0.5, 0, 0.345083}, .euler = {3.142, 0, 3.142}}, }
+    },
+    [RM_MODEL_ECO_65_E] = {  
+        .joint_angles = {0, 20, 70, 0, -90, 0},
+        .pose = { .position = {0.352925, -0.058880, 0.327320}, .euler = {3.141, 0, -1.57} } ,
+        .point_list = { {.position = {0.3, 0.3, 0.327320}, .euler = {3.141, 0, -1.57}},
+                        {.position = {0.2, 0.4, 0.127320}, .euler = {3.141, 0, -1.57}},
+                        {.position = {0.2, 0.2, 0.027320}, .euler = {3.141, 0, -1.57}},
+                        {.position = {0.3, 0.1, 0.227320}, .euler = {3.141, 0, -1.57}},
+                        {.position = {0.4, 0, 0.327320}, .euler = {3.141, 0, -1.57}}, }
+    },
+    [RM_MODEL_GEN_72_E] = {  
+        .joint_angles = {0, 0, 0, -90, 0, 0, 0},
+        .pose = { .position = {0.359500, 0, 0.426500}, .euler = {3.142, 0, 0} } ,
+        .point_list = { {.position = {0.359500, 0, 0.426500}, .euler = {3.142, 0, 0}},
+                        {.position = {0.2, 0.3, 0.426500}, .euler = {3.142, 0, 0}},
+                        {.position = {0.2, 0.3, 0.3}, .euler = {3.142, 0, 0}},
+                        {.position = {0.3, 0.3, 0.3}, .euler = {3.142, 0, 0}},
+                        {.position = {0.3, -0.1, 0.4}, .euler = {3.142, 0, 0}} }
+    },
+    [RM_MODEL_ECO_63_E] = {  
+        .joint_angles = {0, 20, 70, 0, -90, 0},
+        .pose = { .position = {0.544228, -0.058900, 0.468274}, .euler = {3.142, 0, -1.571} },
+        .point_list = { {.position = {0.3, 0.3, 0.468274}, .euler = {3.142, 0, -1.571}},
+                        {.position = {0.3, 0.4, 0.168274}, .euler = {3.142, 0, -1.571}},
+                        {.position = {0.3, 0.2, 0.268274}, .euler = {3.142, 0, -1.571}},
+                        {.position = {0.4, 0.1, 0.368274}, .euler = {3.142, 0, -1.571}},
+                        {.position = {0.5, 0, 0.468274}, .euler = {3.142, 0, -1.571}} }
+    }
+};
 
 void custom_api_log(const char* message, va_list args) {
     if (!message) {
@@ -80,37 +144,26 @@ int main(int argc, char *argv[]) {
     } else {
         printf("Robot handle created successfully: %d\n", robot_handle->id);
     }
-
-    float joint_angles_start[6] = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
-    result = rm_movej(robot_handle, joint_angles_start, 20, 0, 0, 1);
-    if(result != 0)
-    {
-        return -1;
-    }
-    rm_pose_t pose;
-    pose.position.x = -0.3f;
-    pose.position.y = 0.0f;
-    pose.position.z = 0.3f;
-    pose.euler.rx = 3.14f;
-    pose.euler.ry = 0.0f;
-    pose.euler.rz = 0.0f;
-    pose.quaternion = (rm_quat_t){0.0f, 0.0f, 0.0f, 0.0f};
-    result = rm_movej_p(robot_handle, pose, 20, 0, 0, 1);
+    rm_robot_info_t arm_info;
+    result = rm_get_robot_info(robot_handle, &arm_info);
     if(result != 0)
     {
         return -1;
     }
 
-    rm_pose_t move_positions[] = {
-            {{-0.3f, 0.0f, 0.3f}, {0.0f, 0.0f, 0.0f, 0.0f}, {3.14f, 0.0f, 0.0f}},  // 默认四元数
-            {{-0.27f, -0.22f, 0.3f}, {0.0f, 0.0f, 0.0f, 0.0f}, {3.14f, 0.0f, 0.0f}},
-            {{-0.314f, -0.25f, 0.2f}, {0.0f, 0.0f, 0.0f, 0.0f}, {3.14f, 0.0f, 0.0f}},
-            {{-0.239f, 0.166f, 0.276f}, {0.0f, 0.0f, 0.0f, 0.0f}, {3.14f, 0.0f, 0.0f}},
-            {{-0.239f, 0.264f, 0.126f}, {0.0f, 0.0f, 0.0f, 0.0f}, {3.14f, 0.0f, 0.0f}}
-    };
-    int num_positions = sizeof(move_positions) / sizeof(move_positions[0]);
+    result = rm_movej(robot_handle, arm_data[arm_info.arm_model].joint_angles, 20, 0, 0, 1);
+    if(result != 0)
+    {
+        return -1;
+    }
 
-    execute_moves(robot_handle, move_positions, num_positions, 20, 1);
+    result = rm_movej_p(robot_handle, arm_data[arm_info.arm_model].pose, 20, 0, 0, 1);
+    if(result != 0)
+    {
+        return -1;
+    }
+
+    execute_moves(robot_handle, arm_data[arm_info.arm_model].point_list, POINT_NUM, 20, 1);
 
     // Disconnect from the robot arm
     result = rm_delete_robot_arm(robot_handle);

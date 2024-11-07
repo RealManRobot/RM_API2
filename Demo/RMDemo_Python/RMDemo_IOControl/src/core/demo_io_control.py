@@ -113,7 +113,7 @@ class RobotArmController:
             file.writelines(lines_to_add)
             file.write(original_content)
 
-    def send_project(self, file_path, plan_speed=20, only_save=0, save_id=100, step_flag=0, auto_start=0):
+    def demo_send_project(self, file_path, plan_speed=20, only_save=0, save_id=100, step_flag=0, auto_start=0, project_type=0):
         """
         Send a project to the robot arm.
 
@@ -124,6 +124,7 @@ class RobotArmController:
             save_id (int, optional): ID to save in the controller. Defaults to 100.
             step_flag (int, optional): Set step mode, 1 to set step mode, 0 to set normal mode. Defaults to 0.
             auto_start (int, optional): Set default online programming file, 1 to set as default, 0 to set as non-default. Defaults to 0.
+            project_type (int, optional): Set project file type, 1 to set as drag trajectory, 0 to set as online programming file. Defaults to 0.
 
         Returns:
             None
@@ -132,7 +133,7 @@ class RobotArmController:
             print("File path does not exist:", file_path)
             return
 
-        send_project = rm_send_project_t(file_path, plan_speed, only_save, save_id, step_flag, auto_start)
+        send_project = rm_send_project_t(file_path, plan_speed, only_save, save_id, step_flag, auto_start, project_type)
         result = self.robot.rm_send_project(send_project)
 
         if result[0] == 0:
@@ -260,8 +261,8 @@ def main():
 
     # Get API version
     print("\nAPI Version:", rm_api_version(), "\n")
-
-    file_path_test = 'data/trajectory.txt'
+    print(os.getcwd())
+    file_path_test = os.path.join(sys.path[0], "../../data/test.txt")
 
     # A blank programming ID
     test_id = 100
@@ -276,7 +277,7 @@ def main():
     robot_controller.add_lines_to_file(file_path_test, 6, lines)
 
     # Send project and query running state
-    robot_controller.send_project(file_path_test, only_save=1, save_id=test_id)
+    robot_controller.demo_send_project(file_path_test, only_save=1, save_id=test_id)
 
     # Set default running program
     robot_controller.set_default_run_program(test_id)

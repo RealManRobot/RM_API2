@@ -57,7 +57,7 @@ pip install -r requirements.txt
 
 ## 5. 注意事项
 
-该Demo以RM65-B型号机械臂为例，请根据实际情况修改代码中的数据。
+该Demo需末端装配夹爪使用。
 
 ## 6. 使用指南
 

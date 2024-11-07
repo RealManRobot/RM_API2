@@ -1,6 +1,0 @@
-{"file":6}
-{"name":"Folder","num":1,"type":4,"enabled":true,"parent_number":0}
-{"point":[0,0,0,0,0,0]}
-{"point":[0,0,0,0,0,0]}
-{"point":[0,0,0,0,0,0]}
-{"point":[0,0,0,0,0,0]}

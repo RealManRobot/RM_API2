@@ -16,7 +16,7 @@
 -
 """
 # python包版本
-__version__ = '1.0.3'
+__version__ = '1.0.4'
 
 from .rm_ctypes_wrap import *
 import ctypes
@@ -1600,7 +1600,7 @@ class MovePlan:
 
     def rm_movej_follow(self, joint: list[float]) -> int:
         """
-        关节空间跟随运动（正式版本暂不支持）
+        关节空间跟随运动
 
         Args:
             joint (list[float]): 关节1~7目标角度数组,单位：°
@@ -1622,7 +1622,7 @@ class MovePlan:
 
     def rm_movep_follow(self, pose: list[float]) -> int:
         """
-        笛卡尔空间跟随运动（正式版本暂不支持）
+        笛卡尔空间跟随运动
 
         Args:
             pose (list[float]): 位姿 (若位姿列表长度为7则认为使用四元数表达位姿，长度为6则认为使用欧拉角表达位姿)
@@ -1963,7 +1963,7 @@ class ArmMotionControl:
             - 'trajectory_type' (rm_arm_current_trajectory_e): 返回的规划类型
             - 'data' (list[float]): 无规划和关节空间规划为当前关节1~7角度数组；笛卡尔空间规划则为当前末端位姿
         """
-        plan_type = rm_arm_current_trajectory_e()
+        plan_type = c_int()
 
         if self.arm_dof != 0:
             data = (c_float * self.arm_dof)()
@@ -3295,12 +3295,13 @@ class HandControl:
         tag = rm_set_hand_angle(self.handle, angle)
         return tag
 
-    def rm_set_hand_follow_angle(self, hand_angle: list[int]) -> int:
+    def rm_set_hand_follow_angle(self, hand_angle: list[int], block:int) -> int:
         """
-        设置灵巧手各自由度跟随角度（正式版本暂不支持）
+        设置灵巧手角度跟随控制
         @details 设置灵巧手跟随角度，灵巧手有6个自由度，从1~6分别为小拇指，无名指，中指，食指，大拇指弯曲，大拇指旋转
         Args:
-            hand_angle (list[int]): 手指角度数组，范围：0~1000. 另外，-1代表该自由度不执行任何操作，保持当前状态
+            hand_angle (list[int]): 手指角度数组，最大表示范围为-32768到+32767，按照灵巧手厂商定义的角度做控制，例如因时的范围为0-2000
+            block (int): 设置等待机械臂返回状态超时时间，设置0时为非阻塞模式，单位为毫秒。
 
         Returns:
             int: 函数执行的状态码。
@@ -3312,9 +3313,30 @@ class HandControl:
             - -4: 超时未返回
         """
         angle = (c_int * 6)(*hand_angle)
-        tag = rm_set_hand_follow_angle(self.handle, angle)
+        tag = rm_set_hand_follow_angle(self.handle, angle, block)
         return tag
 
+    def rm_set_hand_follow_pos(self, hand_pos: list[int], block:int) -> int:
+        """
+        设置灵巧手位置跟随控制
+        @details 设置灵巧手跟随角度，灵巧手有6个自由度，从1~6分别为小拇指，无名指，中指，食指，大拇指弯曲，大拇指旋转
+        Args:
+            hand_pos (list[int]): 手指位置数组，最大范围为0-65535，按照灵巧手厂商定义的角度做控制，例如因时的范围为0-1000
+            block (int): 设置等待机械臂返回状态超时时间，设置0时为非阻塞模式。单位为毫秒。
+
+        Returns:
+            int: 函数执行的状态码。
+            - 0: 成功。
+            - 1: 控制器返回false，参数错误或机械臂状态发生错误。
+            - -1: 数据发送失败，通信过程中出现问题。
+            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。
+            - -3: 返回值解析失败，接收到的数据格式不正确或不完整。
+            - -4: 超时未返回
+        """
+        pos = (c_int * 6)(*hand_pos)
+        tag = rm_set_hand_follow_pos(self.handle, pos, block)
+        return tag
+    
     def rm_set_hand_speed(self, speed: int) -> int:
         """
         设置灵巧手速度
@@ -5377,11 +5399,11 @@ class RoboticArm(ArmState, MovePlan, JointConfigSettings, JointConfigReader, Arm
                 - 0: 成功。
                 - -1: 未找到对应句柄,句柄为空或已被删除。
                 - -2: 获取到的机械臂基本信息非法，检查句柄是否已被删除。
-            - dict[str, any]: 返回当前工具坐标系字典，键为rm_robot_info_t结构体的字段名称。
+            - dict[str, any]: 返回机械臂基本信息字典，键为rm_robot_info_t结构体的字段名称。
         """
         info = rm_robot_info_t()
         ret = rm_get_robot_info(self.handle, info)
-        return ret, info.to_dictionary()
+        return ret, info.to_dictionary() #返回字典，也可直接返回info
 
     def rm_get_arm_event_call_back(self, event_callback: rm_event_callback_ptr):
         """注册机械臂事件回调函数

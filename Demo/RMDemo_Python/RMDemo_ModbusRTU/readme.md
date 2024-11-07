@@ -54,11 +54,7 @@ pip install -r requirements.txt
 pip install -r requirements.txt
 ```
 
-## 5. 注意事项
-
-该Demo以RM65-B型号机械臂为例，请根据实际情况修改代码中的数据。
-
-## 6. 使用指南
+## 5. 使用指南
 
 ### 1. 快速运行
 
@@ -162,11 +158,11 @@ Successfully disconnected from the robot arm
     robot_controller.disconnect()
     ```
 
-## 7. 许可证信息
+## 6. 许可证信息
 
 * 本项目遵循MIT许可证。
 
-## 8. 控制器和末端接口图
+## 7. 控制器和末端接口图
 
 ### 控制器IO接口图1
 ![控制器_IO接口图1](控制器_IO接口图1.png)

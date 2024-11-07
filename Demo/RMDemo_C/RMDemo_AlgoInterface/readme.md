@@ -2,7 +2,7 @@
 
 ## 1. 项目介绍
 
-本项目演示了不连接机械臂，独立使用算法进行RM65-B机械臂在指定工作工具坐标系、指定安装角度下的正逆解，以及常用算法功能使用，如欧拉角转四元数、四元数转欧拉角等。项目基于Cmake构建，使用了睿尔曼提供的机械臂C语言开发包。
+本项目演示了不连接机械臂，独立使用算法进行全型号机械臂在指定工作工具坐标系、指定安装角度下的正逆解，以及常用算法功能使用，如欧拉角转四元数、四元数转欧拉角等。项目基于Cmake构建，使用了睿尔曼提供的机械臂C语言开发包。
 
 ## 2. 代码结构
 
@@ -123,6 +123,44 @@ Quaternion to Euler: [rx: 0.000000, ry: -0.000000, rz: 3.141593]
 ### **5.2 关键代码说明**
 
 下面是 `main.c` 文件的主要功能：
+- **定义各型号机械臂参数**
+
+  各型号机械臂初始化参数数组
+
+  ```c
+  ArmModelData arm_data[9] = {
+    [RM_MODEL_RM_65_E] = {
+        .joint_angles = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},
+        .q_in_joint = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},
+        .pose = { .position = {0.3, 0, 0.3}, .euler = {3.14, 0, 0} }
+    },
+    [RM_MODEL_RM_75_E] = {
+        .joint_angles = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},  
+        .q_in_joint = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},
+        .pose = { .position = {0.3, 0, 0.3}, .euler = {3.14, 0, 3.14} } 
+    }, 
+    [RM_MODEL_RM_63_II_E] = {  
+        .joint_angles = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},  
+        .q_in_joint = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},
+        .pose = { .position = {0.3, 0, 0.3}, .euler = {3.14, 0, 0} }
+    },
+    [RM_MODEL_ECO_65_E] = {  
+        .joint_angles = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},  
+        .q_in_joint = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}, 
+        .pose = { .position = {0.3, 0, 0.3}, .euler = {3.14, 0, 0} } 
+    },
+    [RM_MODEL_GEN_72_E] = {  
+        .joint_angles = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},  
+        .q_in_joint = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},  
+        .pose = { .position = {0.3, 0, 0.3}, .euler = {3.14, 0, 0} } 
+    },
+    [RM_MODEL_ECO_63_E] = {  
+        .joint_angles = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},  
+        .q_in_joint = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},  
+        .pose = { .position = {0.3, 0, 0.3}, .euler = {3.14, 0, 0} }
+    }
+  };
+  ```
 
 - **初始化算法接口**
 
@@ -159,21 +197,11 @@ Quaternion to Euler: [rx: 0.000000, ry: -0.000000, rz: 3.141593]
   
   ```C
   rm_inverse_kinematics_params_t inverse_params;
-  float q_in_joint[6] = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
-  float q_out[6] = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
-  memcpy(inverse_params.q_in, q_in_joint, sizeof(q_in_joint));
-  inverse_params.q_pose.position.x = 0.3f;
-  inverse_params.q_pose.position.y = 0.0f;
-  inverse_params.q_pose.position.z = 0.3f;
-  inverse_params.q_pose.quaternion.w = 0.0f;
-  inverse_params.q_pose.quaternion.x = 0.0f;
-  inverse_params.q_pose.quaternion.y = 0.0f;
-  inverse_params.q_pose.quaternion.z = 0.0f;
-  inverse_params.q_pose.euler.rx = 3.14f;
-  inverse_params.q_pose.euler.ry = 0.0f;
-  inverse_params.q_pose.euler.rz = 0.0f;
+  float q_out[ARM_DOF] = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
+  memcpy(inverse_params.q_in, arm_data[Mode].q_in_joint, sizeof(arm_data[Mode].q_in_joint));
+  inverse_params.q_pose = arm_data[Mode].pose;
   inverse_params.flag = 1;
-  result = rm_algo_inverse_kinematics(&handle, inverse_params, q_out);
+  result = rm_algo_inverse_kinematics(NULL, inverse_params, q_out);
   ```
 
 ## 6. 许可证信息

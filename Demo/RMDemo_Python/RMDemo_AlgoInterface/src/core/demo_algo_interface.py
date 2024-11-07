@@ -7,6 +7,51 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '.
 
 from src.Robotic_Arm.rm_robot_interface import *
 
+# 定义机械臂型号到点位的映射
+arm_models_to_points = {  
+    "RM_65": [  
+        rm_robot_arm_model_e.RM_MODEL_RM_65_E,
+        rm_force_type_e.RM_MODEL_RM_B_E,
+        [0.0, 0.0, 0.0, 0.0, 0.0, 0.0], # 正解关节角度
+        [0.0, 0.0, 0.0, 0.0, 0.0, 0.0], # 逆解上一时刻关节角度
+        [0.3, 0.0, 0.3, 3.14, 0.0, 0.0]     # 逆解目标位姿
+    ],  
+    "RM_75": [  
+        rm_robot_arm_model_e.RM_MODEL_RM_75_E,
+        rm_force_type_e.RM_MODEL_RM_B_E,
+        [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+        [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+        [0.3, 0.0, 0.3, 3.14, 0.0, 3.14]
+    ], 
+    "RML_63": [ 
+        rm_robot_arm_model_e.RM_MODEL_RM_63_II_E,  
+        rm_force_type_e.RM_MODEL_RM_B_E, 
+        [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+        [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+        [0.3, 0.0, 0.3, 3.14, 0.0, 0.0]  
+    ], 
+    "ECO_65": [  
+        rm_robot_arm_model_e.RM_MODEL_ECO_65_E,  
+        rm_force_type_e.RM_MODEL_RM_B_E, 
+        [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+        [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+        [0.3, 0.0, 0.3, 3.14, 0.0, 0.0]  
+    ],
+    "GEN_72": [  
+        rm_robot_arm_model_e.RM_MODEL_GEN_72_E,
+        rm_force_type_e.RM_MODEL_RM_B_E,
+        [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+        [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+        [0.3, 0.0, 0.3, 3.14, 0.0, 0.0]
+    ],
+    "ECO_63": [  
+        rm_robot_arm_model_e.RM_MODEL_ECO_63_E,  
+        rm_force_type_e.RM_MODEL_RM_B_E, 
+        [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+        [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+        [0.3, 0.0, 0.3, 3.14, 0.0, 0.0]  
+    ],
+} 
 
 class AlgoController:
     def __init__(self, arm_model, force_type):
@@ -19,6 +64,15 @@ class AlgoController:
         """
         self.robot = Algo(arm_model, force_type)
         print("Algorithm initialized, handle ID: ", self.robot.handle.id)
+
+    def get_arm_model(self):
+        """Get robotic arm mode.
+        """
+        res, model = self.robot.rm_get_robot_info()
+        if res == 0:
+            return model["arm_model"]
+        else:
+            print("\nFailed to get robot arm model\n")
 
     def set_angle(self, x, y, z):
         """
@@ -118,9 +172,12 @@ class AlgoController:
 
 
 def main():
-    # Initialize the algorithm controller without connecting to the robotic arm
-    arm_model = rm_robot_arm_model_e.RM_MODEL_RM_65_E  # Set the robotic arm model
-    force_type = rm_force_type_e.RM_MODEL_RM_B_E  # Set the end-effector type
+    # Set the robot arm model, where the model corresponds to a key in the arm_models_to_points dictionary.
+    arm_model = "RM_65"
+    datas = arm_models_to_points.get(arm_model, [])
+
+    arm_model = datas[0]  
+    force_type = datas[1]  
     algo_controller = AlgoController(arm_model, force_type)
 
     # Get API version
@@ -134,15 +191,15 @@ def main():
     algo_controller.set_toolframe((0.0, 0.0, 0.0, 0.0, 0.0, 0.0), 0, 0, 0, 0)
 
     # Perform forward kinematics
-    joint = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+    joint = datas[2]
     flag_eul = 1
     flag_qua = 0
     algo_controller.forward_kinematics(joint, flag_eul)  # Euler angles
     algo_controller.forward_kinematics(joint, flag_qua)  # Quaternion
 
     # Perform inverse kinematics
-    q_in_joint = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-    q_in_pose = [0.3, 0.0, 0.3, 3.14, 0.0, 0.0]
+    q_in_joint = datas[3]
+    q_in_pose = datas[4]
     flag_eul = 1
     algo_controller.inverse_kinematics(q_in_joint, q_in_pose, flag_eul)
 

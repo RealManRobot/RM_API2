@@ -54,14 +54,6 @@ pip install -r requirements.txt
 pip install -r requirements.txt
 ```
 
-## 5. 注意事项
-
-该Demo以RM65-B型号机械臂为例，请根据实际情况修改代码中的数据。
-
-好的，以下是修改后的使用指南，分为两部分：快速运行和代码说明。
-
----
-
 ## 5. 使用指南
 
 ### 5.1 快速运行
@@ -116,10 +108,64 @@ Quaternion to Euler: [0.0, -0.0, 3.1415927410125732]
 ### **5.2 代码说明**
 
 下面是 `demo_algo_interface.py` 文件的主要功能：
+- **各型号机械臂初始化参数字典**
+    ```python
+    arm_models_to_points = {  
+        "RM_65": [  
+            rm_robot_arm_model_e.RM_MODEL_RM_65_E,
+            rm_force_type_e.RM_MODEL_RM_B_E,
+            [0.0, 0.0, 0.0, 0.0, 0.0, 0.0], # 正解关节角度
+            [0.0, 0.0, 0.0, 0.0, 0.0, 0.0], # 逆解上一时刻关节角度
+            [0.3, 0.0, 0.3, 3.14, 0.0, 0.0] # 逆解目标位姿
+        ],  
+        "RM_75": [  
+            rm_robot_arm_model_e.RM_MODEL_RM_75_E,
+            rm_force_type_e.RM_MODEL_RM_B_E,
+            [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+            [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+            [0.3, 0.0, 0.3, 3.14, 0.0, 3.14]
+        ], 
+        "RML_63": [ 
+            rm_robot_arm_model_e.RM_MODEL_RM_63_II_E,  
+            rm_force_type_e.RM_MODEL_RM_B_E, 
+            [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+            [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+            [0.3, 0.0, 0.3, 3.14, 0.0, 0.0]  
+        ], 
+        "ECO_65": [  
+            rm_robot_arm_model_e.RM_MODEL_ECO_65_E,  
+            rm_force_type_e.RM_MODEL_RM_B_E, 
+            [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+            [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+            [0.3, 0.0, 0.3, 3.14, 0.0, 0.0]  
+        ],
+        "GEN_72": [  
+            rm_robot_arm_model_e.RM_MODEL_GEN_72_E,
+            rm_force_type_e.RM_MODEL_RM_B_E,
+            [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+            [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+            [0.3, 0.0, 0.3, 3.14, 0.0, 0.0]
+        ],
+        "ECO_63": [  
+            rm_robot_arm_model_e.RM_MODEL_ECO_63_E,  
+            rm_force_type_e.RM_MODEL_RM_B_E, 
+            [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+            [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+            [0.3, 0.0, 0.3, 3.14, 0.0, 0.0]  
+        ],
+    }
+    ```
 
-- **初始化算法**
+- **设置机械臂型号同时初始化算法**
 
     ```python
+    # 设置机械臂型号
+    arm_model = "RM_65"
+    datas = arm_models_to_points.get(arm_model, [])
+
+    arm_model = datas[0]  
+    force_type = datas[1]  
+    # 初始化算法
     algo_controller = AlgoController(arm_model, force_type)
     ```
     初始化算法，不连接机械臂。

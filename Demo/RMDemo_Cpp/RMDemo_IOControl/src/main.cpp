@@ -120,7 +120,7 @@ void add_lines_to_file(rm_robot_handle *handle, const char *file_path, const cha
 }
 
 // Send project file
-void send_project(rm_robot_handle *handle, const char *file_path, int plan_speed, int only_save, int save_id, int step_flag, int auto_start) {
+void send_project(rm_robot_handle *handle, const char *file_path, int plan_speed, int only_save, int save_id, int step_flag, int auto_start, int project_type) {
     if (access(file_path, F_OK) == -1) {
         printf("File path does not exist: %s\n", file_path);
         return;
@@ -133,7 +133,8 @@ void send_project(rm_robot_handle *handle, const char *file_path, int plan_speed
             only_save,
             save_id,
             step_flag,
-            auto_start
+            auto_start,
+            project_type
     };
     strncpy(send_project.project_path, file_path, sizeof(send_project.project_path) - 1);
     send_project.project_path[sizeof(send_project.project_path) - 1] = '\0';

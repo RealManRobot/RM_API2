@@ -1038,21 +1038,24 @@ class rm_udp_custom_config_t(Structure):
         - expand_state (int): 扩展关节信息（升降关节和扩展关节为二选一，优先显示升降关节）1：上报；0：关闭上报；-1：不设置，保持之前的状态
         - hand_state (int): 灵巧手状态。1：上报；0：关闭上报；-1：不设置，保持之前的状态
         - arm_current_status (int): 机械臂当前状态。1：上报；0：关闭上报；-1：不设置，保持之前的状态
+        - aloha_state (int): aloha主臂状态。1：上报；0：关闭上报；-1：不设置，保持之前的状态
     """
     _fields_ = [
         ('joint_speed', c_int),
         ('lift_state', c_int),
         ('expand_state', c_int),
-        # ('hand_state', c_int),
+        ('hand_state', c_int),
         ('arm_current_status', c_int),
+        ('aloha_state', c_int),
     ]
 
-    def __init__(self, joint_speed:int = -1,lift_state:int = -1,expand_state:int = -1,arm_current_status:int = -1) -> None:
+    def __init__(self, joint_speed:int = -1,lift_state:int = -1,expand_state:int = -1,arm_current_status:int = -1,hand_state:int = -1,aloha_state:int = -1) -> None:
         self.joint_speed = joint_speed
         self.lift_state = lift_state
         self.expand_state = expand_state
-        # self.hand_state = hand_state
+        self.hand_state = hand_state
         self.arm_current_status = arm_current_status
+        self.aloha_state = aloha_state
     
     def to_dict(self, recurse=True):
         """将类的变量返回为字典，如果recurse为True，则递归处理ctypes结构字段"""
@@ -1125,7 +1128,7 @@ class rm_realtime_push_config_t(Structure):
             self.force_coordinate = force_coordinate
             self.ip = ip.encode('utf-8')
             if custom_config==None:
-               custom_config=rm_udp_custom_config_t(-1,-1,-1)
+               custom_config=rm_udp_custom_config_t()
             self.custom_config = custom_config
 
     def to_dict(self, recurse=True):
@@ -2034,7 +2037,7 @@ class rm_send_project_t(Structure):
         - project_path (c_char * 300): 下发文件路径文件路径及名称
         - project_path_len (c_int): 路径及名称长度
         - plan_speed (c_int): 规划速度比例系数
-        - only_save (c_int): 0-运行文件，1-仅保存文件，不运行
+        - only_save (c_int): 0-保存并运行文件，1-仅保存文件，不运行
         - save_id (c_int): 保存到控制器中的编号
         - step_flag (c_int): 设置单步运行方式模式，1-设置单步模式 0-设置正常运动模式
         - auto_start (c_int): 设置默认在线编程文件，1-设置默认  0-设置非默认
@@ -2057,7 +2060,7 @@ class rm_send_project_t(Structure):
 
         @param project_path (str, optional): 下发文件路径文件路径及名称，默认为None
         @param plan_speed (int, optional): 规划速度比例系数，默认为None
-        @param only_save (int, optional): 0-运行文件，1-仅保存文件，不运行，默认为None
+        @param only_save (int, optional): 0-保存并运行文件，1-仅保存文件，不运行，默认为None
         @param save_id (int, optional): 保存到控制器中的编号，默认为None
         @param step_flag (int, optional): 设置单步运行方式模式，1-设置单步模式 0-设置正常运动模式，默认为None
         @param auto_start (int, optional): 设置默认在线编程文件，1-设置默认  0-设置非默认，默认为None
@@ -2075,7 +2078,7 @@ class rm_send_project_t(Structure):
 
             # 规划速度比例系数
             self.plan_speed = plan_speed if plan_speed is not None else 20
-            # 0-运行文件，1-仅保存文件，不运行
+            # 0-保存并运行文件，1-仅保存文件，不运行
             self.only_save = only_save if only_save is not None else 0
             # 保存到控制器中的编号
             self.save_id = save_id if save_id is not None else 0
@@ -2796,9 +2799,10 @@ class rm_udp_hand_state_t(Structure):
     灵巧手状态
 
     **Attributes**:  
-        - hand_pos (int): 表示灵巧手自由度大小，0-1000，无量纲
-        - hand_force (float): 表示灵巧手自由度电流，单位mN
-        - hand_state (int): 表示灵巧手当前状态
+        - hand_pos (int): 表示灵巧手位置
+        - hand_angle (int): 表示灵巧手角度
+        - hand_force (float): 表示灵巧手自由度力，单位mN
+        - hand_state (int): 表示灵巧手当前状态，由灵巧手厂商定义状态含义。例如因时状态码含义定义：
             - 0: 正在松开
             - 1: 正在抓取
             - 2: 位置到位停止
@@ -2806,13 +2810,28 @@ class rm_udp_hand_state_t(Structure):
             - 5: 电流保护停止
             - 6: 电缸堵转停止
             - 7: 电缸故障停止
-        - hand_err (int): 表示灵巧手系统错误，1表示有错误，0表示无错误
+        - hand_err (int): 表示灵巧手系统错误，由灵巧手厂商定义错误含义，例如因时错误码如下：1表示有错误，0表示无错误
     """
     _fields_ = [
-        ('hand_pos', c_int),
-        ('hand_force', c_float),
-        ('hand_state', c_int),
+        ('hand_pos', c_int * int(6)),
+        ('hand_angle', c_int * int(6)),
+        ('hand_force', c_int * int(6)),
+        ('hand_state', c_int * int(6)),
         ('hand_err', c_int),
+    ]
+
+
+class rm_udp_aloha_state_t(Structure):
+    """  
+    aloha主臂状态
+
+    **Attributes**:  
+        - io1_state (int): IO1状态（手柄光电检测），0为按键未触发，1为按键触发。
+        - io2_state (int): IO2状态（手柄光电检测），0为按键未触发，1为按键触发。
+    """
+    _fields_ = [
+        ('io1_state', c_int),
+        ('io2_state', c_int),
     ]
 
 
@@ -2852,6 +2871,7 @@ class rm_realtime_arm_joint_state_t(Structure):
         - expandState (rm_udp_expand_state_t): 扩展关节数据
         - handState (rm_udp_hand_state_t): 灵巧手数据
         - arm_current_status (int): 机械臂状态，对应rm_udp_arm_current_status_e枚举
+        - aloha_state (rm_udp_aloha_state_t): aloha主臂状态
     """
     _fields_ = [
         ('errCode', c_int),
@@ -2865,6 +2885,7 @@ class rm_realtime_arm_joint_state_t(Structure):
         ('expandState', rm_udp_expand_state_t),
         ('handState', rm_udp_hand_state_t),
         ('arm_current_status', c_int),
+        ('aloha_state', rm_udp_aloha_state_t),
     ]
 
 
@@ -4037,8 +4058,13 @@ if _libs[libname].has("rm_set_hand_angle", "cdecl"):
 
 if _libs[libname].has("rm_set_hand_follow_angle", "cdecl"):
     rm_set_hand_follow_angle = _libs[libname].get("rm_set_hand_follow_angle", "cdecl")
-    rm_set_hand_follow_angle.argtypes = [POINTER(rm_robot_handle), POINTER(c_int)]
+    rm_set_hand_follow_angle.argtypes = [POINTER(rm_robot_handle), POINTER(c_int), c_int]
     rm_set_hand_follow_angle.restype = c_int
+
+if _libs[libname].has("rm_set_hand_follow_pos", "cdecl"):
+    rm_set_hand_follow_pos = _libs[libname].get("rm_set_hand_follow_pos", "cdecl")
+    rm_set_hand_follow_pos.argtypes = [POINTER(rm_robot_handle), POINTER(c_int), c_int]
+    rm_set_hand_follow_pos.restype = c_int
 
 if _libs[libname].has("rm_set_hand_speed", "cdecl"):
     rm_set_hand_speed = _libs[libname].get("rm_set_hand_speed", "cdecl")

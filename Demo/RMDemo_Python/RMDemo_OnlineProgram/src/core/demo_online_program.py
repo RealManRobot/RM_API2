@@ -109,7 +109,7 @@ class RobotArmController:
                         f'{{"name":"Folder","num":1,"type":{type_value},"enabled":true,"parent_number":0}}\n']
 
         # Read original file content
-        with open(file_path, 'r+', encoding='utf-8', newline='\r\n') as file:
+        with open(file_path, 'r+', encoding='utf-8') as file:
             original_content = file.read()
 
             # Move file pointer to the beginning
@@ -119,7 +119,7 @@ class RobotArmController:
             file.writelines(lines_to_add)
             file.write(original_content)
 
-    def demo_send_project(self, file_path, plan_speed=20, only_save=0, save_id=100, step_flag=0, auto_start=0):
+    def demo_send_project(self, file_path, plan_speed=20, only_save=0, save_id=100, step_flag=0, auto_start=0, project_type=0):
         """
         Send a project to the robot arm.
 
@@ -131,6 +131,8 @@ class RobotArmController:
             step_flag (int, optional): Set step mode, 1 to set step mode, 0 to set normal mode. Defaults to 0.
             auto_start (int, optional): Set default online programming file, 1 to set as default, 0 to set as non-default.
             Defaults to 0.
+            project_type (int, optional): Set project file type, 1 to set as drag trajectory, 0 to set as online programming file.
+            Defaults to 0.
 
         Returns:
             None
@@ -140,7 +142,7 @@ class RobotArmController:
             print("File path does not exist:", file_path)
             return
 
-        send_project = rm_send_project_t(file_path, plan_speed, only_save, save_id, step_flag, auto_start)
+        send_project = rm_send_project_t(file_path, plan_speed, only_save, save_id, step_flag, auto_start, project_type)
         result = self.robot.rm_send_project(send_project)
 
         if result[0] == 0:
@@ -249,12 +251,12 @@ class RobotArmController:
 
 def main():
     # Create a robot arm controller instance and connect to the robot arm
-    robot_controller = RobotArmController("192.168.1.18", 8080, 3)
+    robot_controller = RobotArmController("192.168.1.18", 8080)
 
     # Get API version
     print("\nAPI Version:", rm_api_version(), "\n")
 
-    file_path_test = '../data/test.txt'
+    file_path_test = os.path.join(sys.path[0], "../../data/test.txt")
 
     # Drag teaching
     robot_controller.demo_drag_teach(1)
