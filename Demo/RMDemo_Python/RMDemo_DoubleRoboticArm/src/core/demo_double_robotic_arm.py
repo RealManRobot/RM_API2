@@ -19,7 +19,7 @@ def demo_movej(robot, joint=None, v=20, connect=0, block=1, r=0):
     """
     if joint is None:
         joint = [0, 0, 0, 0, 0, 0]
-    movej_result = robot.rm_movej(joint, v, connect, block, r)
+    movej_result = robot.rm_movej(joint, v, r, connect, block)
     if movej_result == 0:
         print("\nmovej motion succeeded\n")
     else:
@@ -41,7 +41,7 @@ def demo_movel(robot, pose, v=20, connect=0, block=1, r=0):
     Returns:
         None
     """
-    movel_result = robot.rm_movel(pose, v, connect, block, r)
+    movel_result = robot.rm_movel(pose, v, r, connect, block)
     if movel_result == 0:
         print("\nmovel motion succeeded\n")
     else:
@@ -65,7 +65,7 @@ def demo_movec(robot, pose_via, pose_to, v=20, loop=0, connect=0, block=1, r=0):
     Returns:
         None
     """
-    movec_result = robot.rm_movec(pose_via, pose_to, v, loop, connect, block, r)
+    movec_result = robot.rm_movec(pose_via, pose_to, v, r, loop, connect, block)
     if movec_result == 0:
         print("\nmovec motion succeeded\n")
     else:
@@ -87,7 +87,7 @@ def demo_movej_p(robot, pose, v=20, connect=0, block=1, r=0):
     Returns:
         None
     """
-    movej_p_result = robot.rm_movej_p(pose, v, connect, block, r)
+    movej_p_result = robot.rm_movej_p(pose, v, r, connect, block)
     if movej_p_result == 0:
         print("\nmovej_p motion succeeded\n")
     else:
