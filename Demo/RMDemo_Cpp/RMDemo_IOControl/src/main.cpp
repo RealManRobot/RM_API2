@@ -12,7 +12,7 @@
 #define access _access
 #define localtime_r(timep, result) localtime_s(result, timep)  // Use localtime_s as a replacement
 #else
-include <limits.h>  
+#include <limits.h>  
 #include <unistd.h>
 #define SLEEP(ms) usleep((ms) * 1000)
 #endif
@@ -213,7 +213,7 @@ int main(int argc, char *argv[]) {
     add_lines_to_file(robot_handle, TRAJECTORY_FILE_PATH, PROJECT_FILE_PATH, lines);
 
     // Send file and query running status
-    send_project(robot_handle, PROJECT_FILE_PATH, 20, 1, 20, 0, 0);
+    send_project(robot_handle, PROJECT_FILE_PATH, 20, 1, 20, 0, 0, 0);
 
     // Set the default run program
     result = robotic_arm.rm_set_default_run_program(robot_handle, 20);
@@ -222,19 +222,23 @@ int main(int argc, char *argv[]) {
     }
 
     // Set IO modes
-    result = robotic_arm.rm_set_IO_mode(robot_handle, 1, 2);  // Set IO mode to input start function multiplexing mode
+    int io_mode = 2;
+    result = robotic_arm.rm_set_IO_mode(robot_handle, 1, io_mode);  // Set IO mode to input start function multiplexing mode
     if (check_result(result, "Failed to set IO mode for input start function") != 0) {
         return -1;
     }
-    result = robotic_arm.rm_set_IO_mode(robot_handle, 2, 3);  // Set IO mode to input pause function multiplexing mode
+    io_mode = 3;
+    result = robotic_arm.rm_set_IO_mode(robot_handle, 2, io_mode);  // Set IO mode to input pause function multiplexing mode
     if (check_result(result, "Failed to set IO mode for input pause function") != 0) {
         return -1;
     }
-    result = robotic_arm.rm_set_IO_mode(robot_handle, 3, 4);  // Set IO mode to input continue function multiplexing mode
+    io_mode = 4;
+    result = robotic_arm.rm_set_IO_mode(robot_handle, 3, io_mode);  // Set IO mode to input continue function multiplexing mode
     if (check_result(result, "Failed to set IO mode for input continue function") != 0) {
         return -1;
     }
-    result = robotic_arm.rm_set_IO_mode(robot_handle, 4, 5);  // Set IO mode to input emergency stop function multiplexing mode
+    io_mode = 5;
+    result = robotic_arm.rm_set_IO_mode(robot_handle, 4, io_mode);  // Set IO mode to input emergency stop function multiplexing mode
     if (check_result(result, "Failed to set IO mode for input emergency stop function") != 0) {
         return -1;
     }

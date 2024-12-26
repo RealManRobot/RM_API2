@@ -48,4 +48,4 @@ else()
 endif()
 
 # 将数据文件路径定义为预处理器宏
-add_definitions(-DDATA_FILE_PATH="${CMAKE_CURRENT_SOURCE_DIR}/data/RM65&RM63_canfd_data.txt")
+add_definitions(-DDATA_FILE_PATH="${CMAKE_CURRENT_SOURCE_DIR}/data/ECO65_canfd_data.txt")

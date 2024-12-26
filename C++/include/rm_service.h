@@ -2,7 +2,7 @@
 #define RM_SERVICE_H
   
 #ifdef __cplusplus  
-extern "C" {  
+extern "C" {
 #endif  
   
 #include "rm_interface.h"  
@@ -1149,11 +1149,13 @@ RM_INTERFACE_EXPORT int rm_movej_p(rm_robot_handle *handle,rm_pose_t pose, int v
  * @param joint 关节1~7目标角度数组,单位：°
  * @param follow true-高跟随，false-低跟随。若使用高跟随，透传周期要求不超过 10ms。
  * @param expand 如果存在通用扩展轴，并需要进行透传，可使用该参数进行透传发送。
+ * @param trajectory_mode 高跟随模式下，0-完全透传模式、1-曲线拟合模式、2-滤波模式
+ * @param radio 曲线拟合模式和滤波模式下的平滑系数（数值越大效果越好），滤波模式下取值范围0~100，曲线拟合模式下取值范围0~1000
  * @return int 函数执行的状态码。  
             - 0: 成功。  
             - -1: 数据发送失败，通信过程中出现问题。
  */
-RM_INTERFACE_EXPORT int rm_movej_canfd(rm_robot_handle *handle,float *joint, bool follow, int expand);
+RM_INTERFACE_EXPORT int rm_movej_canfd(rm_robot_handle *handle, float *joint, bool follow, int expand, int trajectory_mode=0, int radio=0);
 /**
  * @brief 位姿不经规划，直接通过CANFD透传给机械臂
  * @details 当目标位姿被透传到机械臂控制器时，控制器首先尝试进行逆解计算。
@@ -1166,11 +1168,13 @@ RM_INTERFACE_EXPORT int rm_movej_canfd(rm_robot_handle *handle,float *joint, boo
  * @param handle 机械臂控制句柄 
  * @param pose 位姿 (优先采用四元数表达)
  * @param follow true-高跟随，false-低跟随。若使用高跟随，透传周期要求不超过 10ms。
+ * @param trajectory_mode 高跟随模式下，0-完全透传模式、1-曲线拟合模式、2-滤波模式
+ * @param radio 曲线拟合模式和滤波模式下的平滑系数（数值越大效果越好），滤波模式下取值范围0~100，曲线拟合模式下取值范围0~1000
  * @return int 函数执行的状态码。  
             - 0: 成功。  
             - -1: 数据发送失败，通信过程中出现问题。
  */
-RM_INTERFACE_EXPORT int rm_movep_canfd(rm_robot_handle *handle, rm_pose_t pose, bool follow);
+RM_INTERFACE_EXPORT int rm_movep_canfd(rm_robot_handle *handle, rm_pose_t pose, bool follow, int trajectory_mode=0, int radio=0);
 /**
  * @brief 关节空间跟随运动
  * @param handle 机械臂控制句柄 
@@ -1770,10 +1774,16 @@ RM_INTERFACE_EXPORT int rm_set_wifi_close(rm_robot_handle *handle);
  * 
  * @param handle 机械臂控制句柄 
  * @param io_num IO 端口号，范围：1~4
- * @param io_mode 模式，0-通用输入模式，1-通用输出模式、2-输入开始功能复用模式、3-输入暂停功能复用模式、
- * 4-输入继续功能复用模式、5-输入急停功能复用模式、6-输入进入电流环拖动复用模式、7-输入进入力只动位置拖动模式（六维力版本可配置）、
- * 8-输入进入力只动姿态拖动模式（六维力版本可配置）、9-输入进入力位姿结合拖动复用模式（六维力版本可配置）、
- * 10-输入外部轴最大软限位复用模式（外部轴模式可配置）、11-输入外部轴最小软限位复用模式（外部轴模式可配置）。
+ * @param io_mode 模式：
+ *                0-通用输入模式，1-通用输出模式、2-输入开始功能复用模式、3-输入暂停功能复用模式、
+ *                4-输入继续功能复用模式、5-输入急停功能复用模式、6-输入进入电流环拖动复用模式、7-输入进入力只动位置拖动模式（六维力版本可配置）、
+ *                8-输入进入力只动姿态拖动模式（六维力版本可配置）、9-输入进入力位姿结合拖动复用模式（六维力版本可配置）、
+ *                10-输入外部轴最大软限位复用模式（外部轴模式可配置）、11-输入外部轴最小软限位复用模式（外部轴模式可配置）、
+ *                12-输入初始位姿功能复用模式、13-输出碰撞功能复用模式、14-实时调速功能复用模式
+ * @param io_speed_mode 模式取值1或2(只有io_mode为14时生效)：
+ *                          1表示单次触发模式，单次触发模式下当IO拉低速度设置为speed参数值，IO恢复高电平速度设置为初始值。
+ *                          2表示连续触发模式，连续触发模式下IO拉低速度设置为speed参数值，IO恢复高电平速度维持当前值
+ * @param io_speed 速度取值范围0-100(只有io_mode为14时生效)
  * @return int 函数执行的状态码。  
             - 0: 成功。  
             - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
@@ -1781,7 +1791,7 @@ RM_INTERFACE_EXPORT int rm_set_wifi_close(rm_robot_handle *handle);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-RM_INTERFACE_EXPORT int rm_set_IO_mode(rm_robot_handle *handle, int io_num, int io_mode);
+RM_INTERFACE_EXPORT int rm_set_IO_mode(rm_robot_handle *handle, int io_num, int io_mode, int io_speed_mode=0, int io_speed=0);
 /**
  * @brief 设置数字IO输出
  * 
@@ -1802,9 +1812,16 @@ RM_INTERFACE_EXPORT int rm_set_DO_state(rm_robot_handle *handle, int io_num, int
  * @param handle 机械臂控制句柄 
  * @param io_num IO 端口号，范围：1~4
  * @param state IO 状态
- * @param mode 0-通用输入模式，1-通用输出模式、2-输入开始功能复用模式、3-输入暂停功能复用模式、4-输入继续功能复用模式、
- * 5-输入急停功能复用模式、6-输入进入电流环拖动复用模式、7-输入进入力只动位置拖动模式、8-输入进入力只动姿态拖动模式、
- * 9- 输入进入力位姿结合拖动复用模式、10-输入外部轴最大软限位复用模式、11-输入外部轴最小软限位复用模式
+ * @param io_mode 模式：
+ *                0-通用输入模式，1-通用输出模式、2-输入开始功能复用模式、3-输入暂停功能复用模式、
+ *                4-输入继续功能复用模式、5-输入急停功能复用模式、6-输入进入电流环拖动复用模式、7-输入进入力只动位置拖动模式（六维力版本可配置）、
+ *                8-输入进入力只动姿态拖动模式（六维力版本可配置）、9-输入进入力位姿结合拖动复用模式（六维力版本可配置）、
+ *                10-输入外部轴最大软限位复用模式（外部轴模式可配置）、11-输入外部轴最小软限位复用模式（外部轴模式可配置）、
+ *                12-输入初始位姿功能复用模式13-输出碰撞功能复用模式、14-实时调速功能复用模式
+ * @param io_speed_mode 模式取值1或2(只有io_mode为14时生效)：
+ *                          1表示单次触发模式，单次触发模式下当IO拉低速度设置为speed参数值，IO恢复高电平速度设置为初始值。
+ *                          2表示连续触发模式，连续触发模式下IO拉低速度设置为speed参数值，IO恢复高电平速度维持当前值
+ * @param io_speed 速度取值范围0-100(只有io_mode为14时生效)
  * @return int 函数执行的状态码。  
             - 0: 成功。  
             - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
@@ -1812,7 +1829,7 @@ RM_INTERFACE_EXPORT int rm_set_DO_state(rm_robot_handle *handle, int io_num, int
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-RM_INTERFACE_EXPORT int rm_get_IO_state(rm_robot_handle *handle, int io_num, int* state, int* mode);
+RM_INTERFACE_EXPORT int rm_get_IO_state(rm_robot_handle *handle, int io_num, int* state, int* mode, int* io_speed_mode=nullptr, int* io_speed=nullptr);
 /**
  * @brief 获取所有 IO 输入状态
  * 

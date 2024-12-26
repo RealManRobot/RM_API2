@@ -8,9 +8,14 @@ extern "C" {
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdarg.h>
-#define ARM_DOF 7
-#define  M_PI		 3.14159265358979323846
-#define  SDK_VERSION (char*)"1.0.4"
+
+#define ARM_DOF                     7
+#define M_PI		                3.14159265358979323846
+// #define SDK_VERSION                 (char*)"1.0.5.t6"
+
+#define RM_MOVE_NBLOCK  0                                          ///<机械臂运动设置，非阻塞模式
+#define RM_MOVE_MULTI_BLOCK  1                                 ///<机械臂运动设置，多线程阻塞模式
+static inline int RM_MOVE_SINGLE_BLOCK(int timeout){return timeout;}    ///<机械臂运动设置，单线程阻塞模式超时时间
 
 /**
  * @brief 线程模式
@@ -18,7 +23,7 @@ extern "C" {
  */
 typedef enum {
     RM_SINGLE_MODE_E,       ///< 单线程模式，单线程非阻塞等待数据返回
-    RM_DUAL_MODE_E,     ///< 双线程模式，增加接收线程监测队列中的数据
+    RM_DUAL_MODE_E,         ///< 双线程模式，增加接收线程监测队列中的数据
     RM_TRIPLE_MODE_E,       ///< 三线程模式，在双线程模式基础上增加线程监测UDP接口数据
 }rm_thread_mode_e;
 
@@ -54,9 +59,9 @@ typedef enum{
  */
 typedef enum 
 {
-    RM_NONE_EVENT_E,    ///< 无事件
+    RM_NONE_EVENT_E,                    ///< 无事件
     RM_CURRENT_TRAJECTORY_STATE_E,      ///< 当前轨迹到位
-    RM_PROGRAM_RUN_FINISH_E,        ///< 在线编程运行结束
+    RM_PROGRAM_RUN_FINISH_E,            ///< 在线编程运行结束
 } rm_event_type_e;
 
 /**
@@ -79,12 +84,12 @@ typedef struct
  */
 typedef enum 
 {
-    RM_NO_PLANNING_E,     ///< 无规划
-    RM_JOINT_SPACE_PLANNING_E,        ///< 关节空间规划
-    RM_CARTESIAN_LINEAR_PLANNING_E,   ///< 笛卡尔空间直线规划
-    RM_CARTESIAN_ARC_PLANNING_E,      ///< 笛卡尔空间圆弧规划
-    RM_SPLINE_CURVE_MOTION_PLANNING_E,      ///< 样条曲线运动规划
-    RM_TRAJECTORY_REPLAY_PLANNING_E,  ///< 示教轨迹复现规划
+    RM_NO_PLANNING_E,                   ///< 无规划
+    RM_JOINT_SPACE_PLANNING_E,          ///< 关节空间规划
+    RM_CARTESIAN_LINEAR_PLANNING_E,     ///< 笛卡尔空间直线规划
+    RM_CARTESIAN_ARC_PLANNING_E,        ///< 笛卡尔空间圆弧规划
+    RM_SPLINE_CURVE_MOTION_PLANNING_E,  ///< 样条曲线运动规划
+    RM_TRAJECTORY_REPLAY_PLANNING_E,    ///< 示教轨迹复现规划
 }rm_arm_current_trajectory_e;
 
 typedef struct
@@ -105,7 +110,7 @@ typedef struct {
     int cycle;      ///< 广播周期，5ms的倍数
     bool enable;     ///< 使能，是否主动上报
     int port;       ///< 广播的端口号
-    int force_coordinate;       ///< 系统外受力数据的坐标系，-1不支持力传感器 0为传感器坐标系 1为当前工作坐标系 2为当前工具坐标系 
+    int force_coordinate;       ///< 系统外受力数据的坐标系，-1不支持力传感器 0为传感器坐标系 1为当前工作坐标系 2为当前工具坐标系
     char ip[28];       ///< 自定义的上报目标IP地址
     rm_udp_custom_config_t custom_config;     ///< 自定义项内容
 } rm_realtime_push_config_t;
@@ -143,6 +148,7 @@ typedef struct
 	float ry;
 	float rz;
 } rm_euler_t;
+
 /**
  * @brief 机械臂位置姿态结构体
  * @ingroup Algo
@@ -214,6 +220,16 @@ typedef struct
 }rm_arm_software_version_t;
 
 /**
+ * @brief  错误代码结构体
+ * 
+*/
+typedef struct 
+{
+    uint8_t err_len;   ///< 错误代码个数
+    int err[24];       ///< 错误代码数组
+}rm_err_t;
+
+/**
  * @brief  机械臂当前状态
  * 
 */
@@ -221,8 +237,7 @@ typedef struct
 {
     rm_pose_t pose;         ///< 机械臂当前位姿
     float joint[ARM_DOF];   ///< 机械臂当前关节角度
-    uint8_t arm_err;        ///< 机械臂错误代码
-    uint8_t sys_err;        ///< 控制器错误代码
+    rm_err_t err;
 }rm_current_arm_state_t;
 
 /**
@@ -235,9 +250,9 @@ typedef struct
     bool joint_en_flag[ARM_DOF];                ///< 当前关节使能状态 ，1为上使能，0为掉使能
     uint16_t joint_err_code[ARM_DOF];           ///< 当前关节错误码
     float joint_position[ARM_DOF];              ///< 关节角度，单位°，精度：0.001°
-    float joint_temperature[ARM_DOF];       ///< 当前关节温度，精度0.001℃
-    float joint_voltage[ARM_DOF];       ///< 当前关节电压，精度0.001V
-    float joint_speed[ARM_DOF];       ///< 当前关节速度，精度0.01RPM。
+    float joint_temperature[ARM_DOF];           ///< 当前关节温度，精度0.001℃
+    float joint_voltage[ARM_DOF];               ///< 当前关节电压，精度0.001V
+    float joint_speed[ARM_DOF];                 ///< 当前关节速度，精度0.01RPM。
 }rm_joint_status_t;
 
 /**
@@ -263,6 +278,42 @@ typedef enum
 }rm_ort_teach_type_e;
 
 /**
+ * @brief 数字IO配置结构体
+ *      io_mode:模式，0-通用输入模式、1-通用输出模式、2-输入开始功能复用模式、3-输入暂停功能复用模式、
+ *                   4-输入继续功能复用模式、5-输入急停功能复用模式、6-输入进入电流环拖动复用模式
+ *                   7-输入进入力只动位置拖动模式（六维力版本可配置）、8-输入进入力只动姿态拖动模式（六维力版本可配置）
+ *                   9-输入进入力位姿结合拖动复用模式（六维力版本可配置）、10-输入外部轴最大软限位复用模式（外部轴模式可配置）
+ *                   11-输入外部轴最小软限位复用模式（外部轴模式可配置）、12-输入初始位姿功能复用模式
+ *                   13-输出碰撞功能复用模式、14-实时调速功能复用模式
+ *      io_state:数字io状态（0低 1高）（该成员在set时无效）
+ *      io_real_time_config_t:实时调速功能，io配置
+ *          speed:速度取值范围0-100     (当io_mode不为14时，默认值为-1)
+ *          mode :模式取值范围1或2      (当io_mode不为14时，默认值为-1)
+ *                  1表示单次触发模式，单次触发模式下当IO拉低速度设置为speed参数值，IO恢复高电平速度设置为初始值
+ *                  2表示连续触发模式，连续触发模式下IO拉低速度设置为speed参数值，IO恢复高电平速度维持当前值
+ */
+typedef struct
+{
+    int io_mode;    // io_mode:模式0~14
+    struct
+    {
+        int speed;  // speed:速度取值范围0-100
+        int mode;   // mode :模式取值范围1或2
+    }io_real_time_config_t;
+}rm_io_config_t;
+
+/**
+ * @brief 数字IO状态获取结构体
+ *      io_state:数字io状态（0低 1高）（该成员在set时无效）
+ *      io_config:io配置结构体
+ */
+typedef struct
+{
+    int io_state;               // io_state:数字io状态（0低 1高）
+    rm_io_config_t io_config;   // io_config:数字io配置结构体
+}rm_io_get_t;
+
+/**
  * @brief 复合模式拖动示教参数
  * 
  */
@@ -271,6 +322,37 @@ typedef struct{
     int frame;              ///< 参考坐标系，0-工作坐标系 1-工具坐标系。
     int singular_wall;      ///< 仅在六维力模式拖动示教中生效，用于指定是否开启拖动奇异墙，0表示关闭拖动奇异墙，1表示开启拖动奇异墙，若无配置参数，默认启动拖动奇异墙
 }rm_multi_drag_teach_t;
+
+/**
+ * @brief 力位混合控制传感器枚举
+ * 
+ */
+typedef enum{
+    RM_FP_OF_SENSOR_E = 0,     ///<一维力
+    RM_FP_SF_SENSOR_E,         ///<六维力
+}rm_force_position_sensor_e;
+
+/**
+ * @brief 力位混合控制模式枚举
+ * 
+ */
+typedef enum{
+    RM_FP_BASE_COORDINATE_E = 0,   ///<基坐标系力控
+    RM_FP_TOOL_COORDINATE_E,       ///<工具坐标系力控
+}rm_force_position_mode_e;
+
+/**
+ * @brief 力位混合控制模式（单方向）力控方向枚举
+ * 
+ */
+typedef enum{
+    RM_FP_X_E = 0,      ///<沿X轴
+    RM_FP_Y_E,          ///<沿Y轴
+    RM_FP_Z_E,          ///<沿Z轴
+    RM_FP_RX_E,         ///<沿RX姿态方向
+    RM_FP_RY_E,         ///<沿RY姿态方向
+    RM_FP_RZ_E,         ///<沿RZ姿态方向
+}rm_force_position_dir_e;
 
 /**
  * @brief 力位混合控制参数
@@ -284,22 +366,53 @@ typedef struct
     float desired_force[6];     ///< 力控轴维持的期望力/力矩，力控轴的力控模式为力跟踪模式时，期望力/力矩设置才会生效 ，精度0.1N。
     float limit_vel[6];     ///< 力控轴的最大线速度和最大角速度限制，只对开启力控方向生效。
 }rm_force_position_t;
+
 /**
  * @brief 透传力位混合补偿参数
- * 
+ * 建议初始化方式，避免一些未知错误
+ * rm_force_position_move_t my_fp_move = (rm_force_position_move_t){ 0 };
  */
 typedef struct 
 {
-    int flag;          ///< 0-下发目标角度，1-下发目标位姿
-    rm_pose_t pose;         ///< 当前坐标系下的目标位姿，支持四元数/欧拉角表示姿态。位置精度：0.001mm，欧拉角表示姿态，姿态精度：0.001rad，四元数方式表示姿态，姿态精度：0.000001
+    int flag;                   ///< 0-下发目标角度，1-下发目标位姿
+    rm_pose_t pose;             ///< 当前坐标系下的目标位姿，支持四元数/欧拉角表示姿态。位置精度：0.001mm，欧拉角表示姿态，姿态精度：0.001rad，四元数方式表示姿态，姿态精度：0.000001
     float joint[ARM_DOF];       ///< 目标关节角度，单位：°，精度：0.001°
-    int sensor;            ///< 传感器，0-一维力；1-六维力
-    int mode;              ///< 0-基坐标系力控；1-工具坐标系力控；
-    bool follow;            ///< 表示驱动器的运动跟随效果，true 为高跟随，false 为低跟随。
-    int control_mode[6];       ///< 6个力控方向的模式 0-固定模式 1-浮动模式 2-弹簧模式 3-运动模式 4-力跟踪模式 5-浮动+运动模式 6-弹簧+运动模式 7-力跟踪+运动模式 8-姿态自适应模式
+    int sensor;                 ///< 传感器，0-一维力；1-六维力
+    int mode;                   ///< 0-基坐标系力控；1-工具坐标系力控；
+    bool follow;                ///< 表示驱动器的运动跟随效果，true 为高跟随，false 为低跟随。
+    int control_mode[6];        ///< 6个力控方向的模式 0-固定模式 1-浮动模式 2-弹簧模式 3-运动模式 4-力跟踪模式 5-浮动+运动模式 6-弹簧+运动模式 7-力跟踪+运动模式 8-姿态自适应模式
     float desired_force[6];     ///< 力控轴维持的期望力/力矩，力控轴的力控模式为力跟踪模式时，期望力/力矩设置才会生效 ，精度0.1N。
-    float limit_vel[6];     ///< 力控轴的最大线速度和最大角速度限制，只对开启力控方向生效。
+    float limit_vel[6];         ///< 力控轴的最大线速度和最大角速度限制，只对开启力控方向生效。
+    int trajectory_mode;        ///< 高跟随模式下，0-完全透传模式、1-曲线拟合模式、2-滤波模式
+    int radio;                  ///< 曲线拟合模式0-100和滤波模式下的平滑系数（数值越大效果越好），滤波模式下取值范围0~1000，曲线拟合模式下取值范围0~100
 }rm_force_position_move_t;
+
+/**
+ * @brief 角度透传模式结构体
+ * 建议初始化方式，避免一些未知错误
+ * rm_movej_canfd_mode_t my_j_canfd = (rm_movej_canfd_mode_t){ 0 };
+ */
+typedef struct
+{
+    float* joint;           // 关节角度（若为六轴机械臂，那么最后一个元素无效），单位°
+    float expand;           // 扩展关节角度（若没有扩展关节，那么此成员值无效）
+    bool follow;            // 跟随模式，0-低跟随，1-高跟随,若使用高跟随，透传周期要求不超过 10ms
+    int trajectory_mode;    // 高跟随模式下，0-完全透传模式、1-曲线拟合模式、2-滤波模式
+    int radio;              // 曲线拟合模式和滤波模式下的平滑系数（数值越大效果越好），滤波模式下取值范围0~1000，曲线拟合模式下取值范围0~100
+}rm_movej_canfd_mode_t;
+
+/**
+ * @brief 姿态透传模式结构体
+ * 建议初始化方式，避免一些未知错误
+ * rm_movep_canfd_mode_t my_p_canfd = (rm_movep_canfd_mode_t){ 0 };
+ */
+typedef struct
+{
+    rm_pose_t pose;         // 位姿 (优先采用四元数表达)
+    bool follow;            // 跟随模式，0-低跟随，1-高跟随,若使用高跟随，透传周期要求不超过 10ms
+    int trajectory_mode;    // 高跟随模式下，0-完全透传模式、1-曲线拟合模式、2-滤波模式
+    int radio;              // 曲线拟合模式和滤波模式下的平滑系数（数值越大效果越好），滤波模式下取值范围0~1000，曲线拟合模式下取值范围0~100
+}rm_movep_canfd_mode_t;
 
 /**
  * @brief 无线网络信息结构体
@@ -322,11 +435,11 @@ typedef struct{
 typedef struct
 {
     float joint_current[ARM_DOF];           ///< 关节电流，单位mA
-    int joint_en_flag[ARM_DOF];            ///< 关节使能状态
+    int joint_en_flag[ARM_DOF];             ///< 关节使能状态
     float joint_temperature[ARM_DOF];       ///< 关节温度,单位℃
     float joint_voltage[ARM_DOF];           ///< 关节电压，单位V
     int joint_err_code[ARM_DOF];            ///< 关节错误码
-    int sys_err;                            ///< 机械臂错误代码
+    rm_err_t err;                           ///< 错误代码
 }rm_arm_all_state_t;
 
 /**
@@ -609,6 +722,15 @@ typedef struct {
     int hand_err;       ///< 表示灵巧手系统错误，由灵巧手厂商定义错误含义，例如因时状态码如下：1表示有错误，0表示无错误
 } rm_udp_hand_state_t;
 
+/***
+ * 
+ * 轨迹连接配置
+ */
+typedef enum{
+    RM_TRAJECTORY_DISCONNECT_E = 0,   ///<立即规划并执行轨迹，不连接后续轨迹
+    RM_TRAJECTORY_CONNECT_E           ///<将当前轨迹与下一条轨迹一起规划
+}rm_trajectory_connect_config_e;
+
 /**
  * @brief 机械臂当前状态
  * 
@@ -630,6 +752,7 @@ typedef enum {
     RM_SENSOR_DRAG_E,              // 六维力拖动状态
     RM_TECH_DEMONSTRATION_E        // 示教状态
 } rm_udp_arm_current_status_e;
+
 /***
  * aloha主臂状态
  *
@@ -644,19 +767,17 @@ typedef struct {
 */
 typedef struct 
 {
-    int errCode;        ///< 数据解析错误码，-3为数据解析错误，代表推送的数据不完整或格式不正确
-    char arm_ip[16];       ///< 推送数据的机械臂的IP地址
-    uint16_t arm_err;       ///< 机械臂错误码
+    int errCode;                        ///< 数据解析错误码，-3为数据解析错误，代表推送的数据不完整或格式不正确
+    char arm_ip[16];                    ///< 推送数据的机械臂的IP地址
     rm_joint_status_t joint_status;     ///< 关节状态
-    rm_force_sensor_t force_sensor;       ///< 力数据（六维力或一维力版本支持）
-    uint16_t sys_err;       ///< 系统错误码
-    rm_pose_t waypoint;         ///< 当前路点信息
+    rm_force_sensor_t force_sensor;     ///< 力数据（六维力或一维力版本支持）
+    rm_err_t err;                       ///< 错误码
+    rm_pose_t waypoint;                 ///< 当前路点信息
     rm_udp_lift_state_t liftState;      ///< 升降关节数据
-    rm_udp_expand_state_t expandState;      ///< 扩展关节数据
-    rm_udp_hand_state_t handState;         ///< 灵巧手数据
+    rm_udp_expand_state_t expandState;  ///< 扩展关节数据
+    rm_udp_hand_state_t handState;      ///< 灵巧手数据
     rm_udp_arm_current_status_e arm_current_status;     ///< 机械臂状态
-    rm_udp_aloha_state_t aloha_state;     ///< aloha主臂状态
-
+    rm_udp_aloha_state_t aloha_state;   ///< aloha主臂状态
 }rm_realtime_arm_joint_state_t; 
 
 /**

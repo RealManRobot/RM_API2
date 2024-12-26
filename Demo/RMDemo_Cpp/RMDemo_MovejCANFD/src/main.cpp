@@ -43,13 +43,17 @@ void callback_rm_realtime_arm_joint_state(rm_realtime_arm_joint_state_t data) {
     printf("Current state: %.3f\n", data.joint_status.joint_current[0]);
     printf("Current angles: %.3f %.3f %.3f %.3f %.3f %.3f\n", data.joint_status.joint_position[0], data.joint_status.joint_position[1],
            data.joint_status.joint_position[2], data.joint_status.joint_position[3], data.joint_status.joint_position[4], data.joint_status.joint_position[5]);
-    printf("Current state: %u\n", data.arm_err);
 
     printf("Current state: %u\n", data.joint_status.joint_err_code[0]);
     // Handle received data
     printf("Error Code: %d\n", data.errCode);
     printf("Arm IP: %s\n", data.arm_ip);
-    printf("Arm Error: %u\n", data.arm_err);
+    
+    printf("Error: ");
+    for (int i = 0; i < data.err.err_len; i++) {
+        printf("%04x ", data.err.err[i]);
+    }
+    printf("\n");
 
     // Handle joint state
     printf("Joint Position:\n");
@@ -105,14 +109,17 @@ void demo_movej_canfd(rm_robot_handle* handle) {
     }
 
     printf("Total points: %d\n", point_count);
-    int movej_result = robotic_arm.rm_movej(handle, points[0], 20, 0, 0, 1);
+    int movej_result = robotic_arm.rm_movej(handle, points[0], 20, 0, RM_TRAJECTORY_DISCONNECT_E, RM_MOVE_MULTI_BLOCK);
     if (movej_result != 0) {
         printf("movej failed with error code: %d\n", movej_result);
     }
-
+    
+    rm_movej_canfd_mode_t param = {0};
+    param.follow = false;
+    param.expand = 0;
     robotic_arm.rm_realtime_arm_state_call_back(callback_rm_realtime_arm_joint_state);
     for (int i = 0; i < point_count; ++i) {
-        // printf("Moving to point %d\n", i);
+        printf("Moving to point %d\n", i);
         int result = robotic_arm.rm_movej_canfd(handle, points[i], false, 0);
         if (result != 0) {
             printf("Error at point %d: %d\n", i, result);
@@ -128,7 +135,7 @@ void demo_movej_canfd(rm_robot_handle* handle) {
     for (int i = 0; i < dof; ++i) {
         home_position[i] = 0.0f;
     }
-    int movej_ret = robotic_arm.rm_movej(handle, home_position, 25, 0, 0, 1);
+    int movej_ret = robotic_arm.rm_movej(handle, home_position, 25, 0, RM_TRAJECTORY_DISCONNECT_E, RM_MOVE_MULTI_BLOCK);
     printf("movej_cmd joint movement 1: %d\n", movej_ret);
     SLEEP_S(2);
 }

@@ -2,7 +2,7 @@ from src.Robotic_Arm.rm_robot_interface import *
 import threading
 
 
-def demo_movej(robot, joint=None, v=20, connect=0, block=1, r=0):
+def demo_movej(robot, joint=None, v=20, r=0, connect=0, block=1):
     """
     Perform movej motion.
 
@@ -26,7 +26,7 @@ def demo_movej(robot, joint=None, v=20, connect=0, block=1, r=0):
         print("\nmovej motion failed, Error code: ", movej_result, "\n")
 
 
-def demo_movel(robot, pose, v=20, connect=0, block=1, r=0):
+def demo_movel(robot, pose, v=20, r=0, connect=0, block=1):
     """
     Perform movel motion.
 
@@ -48,7 +48,7 @@ def demo_movel(robot, pose, v=20, connect=0, block=1, r=0):
         print("\nmovel motion failed, Error code: ", movel_result, "\n")
 
 
-def demo_movec(robot, pose_via, pose_to, v=20, loop=0, connect=0, block=1, r=0):
+def demo_movec(robot, pose_via, pose_to, v=20, r=0, loop=0, connect=0, block=1):
     """
     Perform movec motion.
 
@@ -72,7 +72,7 @@ def demo_movec(robot, pose_via, pose_to, v=20, loop=0, connect=0, block=1, r=0):
         print("\nmovec motion failed, Error code: ", movec_result, "\n")
 
 
-def demo_movej_p(robot, pose, v=20, connect=0, block=1, r=0):
+def demo_movej_p(robot, pose, v=20, r=0, connect=0, block=1):
     """
     Perform movej_p motion.
 
