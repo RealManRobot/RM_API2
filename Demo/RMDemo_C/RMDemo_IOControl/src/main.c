@@ -13,7 +13,7 @@
 #define localtime_r(timep, result) localtime_s(result, timep)  // Use localtime_s as a replacement
 #else
 #include <unistd.h>
-include <limits.h>  
+#include <limits.h>  
 #define SLEEP(ms) usleep((ms) * 1000)
 #endif
 
@@ -166,7 +166,8 @@ void get_program_run_state(rm_robot_handle *handle, int time_sleep, int max_retr
         retries++;
     }
 
-    if (retries == max_retries) {
+    if (retries == max_retries)
+    {
         printf("Reached maximum query attempts, exiting\n");
     }
 }
@@ -216,34 +217,44 @@ int main(int argc, char *argv[]) {
     printf("Save ID { %d } for this teaching session saved to the controller\n", save_id);
 
     // Send file and query running status
-    send_project(robot_handle, PROJECT_FILE_PATH, 20, 1, save_id, 0, 0);
+    send_project(robot_handle, PROJECT_FILE_PATH, 20, 1, save_id, 0, 0, 0);
 
     // Set the default run program
     result =rm_set_default_run_program(robot_handle, save_id);
     if (check_result(result, "Failed to set default run program") != 0) {
         return -1;
-    }
+    };
     // Set IO modes
-    result = rm_set_IO_mode(robot_handle, 1, 2);  // Set IO mode to input start function multiplexing mode
+    rm_io_config_t io_1_config = {0};
+    io_1_config.io_mode = 2;
+    result = rm_set_IO_mode(robot_handle, 1, io_1_config);  // Set IO mode to input start function multiplexing mode
     if (check_result(result, "Failed to set IO mode for input start function") != 0) {
         return -1;
-    }
-    result = rm_set_IO_mode(robot_handle, 2, 3);  // Set IO mode to input pause function multiplexing mode
+    };
+    rm_io_config_t io_2_config = {0};
+    io_1_config.io_mode = 3;
+    result = rm_set_IO_mode(robot_handle, 2, io_2_config);  // Set IO mode to input pause function multiplexing mode
     if (check_result(result, "Failed to set IO mode for input pause function") != 0) {
         return -1;
-    }
-    result = rm_set_IO_mode(robot_handle, 3, 4);  // Set IO mode to input continue function multiplexing mode
+    };
+    rm_io_config_t io_3_config = {0};
+    io_1_config.io_mode = 4;
+    result = rm_set_IO_mode(robot_handle, 3, io_3_config);  // Set IO mode to input continue function multiplexing mode
     if (check_result(result, "Failed to set IO mode for input continue function") != 0) {
         return -1;
-    }
-    result = rm_set_IO_mode(robot_handle, 4, 5);  // Set IO mode to input emergency stop function multiplexing mode
-    if (check_result(result, "Failed to set IO mode for input emergency stop function") != 0) {
+    };
+    rm_io_config_t io_4_config = {0};
+    io_1_config.io_mode = 5;
+    result = rm_set_IO_mode(robot_handle, 4, io_4_config);  // Set IO mode to input emergency stop function multiplexing mode
+    if (check_result(result, "Failed to set IO mode for input emergency stop function") != 0) 
+    {
         return -1;
     }
 
     // Disconnect the robot arm
     result = rm_delete_robot_arm(robot_handle);
-    if (check_result(result, "Failed to disconnect the robot arm") != 0) {
+    if (check_result(result, "Failed to disconnect the robot arm") != 0) 
+    {
         return -1;
     }
 }

@@ -100,7 +100,7 @@ MSVC（Microsoft Visual C++）编译器通常随Visual Studio一起安装。可�
 
    ```C
    const char *robot_ip_address = "192.168.1.18";
-
+   
    int robot_port = 8080;
    rm_robot_handle *robot_handle = rm_create_robot_arm(robot_ip_address, robot_port);
    ```
@@ -120,7 +120,7 @@ MSVC（Microsoft Visual C++）编译器通常随Visual Studio一起安装。可�
     Robot handle created successfully: 1
     Drag teaching started
     Drag teaching has started, complete the drag operation and press Enter to continue...
-
+   
     Please enter a Save ID for this teaching session: 50
     Save ID { 50 } for this teaching session saved to the controller
     Drag teaching stopped
@@ -217,7 +217,7 @@ Reached maximum query attempts, exiting
   将在线编程文件发送到机械臂。
 
     ```C
-    send_project(robot_handle, file_path_test, 20, 0, 16, 0, 0);
+    send_project(robot_handle, PROJECT_FILE_PATH, 20, 0, save_id, 0, 0, 0);
     ```
 
 - **查询在线编程运行状态**

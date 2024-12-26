@@ -16,7 +16,7 @@
 -
 """
 # python包版本
-__version__ = '1.0.4'
+# __version__ = '1.0.5.t6'
 
 from .rm_ctypes_wrap import *
 import ctypes
@@ -1534,7 +1534,7 @@ class MovePlan:
 
         return tag
 
-    def rm_movej_canfd(self, joint: list[float], follow: bool, expand: float = 0) -> int:
+    def rm_movej_canfd(self, joint: list[float], follow: bool, expand: float = 0, trajectory_mode: int = 0, radio: int = 0) -> int:
         """
         角度不经规划，直接通过CANFD透传给机械臂
         @details 角度透传到 CANFD，若指令正确，机械臂立即执行
@@ -1543,9 +1543,11 @@ class MovePlan:
             用户在使用此功能时，建议进行良好的轨迹规划，以确保机械臂的稳定运行。
             I系列有线网口周期最快可达2ms，提供了更高的实时性。
         Args:
-            joint (list[float]): 关节1~7目标角度数组,单位：°
-            follow (bool): true-高跟随，false-低跟随。若使用高跟随，透传周期要求不超过 10ms。
-            expand (float, optional): 如果存在通用扩展轴，并需要进行透传，可使用该参数进行透传发送。Defaults to 0.
+            joint               (list[float]): 关节1~7目标角度数组,单位：°
+            follow              (bool): true-高跟随，false-低跟随。若使用高跟随，透传周期要求不超过 10ms。
+            expand              (float, optional): 如果存在通用扩展轴，并需要进行透传，可使用该参数进行透传发送。Defaults to 0.
+            trajectory_mode     (int): 高跟随模式下，0-完全透传模式、1-曲线拟合模式、2-滤波模式
+            radio               (int): 曲线拟合模式和滤波模式下的平滑系数（数值越大效果越好），滤波模式下取值范围0~100，曲线拟合模式下取值范围0~999
 
         Returns:
             int: 函数执行的状态码。
@@ -1553,16 +1555,19 @@ class MovePlan:
             - 1: 控制器返回false，参数错误或机械臂状态发生错误。
             - -1: 数据发送失败，通信过程中出现问题。
         """
-        if self.arm_dof != 0 and self.arm_dof == len(joint):
-            joint_positions = (c_float * self.arm_dof)(*joint)
-        else:
-            joint_positions = (c_float * ARM_DOF)(*joint)
+        config = rm_movej_canfd_mode_t()
+        joint_array = (c_float * 7)(*joint)
+        config.joint = ctypes.pointer(joint_array)
+        config.follow = follow
+        config.expand = expand
+        config.trajectory_mode = trajectory_mode
+        config.radio = radio
 
-        tag = rm_movej_canfd(self.handle, joint_positions, follow, expand)
+        tag = rm_movej_canfd(self.handle, config)
 
         return tag
 
-    def rm_movep_canfd(self, pose: list[float], follow: bool) -> int:
+    def rm_movep_canfd(self, pose: list[float], follow: bool, trajectory_mode: int = 0, radio: int = 0) -> int:
         """
         位姿不经规划，直接通过CANFD透传给机械臂
         @details 当目标位姿被透传到机械臂控制器时，控制器首先尝试进行逆解计算。
@@ -1575,6 +1580,8 @@ class MovePlan:
         Args:
             pose (list[float]): 位姿 (若位姿列表长度为7则认为使用四元数表达位姿，长度为6则认为使用欧拉角表达位姿)
             follow (bool): true-高跟随，false-低跟随。若使用高跟随，透传周期要求不超过 10ms。
+            trajectory_mode     (int): 高跟随模式下，0-完全透传模式、1-曲线拟合模式、2-滤波模式
+            radio               (int): 曲线拟合模式和滤波模式下的平滑系数（数值越大效果越好），滤波模式下取值范围0~100，曲线拟合模式下取值范围0~999
 
         Returns:
             int: 函数执行的状态码。
@@ -1582,19 +1589,21 @@ class MovePlan:
             - 1: 控制器返回false，参数错误或机械臂状态发生错误。
             - -1: 数据发送失败，通信过程中出现问题。
         """
-        po1 = rm_pose_t()
-
-        po1.position = rm_position_t(*pose[:3])
+        config = rm_movep_canfd_mode_t()
+        config.pose.position = rm_position_t(*pose[:3])
         # 四元数
         if len(pose) == 7:
-            po1.quaternion = rm_quat_t(*pose[3:])
+            config.pose.quaternion = rm_quat_t(*pose[3:])
         # 欧拉角
         elif len(pose) == 6:
-            po1.euler = rm_euler_t(*pose[3:])
+            config.pose.euler = rm_euler_t(*pose[3:])
         else:
             print("Error: pose length is error.")
+        config.follow = follow
+        config.trajectory_mode = trajectory_mode
+        config.radio = radio
 
-        tag = rm_movep_canfd(self.handle, po1, follow)
+        tag = rm_movep_canfd(self.handle, config)
 
         return tag
 
@@ -2342,10 +2351,8 @@ class ControllerIOConfig:
     机械臂控制器提供IO端口，用于与外部设备交互。可查阅文档了解其数量分类等。
     """
 
-    def rm_set_io_mode(self, io_num: int, io_mode: int) -> int:
+    def rm_set_io_mode(self, io_num: int, io_mode: int, io_speed: int=0, io_speed_mode: int=0) -> int:
         """
-
-
         Args:
             io_num (int): IO 端口号，范围：1~4
             io_mode (int): 模式，0-通用输入模式，1-通用输出模式、2-输入开始功能复用模式、3-输入暂停功能复用模式、
@@ -2353,6 +2360,10 @@ class ControllerIOConfig:
             8-输入进入力只动姿态拖动模式（六维力版本可配置）、9-输入进入力位姿结合拖动复用模式（六维力版本可配置）、
             10-输入外部轴最大软限位复用模式（外部轴模式可配置）、11-输入外部轴最小软限位复用模式（外部轴模式可配置）、12-输入初始位姿功能复用模式、
             13-输出碰撞功能复用模式。
+            io_speed (int): 速度取值范围0-100
+            io_speed_mode (int): 模式取值范围1或2，
+                                1表示单次触发模式,单次触发模式下当IO拉低速度设置为speed参数值，IO恢复高电平速度设置为初始值
+                                2表示连续触发模式，连续触发模式下IO拉低速度设置为speed参数值，IO恢复高电平速度维持当前值
 
         Returns:
             int: 函数执行的状态码。
@@ -2362,7 +2373,8 @@ class ControllerIOConfig:
             - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。
         """
-        tag = rm_set_IO_mode(self.handle, io_num, io_mode)
+        config = rm_io_config_t(io_mode=io_mode, io_real_time_config_t=rm_io_real_time_config_t(io_speed, io_speed_mode))
+        tag = rm_set_IO_mode(self.handle, io_num, config)
         return tag
 
     def rm_set_do_state(self, io_num: int, state: int) -> int:
@@ -2384,7 +2396,7 @@ class ControllerIOConfig:
         tag = rm_set_DO_state(self.handle, io_num, state)
         return tag
 
-    def rm_get_io_state(self, io_num: int) -> dict[str, any]:
+    def rm_get_io_state(self, io_num: int) -> tuple[int, dict[str, any]]:
         """
         获取数字 IO 状态
 
@@ -2399,22 +2411,24 @@ class ControllerIOConfig:
                 - -1: 数据发送失败，通信过程中出现问题。
                 - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。
                 - -3: 返回值解析失败，接收到的数据格式不正确或不完整。
-            - 'IO_state' (int): IO 状态
-            - 'IO_Mode' (int): 模式，0-通用输入模式，1-通用输出模式、2-输入开始功能复用模式、3-输入暂停功能复用模式、
-                4-输入继续功能复用模式、5-输入急停功能复用模式、6-输入进入电流环拖动复用模式、7-输入进入力只动位置拖动模式（六维力版本可配置）、
-                8-输入进入力只动姿态拖动模式（六维力版本可配置）、9-输入进入力位姿结合拖动复用模式（六维力版本可配置）、
-                10-输入外部轴最大软限位复用模式（外部轴模式可配置）、11-输入外部轴最小软限位复用模式（外部轴模式可配置）。
+            - 'io_state' (int): io 状态
+            - 'io_config' (dict): 配置字典
+                - 'io_mode' (int):模式
+                                0-通用输入模式，1-通用输出模式、2-输入开始功能复用模式、3-输入暂停功能复用模式、
+                                4-输入继续功能复用模式、5-输入急停功能复用模式、6-输入进入电流环拖动复用模式、7-输入进入力只动位置拖动模式（六维力版本可配置）、
+                                8-输入进入力只动姿态拖动模式（六维力版本可配置）、9-输入进入力位姿结合拖动复用模式（六维力版本可配置）、
+                                10-输入外部轴最大软限位复用模式（外部轴模式可配置）、11-输入外部轴最小软限位复用模式（外部轴模式可配置）、
+                                12-输入初始位姿功能复用模式、13-输出碰撞功能复用模式、14-实时调速功能复用模式
+                - 'io_real_time_config_t' (dict):实时调速功能复用模式配置
+                    - speed (int):速度取值范围0-100(当io_mode不为14时，默认值为-1)
+                    - mode (int) :模式取值范围1或2 (当io_mode不为14时，默认值为-1)
+                            1-单次触发模式，当IO拉低速度设置为speed参数值，IO恢复高电平速度设置为初始值
+                            2-连续触发模式，IO拉低速度设置为speed参数值，IO恢复高电平速度维持当前值
         """
-        mode = c_int()
-        state = c_int()
-        ret = rm_get_IO_state(self.handle, io_num, byref(state), byref(mode))
+        config = rm_io_get_t()
+        ret = rm_get_IO_state(self.handle, io_num, byref(config))
 
-        result_dict = {
-            'return_code': ret,
-            'IO_state': state.value,
-            'IO_Mode': mode.value,
-        }
-        return result_dict
+        return ret, config.to_dict()
 
     def rm_get_io_input(self) -> tuple[int, list[int]]:
         """
@@ -3186,8 +3200,7 @@ class DragTeach:
             - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。
         """
-        tag = rm_set_force_position_new(
-            self.handle, param)
+        tag = rm_set_force_position_new(self.handle, param)
         return tag
 
     def rm_stop_force_position(self) -> int:
@@ -3295,13 +3308,13 @@ class HandControl:
         tag = rm_set_hand_angle(self.handle, angle)
         return tag
 
-    def rm_set_hand_follow_angle(self, hand_angle: list[int], block:int) -> int:
+    def rm_set_hand_follow_angle(self, hand_angle: list[int], block:bool) -> int:
         """
         设置灵巧手角度跟随控制
         @details 设置灵巧手跟随角度，灵巧手有6个自由度，从1~6分别为小拇指，无名指，中指，食指，大拇指弯曲，大拇指旋转
         Args:
             hand_angle (list[int]): 手指角度数组，最大表示范围为-32768到+32767，按照灵巧手厂商定义的角度做控制，例如因时的范围为0-2000
-            block (int): 设置等待机械臂返回状态超时时间，设置0时为非阻塞模式，单位为毫秒。
+            block (int): 设置0时为非阻塞模式；1位阻塞模式，超时时间20ms
 
         Returns:
             int: 函数执行的状态码。
@@ -3316,13 +3329,13 @@ class HandControl:
         tag = rm_set_hand_follow_angle(self.handle, angle, block)
         return tag
 
-    def rm_set_hand_follow_pos(self, hand_pos: list[int], block:int) -> int:
+    def rm_set_hand_follow_pos(self, hand_pos: list[int], block:bool) -> int:
         """
         设置灵巧手位置跟随控制
         @details 设置灵巧手跟随角度，灵巧手有6个自由度，从1~6分别为小拇指，无名指，中指，食指，大拇指弯曲，大拇指旋转
         Args:
             hand_pos (list[int]): 手指位置数组，最大范围为0-65535，按照灵巧手厂商定义的角度做控制，例如因时的范围为0-1000
-            block (int): 设置等待机械臂返回状态超时时间，设置0时为非阻塞模式。单位为毫秒。
+            block (int): 设置0时为非阻塞模式；1位阻塞模式，超时时间20ms
 
         Returns:
             int: 函数执行的状态码。
@@ -3912,7 +3925,7 @@ class ForcePositionControl:
                 - -3: 返回值解析失败，控制器返回的数据无法识别或不完整等情况。
         """
 
-        tag = rm_force_position_move(self.handle,param)
+        tag = rm_force_position_move(self.handle, param)
         return tag
 
 class LiftControl:

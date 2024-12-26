@@ -99,7 +99,7 @@ MSVC（Microsoft Visual C++）编译器通常随Visual Studio一起安装。可�
 
    ```C
    const char *robot_ip_address = "192.168.1.18";
-
+   
    int robot_port = 8080;
    rm_robot_handle *robot_handle = rm_create_robot_arm(robot_ip_address, robot_port);
    ```
@@ -154,7 +154,7 @@ Project sent and run successfully
 
 - **保存拖动示教的轨迹**
   调用rm_start_drag_teach接口使机械臂开始拖动示教模式，完成拖动后调用rm_stop_drag_teach退出拖动示教模式。调用rm_save_trajectory接口将拖动示教轨迹保存到data文件夹下的trajectory.txt文件。
-     
+  
   ```C
   int result = rm_start_drag_teach(handle, trajectory_record);
   
@@ -162,7 +162,7 @@ Project sent and run successfully
   getchar();
   
   result = rm_stop_drag_teach(handle);
-
+  
   // Save trajectory
   int lines;
   result = rm_save_trajectory(robot_handle, TRAJECTORY_FILE_PATH, &lines);
@@ -175,7 +175,7 @@ Project sent and run successfully
   // 其中file_value为当前机械臂自由度，type_value为文件行数
   char line1[50];
   char line2[100];
-
+  
   snprintf(line1, sizeof(line1), "{\"file\":%d}\n", file_value);
   snprintf(line2, sizeof(line2), "{\"name\":\"Folder\",\"num\":1,\"type\":%d,\"enabled\":true,\"parent_number\":0}\n", type_value);
   ```
@@ -189,10 +189,10 @@ Project sent and run successfully
   printf("Please enter a Save ID for this teaching session: ");
   scanf("%d", &save_id);
   printf("Save ID { %d } for this teaching session saved to the controller\n", save_id);
-
+  
   // Send file and query running status
-  send_project(robot_handle, PROJECT_FILE_PATH, 20, 1, save_id, 0, 0);
-
+  send_project(robot_handle, PROJECT_FILE_PATH, 20, 1, save_id, 0, 0, 0);
+  
   result = rm_set_default_run_program(robot_handle, save_id);
   ```
 
@@ -200,14 +200,25 @@ Project sent and run successfully
   调用rm_set_IO_mode接口分别设置IO各端口的模式为输入开始功能复用模式、输入暂停功能复用模式、输入继续功能复用模式、输入急停功能复用模式
 
   ```C
-  result = rm_set_IO_mode(robot_handle, 1, 2);  // Set IO mode to input start function multiplexing mode
-  result = rm_set_IO_mode(robot_handle, 2, 3);  // Set IO mode to input pause function multiplexing mode
-  result = rm_set_IO_mode(robot_handle, 3, 4);  // Set IO mode to input continue function multiplexing mode
-  result = rm_set_IO_mode(robot_handle, 4, 5);  // Set IO mode to input emergency stop function multiplexing mode
+  rm_io_config_t io_1_config = {0};
+  io_1_config.io_mode = 2;
+  result = rm_set_IO_mode(robot_handle, 1, io_1_config);  // Set IO mode to input start function multiplexing mode
+  
+  rm_io_config_t io_2_config = {0};
+  io_1_config.io_mode = 3;
+  result = rm_set_IO_mode(robot_handle, 2, io_2_config);  // Set IO mode to input pause function multiplexing mode
+  
+  rm_io_config_t io_3_config = {0};
+  io_1_config.io_mode = 4;
+  result = rm_set_IO_mode(robot_handle, 3, io_3_config);  // Set IO mode to input continue function multiplexing mode
+  
+  rm_io_config_t io_4_config = {0};
+  io_1_config.io_mode = 5;
+  result = rm_set_IO_mode(robot_handle, 4, io_4_config);  // Set IO mode to input emergency stop function multiplexing mode
   ```
-
+  
   程序运行结束后，控制器IO设置如下，通过触发对应端口即可实现在线编程文件的控制：
-
+  
   IO1：表示开始运行在线编程文件；
   IO2：表示暂停运行在线编程文件；
   IO3：表示继续运行在线编程文件；

@@ -12,6 +12,7 @@
 
 #include "rm_define.h"
 #include "rm_interface_global.h"
+#include "rm_version.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -1010,14 +1011,14 @@ RM_INTERFACE_EXPORT int rm_get_init_pose(rm_robot_handle *handle, float *joint);
  *        - 0：立即规划并执行轨迹，不与后续轨迹连接。  
  *        - 1：将当前轨迹与下一条轨迹一起规划，但不立即执行。阻塞模式下，即使发送成功也会立即返回。  
  * @param block 阻塞设置
- *        - 多线程模式：  
+ *        - 多线程模式：
  *            - 0：非阻塞模式，发送指令后立即返回。  
  *            - 1：阻塞模式，等待机械臂到达目标位置或规划失败后返回。  
  *        - 单线程模式：  
  *            - 0：非阻塞模式。  
  *            - 其他值：阻塞模式并设置超时时间，根据运动时间设置，单位为秒。
  * @attention 使用单线程阻塞模式时，请设置超时时间确保轨迹在超时时间内运行结束返回
- * @return int 函数执行的状态码。  
+ * @return int 函数执行的状态码。
             - 0: 成功。  
             - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
@@ -1150,14 +1151,12 @@ RM_INTERFACE_EXPORT int rm_movej_p(rm_robot_handle *handle,rm_pose_t pose, int v
  *     用户在使用此功能时，建议进行良好的轨迹规划，以确保机械臂的稳定运行。  
  *     I系列有线网口周期最快可达2ms，提供了更高的实时性。
  * @param handle 机械臂控制句柄 
- * @param joint 关节1~7目标角度数组,单位：°
- * @param follow true-高跟随，false-低跟随。若使用高跟随，透传周期要求不超过 10ms。
- * @param expand 如果存在通用扩展轴，并需要进行透传，可使用该参数进行透传发送。
- * @return int 函数执行的状态码。  
+ * @param config 角度透传模式配置结构体
+ * @return int 函数执行的状态码。
             - 0: 成功。  
             - -1: 数据发送失败，通信过程中出现问题。
  */
-RM_INTERFACE_EXPORT int rm_movej_canfd(rm_robot_handle *handle,float *joint, bool follow, float expand);
+RM_INTERFACE_EXPORT int rm_movej_canfd(rm_robot_handle *handle, rm_movej_canfd_mode_t config);
 /**
  * @brief 位姿不经规划，直接通过CANFD透传给机械臂
  * @details 当目标位姿被透传到机械臂控制器时，控制器首先尝试进行逆解计算。
@@ -1168,13 +1167,12 @@ RM_INTERFACE_EXPORT int rm_movej_canfd(rm_robot_handle *handle,float *joint, boo
  *     用户在使用此功能时，建议进行良好的轨迹规划，以确保机械臂的稳定运行。  
  *     I系列有线网口周期最快可达2ms，提供了更高的实时性。     
  * @param handle 机械臂控制句柄 
- * @param pose 位姿 (优先采用四元数表达)
- * @param follow true-高跟随，false-低跟随。若使用高跟随，透传周期要求不超过 10ms。
+ * @param config 姿态透传模式结构体
  * @return int 函数执行的状态码。  
-            - 0: 成功。  
-            - -1: 数据发送失败，通信过程中出现问题。
+ *           - 0: 成功。
+ *           - -1: 数据发送失败，通信过程中出现问题。
  */
-RM_INTERFACE_EXPORT int rm_movep_canfd(rm_robot_handle *handle, rm_pose_t pose, bool follow);
+RM_INTERFACE_EXPORT int rm_movep_canfd(rm_robot_handle *handle, rm_movep_canfd_mode_t config);
 /**
  * @brief 关节空间跟随运动
  * @param handle 机械臂控制句柄 
@@ -1770,20 +1768,16 @@ RM_INTERFACE_EXPORT int rm_set_wifi_close(rm_robot_handle *handle);
  * @brief 设置数字IO模式
  * 
  * @param handle 机械臂控制句柄 
- * @param io_num IO 端口号，范围：1~4
- * @param io_mode 模式，0-通用输入模式，1-通用输出模式、2-输入开始功能复用模式、3-输入暂停功能复用模式、
- * 4-输入继续功能复用模式、5-输入急停功能复用模式、6-输入进入电流环拖动复用模式、7-输入进入力只动位置拖动模式（六维力版本可配置）、
- * 8-输入进入力只动姿态拖动模式（六维力版本可配置）、9-输入进入力位姿结合拖动复用模式（六维力版本可配置）、
- * 10-输入外部轴最大软限位复用模式（外部轴模式可配置）、11-输入外部轴最小软限位复用模式（外部轴模式可配置）、12-输入初始位姿功能复用模式、
- * 13-输出碰撞功能复用模式。
- * @return int 函数执行的状态码。  
+ * @param io_num 数字IO端口号，范围：1~4
+ * @param config 数字IO配置结构体
+ * @return int 函数执行的状态码。
             - 0: 成功。  
             - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-RM_INTERFACE_EXPORT int rm_set_IO_mode(rm_robot_handle *handle, int io_num, int io_mode);
+RM_INTERFACE_EXPORT int rm_set_IO_mode(rm_robot_handle *handle, int io_num, rm_io_config_t config);
 /**
  * @brief 设置数字IO输出
  * 
@@ -1802,19 +1796,15 @@ RM_INTERFACE_EXPORT int rm_set_DO_state(rm_robot_handle *handle, int io_num, int
  * @brief 获取数字 IO 状态
  * 
  * @param handle 机械臂控制句柄 
- * @param io_num IO 端口号，范围：1~4
- * @param state IO 状态
- * @param mode 0-通用输入模式，1-通用输出模式、2-输入开始功能复用模式、3-输入暂停功能复用模式、4-输入继续功能复用模式、
- * 5-输入急停功能复用模式、6-输入进入电流环拖动复用模式、7-输入进入力只动位置拖动模式、8-输入进入力只动姿态拖动模式、
- * 9- 输入进入力位姿结合拖动复用模式、10-输入外部轴最大软限位复用模式、11-输入外部轴最小软限位复用模式
- * @return int 函数执行的状态码。  
-            - 0: 成功。  
-            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
+ * @param config 数字IO配置结构体
+ * @return int 函数执行的状态码。
+            - 0: 成功。
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。
             - -1: 数据发送失败，通信过程中出现问题。
-            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-RM_INTERFACE_EXPORT int rm_get_IO_state(rm_robot_handle *handle, int io_num, int* state, int* mode);
+RM_INTERFACE_EXPORT int rm_get_IO_state(rm_robot_handle *handle, int io_num, rm_io_get_t* config);
 /**
  * @brief 获取所有 IO 输入状态
  * 
@@ -2513,21 +2503,21 @@ RM_INTERFACE_EXPORT int rm_set_hand_angle(rm_robot_handle *handle, const int *ha
  * @details 设置灵巧手跟随角度，灵巧手有6个自由度，从1~6分别为小拇指，无名指，中指，食指，大拇指弯曲，大拇指旋转，最高50Hz的控制频率
  * @param handle 机械臂控制句柄 
  * @param hand_angle 手指角度数组，最大表示范围为-32768到+32767，按照灵巧手厂商定义的角度做控制，例如因时的范围为0-2000
- * @param block 设置等待机械臂返回状态超时时间，设置0时为非阻塞模式。单位为毫秒。
+ * @param block 设置0时为非阻塞模式；设置1时为阻塞模式，阻塞模式时超时20ms未返回认为接受失败。
  * @return int 函数执行的状态码。  
             - 0: 成功。  
             - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
-            - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
+            - -3: 返回值解析失败，接收到的数据格式不正确或不完整。
  */
-RM_INTERFACE_EXPORT int rm_set_hand_follow_angle(rm_robot_handle *handle, const int *hand_angle, int block);
+RM_INTERFACE_EXPORT int rm_set_hand_follow_angle(rm_robot_handle *handle, const int *hand_angle, bool block);
 /**
  * @brief 灵巧手位置跟随控制
  * @details 设置灵巧手跟随位置，灵巧手有6个自由度，从1~6分别为小拇指，无名指，中指，食指，大拇指弯曲，大拇指旋转，最高50Hz的控制频率
  * @param handle 机械臂控制句柄 
  * @param hand_pos 手指位置数组，最大范围为0-65535，按照灵巧手厂商定义的角度做控制，例如因时的范围为0-1000
- * @param block 设置等待机械臂返回状态超时时间，设置0时为非阻塞模式。单位为毫秒。
+ * @param block 设置0时为非阻塞模式；设置1时为阻塞模式，阻塞模式时超时20ms未返回认为接受失败。
  * @return int 函数执行的状态码。  
             - 0: 成功。  
             - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
@@ -2535,7 +2525,7 @@ RM_INTERFACE_EXPORT int rm_set_hand_follow_angle(rm_robot_handle *handle, const 
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-RM_INTERFACE_EXPORT int rm_set_hand_follow_pos(rm_robot_handle *handle, const int *hand_pos, int block);
+RM_INTERFACE_EXPORT int rm_set_hand_follow_pos(rm_robot_handle *handle, const int *hand_pos, bool block);
 /**
  * @brief 设置灵巧手速度
  * 
@@ -2958,7 +2948,7 @@ RM_INTERFACE_EXPORT int rm_set_lift_speed(rm_robot_handle *handle, int speed);
  *            - 其他值：阻塞模式并设置超时时间，单位为秒。
  * @return int 函数执行的状态码。  
             - 0: 成功。  
-            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。
             - -1: 数据发送失败，通信过程中出现问题。
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
@@ -3273,6 +3263,7 @@ RM_INTERFACE_EXPORT int rm_get_global_waypoints_list(rm_robot_handle *handle, in
             - -1: 数据发送失败，通信过程中出现问题。
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
+            - -4: rm_realtime_push_config_t config参数配置非法。
  */
 RM_INTERFACE_EXPORT int rm_set_realtime_push(rm_robot_handle *handle, rm_realtime_push_config_t config);
 /**
@@ -3320,7 +3311,8 @@ RM_INTERFACE_EXPORT int rm_get_realtime_push(rm_robot_handle *handle, rm_realtim
             - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
-            - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 -4:form设置有误
+            - -3: 返回值解析失败，接收到的数据格式不正确或不完整。
+            - -4: rm_fence_config_t中form设置有误。
  */
 RM_INTERFACE_EXPORT int rm_add_electronic_fence_config(rm_robot_handle *handle, rm_fence_config_t config);
 /**
@@ -3333,7 +3325,8 @@ RM_INTERFACE_EXPORT int rm_add_electronic_fence_config(rm_robot_handle *handle, 
             - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
-            - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
+            - -3: 返回值解析失败，接收到的数据格式不正确或不完整。
+            - -4: rm_fence_config_t中form设置有误。
  */
 RM_INTERFACE_EXPORT int rm_update_electronic_fence_config(rm_robot_handle *handle, rm_fence_config_t config);
 /**
@@ -3431,6 +3424,7 @@ RM_INTERFACE_EXPORT int rm_get_electronic_fence_enable(rm_robot_handle *handle,r
             - -1: 数据发送失败，通信过程中出现问题。
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
+            - -4: rm_fence_config_t中form设置有误。
  */
 RM_INTERFACE_EXPORT int rm_set_electronic_fence_config(rm_robot_handle *handle, rm_fence_config_t config);
 /**

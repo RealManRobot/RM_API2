@@ -133,7 +133,7 @@ class RobotArmController:
             # Move to the first point in the pass-through
             num_lines = len(points)
             print(f"Total points: {num_lines}")
-            self.robot.rm_movej(points[0], 20, 0, True, 0)
+            self.robot.rm_movej(points[0], 20, 0, rm_trajectory_connect_config_e.RM_TRAJECTORY_DISCONNECT_E, RM_MOVE_MULTI_BLOCK)
 
             # Register the callback function once
             arm_state = rm_realtime_arm_state_callback_ptr(RobotArmController.arm_state_callback)
@@ -153,9 +153,9 @@ class RobotArmController:
 
             time.sleep(2)
             if info_result[1]['arm_dof'] == 6:
-                movej_result = self.robot.rm_movej([0, 0, 0, 0, 0, 0], 50, 0, 0, True)
+                movej_result = self.robot.rm_movej([0, 0, 0, 0, 0, 0], 50, 0, rm_trajectory_connect_config_e.RM_TRAJECTORY_DISCONNECT_E, RM_MOVE_MULTI_BLOCK)
             elif info_result[1]['arm_dof'] == 7:
-                movej_result = self.robot.rm_movej([0, 0, 0, 0, 0, 0, 0], 50, 0, 0, True)
+                movej_result = self.robot.rm_movej([0, 0, 0, 0, 0, 0, 0], 50, 0, rm_trajectory_connect_config_e.RM_TRAJECTORY_DISCONNECT_E, RM_MOVE_MULTI_BLOCK)
             else:
                 raise ValueError("Invalid arm_dof value")
             print(f"movej_cmd joint movement 1: {movej_result}")

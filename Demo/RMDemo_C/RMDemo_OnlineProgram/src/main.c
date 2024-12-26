@@ -224,7 +224,7 @@ int main(int argc, char *argv[]) {
     // Add lines to file
     add_lines_to_file(robot_handle, TRAJECTORY_FILE_PATH, PROJECT_FILE_PATH, lines);
     // Send file and query running status
-    send_project(robot_handle, PROJECT_FILE_PATH, 20, 0, save_id, 0, 0);
+    send_project(robot_handle, PROJECT_FILE_PATH, 20, 0, save_id, 0, 0, 0);
 
     // Query program running status
     get_program_run_state(robot_handle, 1, 5);
