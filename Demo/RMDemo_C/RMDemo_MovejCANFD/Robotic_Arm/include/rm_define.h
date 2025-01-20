@@ -37,6 +37,7 @@ typedef enum{
     RM_MODEL_RM_63_I_E,     ///< RML_63(已弃用)
     RM_MODEL_RM_63_II_E,        ///< RML_63
     RM_MODEL_RM_63_III_E,       ///< RML_63(已弃用)
+    RM_MODEL_RM_63_IV_E,       ///< RML_63
     RM_MODEL_ECO_65_E,      ///< ECO_65
     RM_MODEL_ECO_62_E,      ///< ECO_62
     RM_MODEL_GEN_72_E,       ///< GEN_72
@@ -828,6 +829,15 @@ typedef struct
 typedef struct {
     int id;         ///< 句柄id，连接成功id大于0，连接失败返回-1
 }rm_robot_handle;
+
+
+typedef struct
+{
+    float d[8];     //* unit: m
+    float a[8];     //* unit: m
+    float alpha[8]; //* unit: °
+    float offset[8];    //* unit: °
+} rm_dh_t;
 
 #ifdef __cplusplus
 }

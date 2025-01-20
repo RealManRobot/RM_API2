@@ -162,7 +162,7 @@ class AlgoController:
         Convert Quaternion to Euler angles.
 
         Args:
-            quaternion (list): Quaternion as (x, y, z, w).
+            quaternion (list): Quaternion as (w, x, y, z).
 
         Returns:
             None

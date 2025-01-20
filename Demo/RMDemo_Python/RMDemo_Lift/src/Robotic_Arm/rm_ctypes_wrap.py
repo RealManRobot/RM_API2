@@ -3511,7 +3511,31 @@ class rm_force_position_move_t(Structure):
             if radio is not None:
                 self.radio = radio
 
+class rm_dh_t(Structure):
+    _fields_ = [
+        ('d', c_float * int(8)),        # unit: m
+        ('a', c_float * int(8)),        # unit: m
+        ('alpha', c_float * int(8)),        # unit: °
+        ('offset', c_float * int(8)),       # unit: °
+    ]
+    def __init__(self, d: list[float] = None, a: list[float] = None, alpha: list[float] = None, offset: list[float] = None):
+        if all(param is None for param in [d, a, alpha, offset]):
+            return
+        else:
+            self.d = (c_float * 8)(*d)
+            self.a = (c_float * 8)(*a)
+            self.alpha = (c_float * 8)(*alpha)
+            self.offset = (c_float * 8)(*offset)
 
+    def to_dict(self, recurse=True):
+        output_dict = {
+            "d": list(self.d),
+            "a": list(self.a),
+            "alpha": list(self.alpha),
+            "offset": list(self.offset)
+        }
+        return output_dict
+        
 
 if _libs[libname].has("rm_api_version", "cdecl"):
     rm_api_version = _libs[libname].get("rm_api_version", "cdecl")
@@ -3791,6 +3815,21 @@ if _libs[libname].has("rm_get_arm_max_angular_acc", "cdecl"):
     rm_get_arm_max_angular_acc.argtypes = [
         POINTER(rm_robot_handle), POINTER(c_float)]
     rm_get_arm_max_angular_acc.restype = c_int
+
+if _libs[libname].has("rm_set_DH_data", "cdecl"):
+    rm_set_DH_data = _libs[libname].get("rm_set_DH_data", "cdecl")
+    rm_set_DH_data.argtypes = [POINTER(rm_robot_handle), rm_dh_t]
+    rm_set_DH_data.restype = c_int
+
+if _libs[libname].has("rm_get_DH_data", "cdecl"):
+    rm_get_DH_data = _libs[libname].get("rm_get_DH_data", "cdecl")
+    rm_get_DH_data.argtypes = [POINTER(rm_robot_handle), POINTER(rm_dh_t)]
+    rm_get_DH_data.restype = c_int
+
+if _libs[libname].has("rm_set_DH_data_default", "cdecl"):
+    rm_set_DH_data_default = _libs[libname].get("rm_set_DH_data_default", "cdecl")
+    rm_set_DH_data_default.argtypes = [POINTER(rm_robot_handle)]
+    rm_set_DH_data_default.restype = c_int
 
 if _libs[libname].has("rm_set_auto_tool_frame", "cdecl"):
     rm_set_auto_tool_frame = _libs[libname].get(
@@ -4437,6 +4476,16 @@ if _libs[libname].has("rm_stop_force_position", "cdecl"):
     rm_stop_force_position.argtypes = [POINTER(rm_robot_handle)]
     rm_stop_force_position.restype = c_int
 
+if _libs[libname].has("rm_set_force_drag_mode", "cdecl"):
+    rm_set_force_drag_mode = _libs[libname].get("rm_set_force_drag_mode", "cdecl")
+    rm_set_force_drag_mode.argtypes = [POINTER(rm_robot_handle), c_int]
+    rm_set_force_drag_mode.restype = c_int
+
+if _libs[libname].has("rm_get_force_drag_mode", "cdecl"):
+    rm_get_force_drag_mode = _libs[libname].get("rm_get_force_drag_mode", "cdecl")
+    rm_get_force_drag_mode.argtypes = [POINTER(rm_robot_handle), POINTER(c_int)]
+    rm_get_force_drag_mode.restype = c_int
+
 if _libs[libname].has("rm_set_hand_posture", "cdecl"):
     rm_set_hand_posture = _libs[libname].get("rm_set_hand_posture", "cdecl")
     rm_set_hand_posture.argtypes = [
@@ -5063,6 +5112,16 @@ if _libs[libname].has("rm_algo_tool2end", "cdecl"):
     rm_algo_tool2end = _libs[libname].get("rm_algo_tool2end", "cdecl")
     rm_algo_tool2end.argtypes = [POINTER(rm_robot_handle), rm_pose_t]
     rm_algo_tool2end.restype = rm_pose_t
+
+if _libs[libname].has("rm_algo_get_dh", "cdecl"):
+    rm_algo_get_dh = _libs[libname].get("rm_algo_get_dh", "cdecl")
+    rm_algo_get_dh.argtypes = []
+    rm_algo_get_dh.restype = rm_dh_t
+
+if _libs[libname].has("rm_algo_set_dh", "cdecl"):
+    rm_algo_set_dh = _libs[libname].get("rm_algo_set_dh", "cdecl")
+    rm_algo_set_dh.argtypes = [rm_dh_t]
+    rm_algo_set_dh.restype = None
 
 try:
     ARM_DOF = 7

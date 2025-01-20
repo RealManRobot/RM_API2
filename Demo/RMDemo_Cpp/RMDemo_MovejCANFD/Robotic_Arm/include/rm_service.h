@@ -595,6 +595,44 @@ RM_INTERFACE_EXPORT int rm_get_arm_max_angular_speed(rm_robot_handle *handle, fl
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 RM_INTERFACE_EXPORT int rm_get_arm_max_angular_acc(rm_robot_handle *handle, float *acc);
+/**
+ * @brief 设置DH参数
+ *
+ * @param handle 机械臂控制句柄
+ * @param dh DH参数
+ * @return int 函数执行的状态码。
+            - 0: 成功。
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。
+            - -1: 数据发送失败，通信过程中出现问题。
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。
+            - -3: 返回值解析失败，接收到的数据格式不正确或不完整。
+ */
+RM_INTERFACE_EXPORT int rm_set_DH_data(rm_robot_handle *handle, rm_dh_t dh);
+/**
+ * @brief 获取DH参数
+ *
+ * @param handle 机械臂控制句柄
+ * @param dh DH参数
+ * @return int 函数执行的状态码。
+            - 0: 成功。
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。
+            - -1: 数据发送失败，通信过程中出现问题。
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。
+            - -3: 返回值解析失败，接收到的数据格式不正确或不完整。
+ */
+RM_INTERFACE_EXPORT int rm_get_DH_data(rm_robot_handle *handle, rm_dh_t *dh);
+/**
+ * @brief 恢复机械臂默认 DH 参数
+ *
+ * @param handle 机械臂控制句柄
+ * @return int 函数执行的状态码。
+            - 0: 成功。
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。
+            - -1: 数据发送失败，通信过程中出现问题。
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。
+            - -3: 返回值解析失败，接收到的数据格式不正确或不完整。
+ */
+RM_INTERFACE_EXPORT int rm_set_DH_data_default(rm_robot_handle *handle);
 /** @} */ // 结束组的定义
 /**  
  * @defgroup ToolCoordinateConfig 工具坐标系配置
@@ -1541,7 +1579,7 @@ RM_INTERFACE_EXPORT int rm_clear_system_runtime(rm_robot_handle *handle);
  * @brief 读取关节的累计转动角度
  * 
  * @param handle 机械臂控制句柄 
- * @param joint_odom 各关节累计的转动角度
+ * @param joint_odom 各关节累计的转动角度，单位°
  * @return int 函数执行的状态码。  
             - 0: 成功。  
             - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
@@ -2188,6 +2226,7 @@ RM_INTERFACE_EXPORT int rm_stop_set_force_sensor(rm_robot_handle *handle);
             - -1: 数据发送失败，通信过程中出现问题。
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
+            - -4: 非力控版本机械臂，不支持此功能。
  */
 RM_INTERFACE_EXPORT int rm_get_Fz(rm_robot_handle *handle, rm_fz_data_t *data);
 /**
@@ -2471,6 +2510,34 @@ RM_INTERFACE_EXPORT int rm_set_force_position(rm_robot_handle *handle, rm_force_
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 RM_INTERFACE_EXPORT int rm_stop_force_position(rm_robot_handle *handle);
+/**
+ * @brief 设置六维力拖动示教模式
+ * 
+ * @param handle 机械臂控制句柄 
+ * @param mode 0表示快速拖动模式 1表示精准拖动模式
+ * @return int 函数执行的状态码。  
+            - 0: 成功。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
+            - -1: 数据发送失败，通信过程中出现问题。
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。
+            - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
+            - -4: 非六维力版本机械臂，不支持此功能。
+ */
+RM_INTERFACE_EXPORT int rm_set_force_drag_mode(rm_robot_handle *handle, int mode);
+/**
+ * @brief 获取六维力拖动示教模式
+ * 
+ * @param handle 机械臂控制句柄 
+ * @param mode 0表示快速拖动模式 1表示精准拖动模式
+ * @return int 函数执行的状态码。  
+            - 0: 成功。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
+            - -1: 数据发送失败，通信过程中出现问题。
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。处理建议：1、联系睿尔曼公司技术支持确认控制器版本是否支持此功能；
+            - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
+            - -4: 非六维力版本机械臂，不支持此功能。
+ */
+RM_INTERFACE_EXPORT int rm_get_force_drag_mode(rm_robot_handle *handle, int *mode);
 /** @} */ // 结束组的定义
 
 /**  
@@ -3791,6 +3858,18 @@ RM_INTERFACE_EXPORT rm_pose_t rm_algo_end2tool(rm_robot_handle *handle,rm_pose_t
  * @return rm_pose_t 基于世界坐标系和默认工具坐标系的末端位姿
  */
 RM_INTERFACE_EXPORT rm_pose_t rm_algo_tool2end(rm_robot_handle *handle,rm_pose_t eu_tool);
+/**
+ * @brief 获取DH参数
+ * 
+ * @return rm_DH_t DH参数
+ */
+RM_INTERFACE_EXPORT rm_dh_t rm_algo_get_dh();
+/**
+ * @brief 设置DH参数
+ *
+ * @param dh DH参数
+ */
+RM_INTERFACE_EXPORT void rm_algo_set_dh(rm_dh_t dh);
 /** @} */ // 结束算法组的定义
 };  
   
