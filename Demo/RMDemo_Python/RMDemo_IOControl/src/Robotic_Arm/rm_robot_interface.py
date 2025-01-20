@@ -15,8 +15,6 @@
 **更新日志**:
 -
 """
-# python包版本
-# __version__ = '1.0.5.t6'
 
 from .rm_ctypes_wrap import *
 import ctypes
@@ -687,7 +685,55 @@ class ArmTipVelocityParameters:
         acc = c_float()
         ret = rm_get_arm_max_angular_acc(self.handle, byref(acc))
         return ret, acc.value
+    
+    def rm_set_DH_data_default(self) -> int:
+        """
+        恢复机械臂默认 DH 参数
 
+        Returns:
+            int: 函数执行的状态码。
+            - 0: 成功。
+            - 1: 控制器返回false，参数错误或机械臂状态发生错误。
+            - -1: 数据发送失败，通信过程中出现问题。
+            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。
+            - -3: 返回值解析失败，接收到的数据格式不正确或不完整。
+        """
+        tag = rm_set_DH_data_default(self.handle)
+        return tag
+    
+    def rm_set_DH_data(self, DH_data: rm_dh_t) -> int:
+        """
+        设置DH参数
+
+        Args:
+            DH_data (rm_dh_t): DH参数
+
+        Returns:
+            int: 函数执行的状态码。
+            - 0: 成功。
+            - 1: 控制器返回false，参数错误或机械臂状态发生错误。
+            - -1: 数据发送失败，通信过程中出现问题。
+            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。
+            - -3: 返回值解析失败，接收到的数据格式不正确或不完整。
+        """
+        tag = rm_set_DH_data(self.handle, DH_data)
+        return tag
+
+    def rm_get_DH_data(self) -> tuple[int, rm_dh_t]:
+        """
+        获取DH参数
+        Returns:
+            tuple[int,rm_dh_t]: 包含两个元素的元组。
+            - int: 函数执行的状态码。
+                - 0: 成功。
+                - -1: 数据发送失败，通信过程中出现问题。
+                - -2: 数据接收失败，通信过程中出现问题或控制器长久没有返回。
+                - -3: 返回值解析失败，控制器返回的数据无法识别或不完整等情况。
+            - rm_dh_t: DH参数。
+        """
+        DH_data = rm_dh_t()
+        ret = rm_get_DH_data(self.handle, DH_data)
+        return ret, DH_data.to_dict()
 
 class ToolCoordinateConfig:
     """
@@ -2126,7 +2172,7 @@ class ControllerConfig:
                 - -1: 数据发送失败，通信过程中出现问题。
                 - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。
                 - -3: 返回值解析失败，控制器返回的数据无法识别或不完整等情况。
-            - list[float]: 各关节累计的转动角度
+            - list[float]: 各关节累计的转动角度，单位：度
         """
         if self.arm_dof != 0:
             joint_odom = (c_float * self.arm_dof)()
@@ -3237,7 +3283,44 @@ class DragTeach:
         num = c_int()
         tag = rm_save_trajectory(self.handle, file_path, byref(num))
         return tag, num.value
+    
+    def rm_set_force_drag_mode(self, mode: int) -> int:
+        """
+        设置六维力拖动示教模式
 
+        Args:
+            mode (int): 0表示快速拖动模式 1表示精准拖动模式
+
+        Returns:
+            int: 函数执行的状态码。
+            - 0: 成功。
+            - 1: 控制器返回false，参数错误或机械臂状态发生错误。
+            - -1: 数据发送失败，通信过程中出现问题。
+            - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。
+            - -3: 返回值解析失败，接收到的数据格式不正确或不完整。
+            - -4: 非六维力版本机械臂，不支持此功能。
+        """
+        tag = rm_set_force_drag_mode(self.handle, mode)
+        return tag
+
+    def rm_get_force_drag_mode(self) -> tuple[int, int]:
+        """
+        查询六维力拖动示教模式
+
+        Returns:
+            tuple[int, int]: 包含两个元素的元组。
+            - int: 函数执行的状态码。
+                - 0: 成功。
+                - -1: 数据发送失败，通信过程中出现问题。
+                - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。
+                - -3: 返回值解析失败，控制器返回的数据无法识别或不完整等情况。
+                - -4: 非六维力版本机械臂，不支持此功能。
+            - int: 0表示快速拖动模式 1表示精准拖动模式
+        """
+        mode = c_int()
+        tag = rm_get_force_drag_mode(self.handle, byref(mode))
+        return tag, mode.value
+    
 
 class HandControl:
     """
@@ -3705,7 +3788,7 @@ class ModbusConfig:
         """
         data_num = int(read_params.num * 2)
         data = (c_int * data_num)()
-        tag = rm_read_multiple_holding_registers(
+        tag = rm_read_multiple_input_registers(
             self.handle, read_params, data)
         return tag, list(data)
 
@@ -5286,6 +5369,22 @@ class Algo:
                     position.z, euler.rx, euler.ry, euler.rz]
         return pose_eul
 
+    def rm_algo_set_dh(self, dh: rm_dh_t) -> None:
+        """
+        设置DH参数
+        Args:
+            dh (rm_dh_t): DH参数列表
+        """
+        rm_algo_set_dh(dh)
+
+    def rm_algo_get_dh(self) -> rm_dh_t:
+        """
+        获取DH参数
+        Returns:
+            list[float]: DH参数列表
+        """
+        dh = rm_algo_get_dh()
+        return dh.to_dict()
 
 
 class RoboticArm(ArmState, MovePlan, JointConfigSettings, JointConfigReader, ArmTipVelocityParameters,
