@@ -70,6 +70,13 @@ RM_INTERFACE_EXPORT void rm_set_log_call_back(void (*LogCallback)(const char* me
 RM_INTERFACE_EXPORT void rm_set_log_save(const char* path);
 
 /**
+ * @brief 设置全局超时时间
+ * 
+ * @param timeout 接收控制器返回指令超时时间，多数接口默认超时时间为500ms，单位ms
+ */
+RM_INTERFACE_EXPORT void rm_set_timeout(int timeout);
+
+/**
  * @brief 创建一个机械臂，用于实现对该机械臂的控制
  * 
  * @param ip 机械臂的ip地址
@@ -2010,8 +2017,8 @@ RM_INTERFACE_EXPORT int rm_set_gripper_route(rm_robot_handle *handle, int min_li
             - -1: 数据发送失败，通信过程中出现问题。
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。  
-            - -4: 超时
-            - -5: 到位设备检验失败
+            - -4: 到位设备检验失败
+            - -5: 超时
  */
 RM_INTERFACE_EXPORT int rm_set_gripper_release(rm_robot_handle *handle, int speed, bool block, int timeout);
 /**
@@ -2029,8 +2036,8 @@ RM_INTERFACE_EXPORT int rm_set_gripper_release(rm_robot_handle *handle, int spee
             - -1: 数据发送失败，通信过程中出现问题。
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。  
-            - -4: 超时
-            - -5: 到位设备检验失败
+            - -4: 到位设备检验失败
+            - -5: 超时
  */
 RM_INTERFACE_EXPORT int rm_set_gripper_pick(rm_robot_handle *handle, int speed, int force, bool block, int timeout);
 /**
@@ -2048,8 +2055,8 @@ RM_INTERFACE_EXPORT int rm_set_gripper_pick(rm_robot_handle *handle, int speed, 
             - -1: 数据发送失败，通信过程中出现问题。
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。  
-            - -4: 超时
-            - -5: 到位设备检验失败
+            - -4: 到位设备检验失败
+            - -5: 超时
  */
 RM_INTERFACE_EXPORT int rm_set_gripper_pick_on(rm_robot_handle *handle, int speed, int force, bool block, int timeout);
 /**
@@ -2067,8 +2074,8 @@ RM_INTERFACE_EXPORT int rm_set_gripper_pick_on(rm_robot_handle *handle, int spee
             - -1: 数据发送失败，通信过程中出现问题。
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
-            - -4: 超时
-            - -5: 到位设备检验失败
+            - -4: 到位设备检验失败
+            - -5: 超时
  */
 RM_INTERFACE_EXPORT int rm_set_gripper_position(rm_robot_handle *handle, int position, bool block, int timeout);
 /**
@@ -3597,6 +3604,97 @@ RM_INTERFACE_EXPORT int rm_set_self_collision_enable(rm_robot_handle *handle, bo
 RM_INTERFACE_EXPORT int rm_get_self_collision_enable(rm_robot_handle *handle,bool *state);
 /** @} */ // 结束组的定义
 
+
+/**
+ * @brief 设置末端生态协议模式
+ * @param handle 机械臂控制句柄
+ * @param mode 末端生态协议模式
+ *            0：禁用协议 
+ *            9600：开启协议（波特率9600）
+ *            115200：开启协议（波特率115200）
+ *            256000：开启协议（波特率256000）
+ *            460800：开启协议（波特率460800）
+ * @return int 函数执行的状态码。  
+            - 0: 成功。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
+            - -1: 数据发送失败，通信过程中出现问题。
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
+            - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
+*/
+RM_INTERFACE_EXPORT int rm_set_rm_plus_mode(rm_robot_handle *handle, int mode);
+
+/**
+ * @brief 查询末端生态协议模式
+ * @param handle 机械臂控制句柄
+ * @param mode 末端生态协议模式
+ *            0：禁用协议 
+ *            9600：开启协议（波特率9600）
+ *            115200：开启协议（波特率115200）
+ *            256000：开启协议（波特率256000）
+ *            460800：开启协议（波特率460800）
+ * @return int 函数执行的状态码。  
+            - 0: 成功。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
+            - -1: 数据发送失败，通信过程中出现问题。
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
+            - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
+ *            
+*/
+RM_INTERFACE_EXPORT int rm_get_rm_plus_mode(rm_robot_handle *handle, int *mode);
+
+/**
+ * @brief 设置触觉传感器模式(末端生态协议支持)
+ * @param handle 机械臂控制句柄
+ * @param mode 触觉传感器开关状态 0：关闭触觉传感器 1：打开触觉传感器（返回处理后数据） 2：打开触觉传感器（返回原始数据）
+ * @return int 函数执行的状态码。  
+            - 0: 成功。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
+            - -1: 数据发送失败，通信过程中出现问题。
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
+            - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
+*/
+RM_INTERFACE_EXPORT int rm_set_rm_plus_touch(rm_robot_handle *handle, int mode);
+
+/**
+ * @brief 查询触觉传感器模式(末端生态协议支持)
+ * @param handle 机械臂控制句柄
+ * @param mode 触觉传感器开关状态 0：关闭触觉传感器 1：打开触觉传感器（返回处理后数据） 2：打开触觉传感器（返回原始数据）
+ * @return int 函数执行的状态码。  
+            - 0: 成功。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
+            - -1: 数据发送失败，通信过程中出现问题。
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
+            - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
+ */
+RM_INTERFACE_EXPORT int rm_get_rm_plus_touch(rm_robot_handle *handle, int *mode);
+
+/**
+ * @brief 读取末端设备基础信息(末端生态协议支持)
+ * @param handle 机械臂控制句柄
+ * @param info 末端设备基础信息
+ * @return int 函数执行的状态码。  
+            - 0: 成功。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
+            - -1: 数据发送失败，通信过程中出现问题。
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
+            - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
+*/
+RM_INTERFACE_EXPORT int rm_get_rm_plus_base_info(rm_robot_handle *handle, rm_plus_base_info_t *info);
+
+/**
+ * @brief 读取末端设备实时信息(末端生态协议支持)
+ * @param handle 机械臂控制句柄
+ * @param info 末端设备实时信息
+ * @return int 函数执行的状态码。
+            - 0: 成功。
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。
+            - -1: 数据发送失败，通信过程中出现问题。
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。
+            - -3: 返回值解析失败，接收到的数据格式不正确或不完整。
+*/
+RM_INTERFACE_EXPORT int rm_get_rm_plus_state_info(rm_robot_handle *handle, rm_plus_state_info_t *info);
+
+
 /******************************************算法接口*******************************************************/
 /**  
  * @defgroup Algo 算法接口
@@ -3731,6 +3829,122 @@ RM_INTERFACE_EXPORT void rm_algo_set_redundant_parameter_traversal_mode(bool mod
  *（不设置则按照出厂默认的参数进行计算），此时机械臂控制句柄设置为NULL即可
  */
 RM_INTERFACE_EXPORT int rm_algo_inverse_kinematics(rm_robot_handle *handle, rm_inverse_kinematics_params_t params, float *q_out);
+
+/**
+ * @brief 计算逆运动学全解(当前仅支持六自由度机器人)
+ * @param handle 机械臂控制句柄，连接机械臂时传入机械臂控制句柄，不连接时传入NULL 
+ * @param params 逆解输入参数结构体
+ * @return rm_inverse_kinematics_all_solve_t 逆解的全解结构体
+*/
+RM_INTERFACE_EXPORT rm_inverse_kinematics_all_solve_t rm_algo_inverse_kinematics_all(rm_robot_handle *handle, rm_inverse_kinematics_params_t params);
+
+/**
+ * @brief 从多解中选取最优解(当前仅支持六自由度机器人)
+ * @param weight 权重,建议默认值为{1,1,1,1,1,1}
+ * @param params 待选解的全解结构体
+ * @return int 最优解索引，选解结果为ik_solve.q_solve[i],如果没有合适的解返回-1（比如求出8组解，但是8组都有关节角度超限位，那么就返回-1）
+*/
+RM_INTERFACE_EXPORT int rm_algo_ikine_select_ik_solve(float *weight, rm_inverse_kinematics_all_solve_t params);
+
+
+/**
+ * @brief 检查逆解结果是否超出关节限位(当前仅支持六自由度机器人)
+ * @param q_solve 选解，单位:°
+ * @return int 0:未超限位,1~dof: 第i个关节超限位 -1:当前机器人非六自由度，当前仅支持六自由度机器人
+*/
+RM_INTERFACE_EXPORT int rm_algo_ikine_check_joint_position_limit(const float* const q_solve);
+
+/**
+ * @brief 检查逆解结果是否超速(当前仅支持六自由度机器人)
+ * @param dt 两帧数据之间的时间间隔，即控制周期，单位sec
+ * @param q_ref 参考关节角度或者第一帧数据角度，单位：°
+ * @param q_solve 求解结果，即下一帧要发送的角度
+ * @return int 0:表示未超限 i:表示关节i超限，优先报序号小的关节 -1:当前机器人非六自由度，当前仅支持六自由度机器人
+*/
+RM_INTERFACE_EXPORT int rm_algo_ikine_check_joint_velocity_limit(float dt, const float* const q_ref, const float* const q_solve);
+
+
+/**
+ * @brief 根据参考位形计算臂角大小（仅支持RM75）
+ * @param q_ref 当前参考位形的关节角度，单位°
+ * @param arm_angle 计算结果，当前参考位形对应的臂角大小，单位°
+ * @return int 
+ *       0: 求解成功
+ *      -1: 求解失败，或机型非RM75
+ *      -2: q_ref 输入参数非法
+ */
+RM_INTERFACE_EXPORT int rm_algo_calculate_arm_angle_from_config_rm75(float *q_ref, float *arm_angle);
+
+/**
+ * @brief 臂角法求解RM75逆运动学
+ * @param params rm_inverse_kinematics_params_t，逆解参数结构体
+ * @param arm_angle 指定轴角大小，单位:°
+ * @param q_solve   求解结果，单位:°
+ * @return int 
+ *               0: 求解成功
+ *              -1: 求解失败
+ *              -2: 求解结果超出限位
+ *              -3: 机型非RM75
+ */
+RM_INTERFACE_EXPORT int rm_algo_inverse_kinematics_rm75_for_arm_angle(rm_inverse_kinematics_params_t params, float arm_angle, float *q_solve);
+
+/**
+ * @brief 通过分析雅可比矩阵最小奇异值, 判断机器人是否处于奇异状态
+ * @param q 要判断的关节角度（机械零位描述），单位：°
+ * @param 最小奇异值阈值，若传NULL，则使用内部默认值，默认值为0.01（该值在0-1之间）
+ * @return    0:在当前阈值条件下正常
+ *            -1:表示在当前阈值条件下判断为奇异区
+ *            -2:表示计算失败
+ */
+RM_INTERFACE_EXPORT int rm_algo_universal_singularity_analyse(const float* const q, float singluar_value_limit);
+/**
+ * @brief 设置自定义阈值(仅适用于解析法分析机器人奇异状态)
+ * @param limit_qe  肘部奇异区域范围设置(即J3接近0的范围),unit: °,default:about 10deg
+ * @param limit_qw  腕部奇异区域范围设置(即J5接近0的范围),unit: °,default:about 10deg
+ * @param limit_d 肩部奇异区域范围设置(即腕部中心点距离奇异平面的距离), unit: m, default: 0.05
+*/
+RM_INTERFACE_EXPORT void rm_algo_kin_set_singularity_thresholds(float limit_qe_algo, float limit_qw_algo, float limit_d_algo);
+/**
+ * @brief 获取自定义阈值(仅适用于解析法分析机器人奇异状态)
+ * 
+ * @param limit_qe  肘部奇异区域范围获取(即J3接近0的范围), unit: °, default: about 10deg
+ * @param limit_qw  腕部奇异区域范围获取(即J5接近0的范围), unit: °, default: about 10deg
+ * @param limit_d   肩部奇异区域范围获取(即腕部中心点距离奇异平面的距离), unit: m, default: 0.05
+ */
+RM_INTERFACE_EXPORT void rm_algo_kin_get_singularity_thresholds(float* limit_qe_algo, float* limit_qw_algo, float* limit_d_algo);
+
+/**
+ * @brief 恢复初始阈值(仅适用于解析法分析机器人奇异状态)，阈值初始化为：limit_qe=10deg,limit_qw=10deg,limit_d = 0.05m      
+*/
+RM_INTERFACE_EXPORT void rm_algo_kin_singularity_thresholds_init();
+/**
+ * @brief 解析法判断机器人是否处于奇异位形（仅支持六自由度）
+ * @param q 要判断的关节角度,单位:°
+ * @param distance 输出参数，返回腕部中心点到肩部奇异平面的距离，该值越接近0说明越接近肩部奇异,单位m,不需要时可传NULL
+ * @return 0表正常，-1表肩部奇异，-2表肘部奇异，-3表腕部奇异，-4表仅支持6自由度机械臂  
+*/
+RM_INTERFACE_EXPORT int rm_algo_kin_robot_singularity_analyse(const float* const q, float *distance);
+/**
+ * @brief 设置工具包络球参数
+ * @param toolSphere_i 工具包络球编号 (0~4)
+ * @param data 工具包络球参数,注意其参数在末端法兰坐标系下描述
+ */
+RM_INTERFACE_EXPORT void rm_algo_set_tool_envelope(const int toolSphere_i, rm_tool_sphere_t data);
+
+/**
+ * @brief 获取工具包络球参数
+ * @param toolSphere_i 工具rm_get_tool_voltage包络球编号 (0~4)
+ * @param data 工具包络球参数,注意其参数在末端法兰坐标系下描述
+ */
+RM_INTERFACE_EXPORT void rm_algo_get_tool_envelope(const int toolSphere_i, rm_tool_sphere_t *data);
+/**
+ * @brief 自碰撞检测
+ * @param joint 要判断的关节角度，单位：°
+ * @return int 
+ * 		0: 无碰撞
+ * 		1: 发生碰撞,超出关节限位将被认为发生碰撞
+ */
+RM_INTERFACE_EXPORT int rm_algo_safety_robot_self_collision_detection(float *joint);
 /**
  * @brief 正解算法接口
  *

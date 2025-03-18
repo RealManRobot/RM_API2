@@ -11,7 +11,6 @@ extern "C" {
 
 #define ARM_DOF                     7
 #define M_PI		                3.14159265358979323846
-// #define SDK_VERSION                 (char*)"1.0.5.t6"
 
 #define RM_MOVE_NBLOCK  0                                          ///<机械臂运动设置，非阻塞模式
 #define RM_MOVE_MULTI_BLOCK  1                                 ///<机械臂运动设置，多线程阻塞模式
@@ -34,10 +33,9 @@ typedef enum {
 typedef enum{
     RM_MODEL_RM_65_E,       ///< RM_65
     RM_MODEL_RM_75_E,       ///< RM_75
-    RM_MODEL_RM_63_I_E,     ///< RML_63(已弃用)
-    RM_MODEL_RM_63_II_E,        ///< RML_63
-    RM_MODEL_RM_63_III_E,       ///< RML_63(已弃用)
-    RM_MODEL_RM_63_IV_E,       ///< RML_63
+    RM_MODEL_RM_63_I_E,     ///< RML_63I(已弃用)
+    RM_MODEL_RM_63_II_E,        ///< RML_63II
+    RM_MODEL_RM_63_III_E,       ///< RML_63III
     RM_MODEL_ECO_65_E,      ///< ECO_65
     RM_MODEL_ECO_62_E,      ///< ECO_62
     RM_MODEL_GEN_72_E,       ///< GEN_72
@@ -52,6 +50,7 @@ typedef enum{
     RM_MODEL_RM_B_E,    ///< 标准版
     RM_MODEL_RM_ZF_E,   ///< 一维力版
     RM_MODEL_RM_SF_E,   ///< 六维力版
+    RM_MODEL_RM_ISF_E,   ///< 一体化六维力版
 }rm_force_type_e;
 
 /**
@@ -98,9 +97,11 @@ typedef struct
     int joint_speed;   ///< 关节速度。
     int lift_state;    ///< 升降关节信息。1：上报；0：关闭上报；-1：不设置，保持之前的状态
     int expand_state;  ///< 扩展关节信息（升降关节和扩展关节为二选一，优先显示升降关节）1：上报；0：关闭上报；-1：不设置，保持之前的状态
-    int hand_state;          ///< 灵巧手状态。1：上报；0：关闭上报；-1：不设置，保持之前的状态
+    int hand_state;          ///< 灵巧手状态。1：上报；0：关闭上报；-1：不设置，保持之前的状态(1.7.0版本无这个)
     int arm_current_status;     ///< 机械臂当前状态。1：上报；0：关闭上报；-1：不设置，保持之前的状态
     int aloha_state;     ///< aloha主臂状态是否上报。1：上报；0：关闭上报；-1：不设置，保持之前的状态
+    int plus_base;   ///< 末端设备基础信息。1：上报；0：关闭上报；-1：不设置，保持之前的状态
+    int plus_state;  ///< 末端设备实时信息。1：上报；0：关闭上报；-1：不设置，保持之前的状态
 }rm_udp_custom_config_t;
 
 /**
@@ -213,7 +214,7 @@ typedef struct {
  */
 typedef struct
 {
-    char product_version[10];           ///< 机械臂型号
+    char product_version[15];           ///< 机械臂型号
     rm_algorithm_version_t algorithm_info;      ///< 算法库信息
     rm_ctrl_version_t ctrl_info;        ///< ctrl 层软件信息
     rm_dynamic_version_t dynamic_info;      ///< 动力学版本
@@ -762,6 +763,56 @@ typedef struct {
     int io1_state;         ///<  IO1状态（手柄光电检测），0为按键未触发，1为按键触发。
     int io2_state;        ///<  IO2状态（手柄光电检测），0为按键未触发，1为按键触发。
 } rm_udp_aloha_state_t;
+
+/**
+ * 末端设备基础信息(末端生态协议支持)
+*/
+typedef struct{
+    char manu[10];              // 设备厂家
+    int type;               // 设备类型 1：两指夹爪 2：五指灵巧手 3：三指夹爪
+    char hv[10];   // 硬件版本
+    char sv[10];   // 软件版本
+    char bv[10];       // boot版本
+    int id;                 // 设备ID
+    int dof;                // 自由度
+    int check;              // 自检开关
+    int bee;                // 蜂鸣器开关
+    bool force;             // 力控支持
+    bool touch;             // 触觉支持
+    int touch_num;          // 触觉个数
+    int touch_sw;       // 触觉开关
+    int hand;               // 手方向 1 ：左手 2： 右手
+    int pos_up[12];         // 位置上限,单位：无量纲
+    int pos_low[12];        // 位置下限,单位：无量纲
+    int angle_up[12];        // 角度上限,单位：0.01度
+    int angle_low[12];       // 角度下限,单位：0.01度
+    int speed_up[12];        // 速度上限,单位：无量纲
+    int speed_low[12];       // 速度下限,单位：无量纲
+    int force_up[12];        // 力上限,单位：0.001N 
+    int force_low[12];       // 力下限,单位：0.001N 
+} rm_plus_base_info_t;
+// 单位：无量纲
+/**
+ * 末端设备实时信息(末端生态协议支持)
+*/
+typedef struct{
+    int sys_state;      // 系统状态:0正常1设备故障
+    int dof_state[12];   // 各自由度当前状态:0正在松开1正在闭合2位置到位停止3力控到位停止4触觉到位停止5电流保护停止6发生故障
+    int dof_err[12];     // 各自由度错误信息
+    int pos[12];       // 各自由度当前位置,单位：无量纲
+    int speed[12];  //各自由度当前速度,闭合正，松开负，单位：无量纲
+    int angle[12];     // 各自由度当前角度，单位：0.01度
+    int current[12];   // 各自由度当前电流，单位：mA
+    int normal_force[18];         // 自由度触觉三维力的法向力,1-6自由度触觉三维力的法向力*3
+    int tangential_force[18];     // 自由度触觉三维力的切向力
+    int tangential_force_dir[18]; // 自由度触觉三维力的切向力方向
+    uint32_t tsa[12];         // 自由度触觉自接近
+    uint32_t tma[12];         // 自由度触觉互接近
+    int touch_data[18];    // 触觉传感器原始数据(示例中有，但未显示数据的JSON情况)
+    int force[12]; //自由度力矩,闭合正，松开负，单位0.001N
+} rm_plus_state_info_t;
+
+
 /**
  * @brief  udp主动上报机械臂信息
  * 
@@ -779,6 +830,9 @@ typedef struct
     rm_udp_hand_state_t handState;      ///< 灵巧手数据
     rm_udp_arm_current_status_e arm_current_status;     ///< 机械臂状态
     rm_udp_aloha_state_t aloha_state;   ///< aloha主臂状态
+    int rm_plus_state;                  ///< 末端设备状态，0-设备在线，1-表示协议未开启，2-表示协议开启但是设备不在线
+    rm_plus_base_info_t plus_base_info;   ///< 末端设备基础信息
+    rm_plus_state_info_t plus_state_info; ///< 末端设备实时信息
 }rm_realtime_arm_joint_state_t; 
 
 /**
@@ -790,6 +844,24 @@ typedef struct {
     rm_pose_t q_pose;      ///< 目标位姿
     uint8_t flag;           ///< 姿态参数类别：0-四元数；1-欧拉角
 } rm_inverse_kinematics_params_t;
+
+typedef struct {
+    int result;  // 0：成功，1：逆解失败，-1：上一时刻关节角度输入为空或超关节限位，-2：目标位姿四元数不合法， -3：当前机器人非六自由度，当前仅支持六自由度机器人
+    int  num;                        // number of solutions
+    float q_ref[8];          // 参考关节角度，通常是当前关节角度, 单位 °
+    float q_solve[8][8];     // 关节角全解, 单位 °
+} rm_inverse_kinematics_all_solve_t;
+
+/**
+ * @brief 包络球描述数据结构
+*/
+typedef struct
+{
+    float radius;     // 球体半径（单位：m）
+    float centrePoint[3]; // 球体中心位置（单位：m，以法兰坐标系为参考坐标系）
+} rm_tool_sphere_t;     // 工具包络球参数
+
+
 /**
  * @brief 旋转矩阵
  * @ingroup Algo
