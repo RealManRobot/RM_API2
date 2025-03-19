@@ -975,7 +975,8 @@ class rm_force_type_e(IntEnum):
     RM_MODEL_RM_ZF_E = (RM_MODEL_RM_B_E + 1)
     # 六维力版本
     RM_MODEL_RM_SF_E = (RM_MODEL_RM_ZF_E + 1)
-
+    # 一体化六维力版
+    RM_MODEL_RM_ISF_E = (RM_MODEL_RM_SF_E + 1)
 
 class rm_event_type_e(IntEnum):
     """机械臂事件类型枚举 
@@ -1095,15 +1096,19 @@ class rm_udp_custom_config_t(Structure):
         ('hand_state', c_int),
         ('arm_current_status', c_int),
         ('aloha_state', c_int),
+        ('plus_base', c_int),
+        ('plus_state', c_int),
     ]
 
-    def __init__(self, joint_speed:int = -1,lift_state:int = -1,expand_state:int = -1,arm_current_status:int = -1,hand_state:int = -1,aloha_state:int = -1) -> None:
+    def __init__(self, joint_speed:int = -1,lift_state:int = -1,expand_state:int = -1,arm_current_status:int = -1,hand_state:int = -1,aloha_state:int = -1,plus_base = -1,plus_state = -1) -> None:
         self.joint_speed = joint_speed
         self.lift_state = lift_state
         self.expand_state = expand_state
         self.hand_state = hand_state
         self.arm_current_status = arm_current_status
         self.aloha_state = aloha_state
+        self.plus_base = plus_base
+        self.plus_state = plus_state
     
     def to_dict(self, recurse=True):
         """将类的变量返回为字典，如果recurse为True，则递归处理ctypes结构字段"""
@@ -1843,7 +1848,7 @@ class rm_err_t(Structure):
         }
         err = list(self.err)
         for i in range(self.err_len):
-            result["err"].append(f"0x{err[i]:04X}")
+            result["err"].append(f"{err[i]}")
         return result
 
 
@@ -3223,6 +3228,97 @@ class rm_udp_arm_current_status_e(IntEnum):
     RM_TECH_DEMONSTRATION_E = RM_SENSOR_DRAG_E + 1      # 示教状态
 
 
+class rm_plus_base_info_t(Structure):
+    _fields_ = [
+        ("manu", c_char * 10),              # 设备厂家
+        ("type", c_int),                   # 设备类型 1：两指夹爪 2：五指灵巧手 3：三指夹爪
+        ("hv", c_char * int(10)),       # 硬件版本
+        ("sv", c_char * int(10)),       # 软件版本
+        ("bv", c_char * int(10)),           # boot版本
+        ("id", c_int),                     # 设备ID
+        ("dof", c_int),                    # 自由度
+        ("check", c_int),                  # 自检开关
+        ("bee", c_int),                    # 蜂鸣器开关
+        ("force", c_bool),                 # 力控支持
+        ("touch", c_bool),                 # 触觉支持
+        ("touch_num", c_int),              # 触觉个数
+        ("touch_sw", c_int),           # 触觉开关
+        ("hand", c_int),                   # 手方向 1 ：左手 2： 右手
+        ("pos_up", c_int * 12),            # 位置上限
+        ("pos_low", c_int * 12),           # 位置下限
+        ("angle_up", c_int * 12),           # 角度上限
+        ("angle_low", c_int * 12),          # 角度下限
+        ("speed_up", c_int * 12),           # 速度上限
+        ("speed_low", c_int * 12),          # 速度下限
+        ("force_up", c_int * 12),           # 力上限
+        ("force_low", c_int * 12),           # 力下限
+    ]
+
+    def to_dict(self, recurse=True):
+        output_dict = {
+            "manu": self.manu.decode('utf-8'),
+            "type": self.type,
+            "hv": self.hv.decode('utf-8'),
+            "sv": self.sv.decode('utf-8'),
+            "bv": self.bv.decode('utf-8'),
+            "id": self.id,
+            "dof": self.dof,
+            "check": self.check,
+            "bee": self.bee,
+            "force": self.force,
+            "touch": self.touch,
+            "touch_num": self.touch_num,
+            "touch_sw": self.touch_sw,
+            "hand": self.hand,
+            "pos_up": list(self.pos_up),
+            "pos_low": list(self.pos_low),
+            "angle_up": list(self.angle_up),
+            "angle_low": list(self.angle_low),
+            "speed_up": list(self.speed_up),
+            "speed_low": list(self.speed_low),
+            "force_up": list(self.force_up),
+            "force_low": list(self.force_low),
+        }
+        return output_dict
+
+class rm_plus_state_info_t(Structure):
+    _fields_ = [
+        ("sys_state", c_int),                  # 系统状态
+        ("dof_state", c_int * 12),              # 各自由度当前状态
+        ("dof_err", c_int * 12),                # 各自由度错误信息
+        ("pos", c_int * 12),                    # 各自由度当前位置
+        ("speed", c_int * 12),                  # 各自由度当前速度,闭合正，松开负，单位：无量纲
+        ("angle", c_int * 12),                  # 各自由度当前角度
+        ("current", c_int * 12),                # 各自由度当前电流
+        ("normal_force", c_int * 18),          # 自由度触觉三维力的法向力
+        ("tangential_force", c_int * 18),      # 自由度触觉三维力的切向力
+        ("tangential_force_dir", c_int * 18),  # 自由度触觉三维力的切向力方向
+        ("tsa", c_uint32 * 12),                    # 自由度触觉自接近
+        ("tma", c_uint32 * 12),                    # 自由度触觉互接近
+        ("touch_data",c_int * 18),              # 触觉传感器原始数据
+        ("force",c_int * 12),                   # 自由度力矩,闭合正，松开负，单位0.001N
+    ]
+
+    def to_dict(self, recurse=True):
+        output_dict = {
+            "sys_state" : self.sys_state,
+            "dof_state" : list(self.dof_state),
+            "dof_err" : list(self.dof_err),
+            "pos" : list(self.pos),
+            "speed" : list(self.speed),
+            "angle" : list(self.angle),
+            "current" : list(self.current),
+            "normal_force" : list(self.normal_force),
+            "tangential_force" : list(self.tangential_force),
+            "tangential_force_dir" : list(self.tangential_force_dir),
+            "tsa" : list(self.tsa),
+            "tma" : list(self.tma),
+            "touch_data" : list(self.touch_data),
+            "force" : list(self.force),
+        }
+        return output_dict
+        
+
 class rm_realtime_arm_joint_state_t(Structure):
     """  
     机械臂实时状态推送信息结构体  
@@ -3239,6 +3335,9 @@ class rm_realtime_arm_joint_state_t(Structure):
         - handState (rm_udp_hand_state_t): 灵巧手数据
         - arm_current_status (int): 机械臂状态，对应rm_udp_arm_current_status_e枚举
         - aloha_state (rm_udp_aloha_state_t): aloha主臂状态
+        - rm_plus_state (int): 末端设备状态，0-设备在线，1-表示协议未开启，2-表示协议开启但是设备不在线
+        - plus_base_info (rm_plus_base_info_t): 末端设备基础信息
+        - plus_state_info (rm_plus_state_info_t): 末端设备实时信息
     """
     _fields_ = [
         ('errCode', c_int),
@@ -3252,6 +3351,9 @@ class rm_realtime_arm_joint_state_t(Structure):
         ('handState', rm_udp_hand_state_t),
         ('arm_current_status', c_int),
         ('aloha_state', rm_udp_aloha_state_t),
+        ('rm_plus_state', c_int),   
+        ('plus_base_info', rm_plus_base_info_t),
+        ('plus_state_info',rm_plus_state_info_t),
     ]
 
     def to_dict(self, recurse=True):
@@ -3320,6 +3422,23 @@ class rm_inverse_kinematics_params_t(Structure):
             self.q_pose = po1
             # 姿态数据的类别：0表示使用四元数，1表示使用欧拉角。
             self.flag = flag
+
+class rm_inverse_kinematics_all_solve_t(ctypes.Structure):
+    """  
+    逆运动学全解参数结构体。  
+
+    **Args:**  
+        - result: 逆解求解结果，0：成功，1：逆解失败，-1：上一时刻关节角度输入为空或超关节限位，-2：目标位姿四元数不合法
+        - num ( optional): 目标位姿，根据flag的值，可以是位置+四元数或位置+欧拉角，默认为None。  
+        - q_ref (List[float]): 参考关节角度，通常是当前关节角度, 单位 °
+        - q_solve(List[float]): 关节角全解, 8x8 数组, 单位 °
+    """
+    _fields_ = [
+        ("result", ctypes.c_int),           
+        ("num", ctypes.c_int), 
+        ("q_ref", ctypes.c_float * 8),     
+        ("q_solve", (ctypes.c_float * 8) * 8),
+    ]
 
 
 class rm_matrix_t(Structure):
@@ -3395,6 +3514,7 @@ class rm_robot_info_t(Structure):
             rm_force_type_e.RM_MODEL_RM_B_E: "B",
             rm_force_type_e.RM_MODEL_RM_ZF_E: "ZF",
             rm_force_type_e.RM_MODEL_RM_SF_E: "SF",
+            rm_force_type_e.RM_MODEL_RM_ISF_E: "ISF"
         }
 
         # 使用字典来查找对应的字符串表示
@@ -3537,6 +3657,13 @@ class rm_dh_t(Structure):
         return output_dict
         
 
+
+class rm_tool_sphere_t(Structure):
+    _fields_ = [
+        ("radius", c_float),                # 球体半径（单位：m）
+        ("centrePoint", c_float * int(3)),        # 球体中心位置（单位：m，以法兰坐标系为参考坐标系）
+    ]
+
 if _libs[libname].has("rm_api_version", "cdecl"):
     rm_api_version = _libs[libname].get("rm_api_version", "cdecl")
     rm_api_version.argtypes = []
@@ -3565,6 +3692,11 @@ if _libs[libname].has("rm_set_log_save", "cdecl"):
     rm_set_log_save = _libs[libname].get("rm_set_log_save", "cdecl")
     rm_set_log_save.argtypes = [String]
     rm_set_log_save.restype = None
+
+if _libs[libname].has("rm_set_timeout", "cdecl"):
+    rm_set_timeout = _libs[libname].get("rm_set_timeout", "cdecl")
+    rm_set_timeout.argtypes = [c_int]
+    rm_set_timeout.restype = None 
 
 if _libs[libname].has("rm_create_robot_arm", "cdecl"):
     rm_create_robot_arm = _libs[libname].get("rm_create_robot_arm", "cdecl")
@@ -5039,6 +5171,42 @@ if _libs[libname].has("rm_algo_inverse_kinematics", "cdecl"):
                                            POINTER(c_float)]
     rm_algo_inverse_kinematics.restype = c_int
 
+if _libs[libname].has("rm_algo_inverse_kinematics_all", "cdecl"):
+    rm_algo_inverse_kinematics_all = _libs[libname].get(
+        "rm_algo_inverse_kinematics_all", "cdecl")
+    rm_algo_inverse_kinematics_all.argtypes = [POINTER(rm_robot_handle), rm_inverse_kinematics_params_t]
+    rm_algo_inverse_kinematics_all.restype = rm_inverse_kinematics_all_solve_t
+
+if _libs[libname].has("rm_algo_ikine_select_ik_solve", "cdecl"):
+    rm_algo_ikine_select_ik_solve = _libs[libname].get(
+        "rm_algo_ikine_select_ik_solve", "cdecl")
+    rm_algo_ikine_select_ik_solve.argtypes = [POINTER(c_float), rm_inverse_kinematics_all_solve_t]
+    rm_algo_ikine_select_ik_solve.restype = c_int
+
+if _libs[libname].has("rm_algo_ikine_check_joint_position_limit", "cdecl"):
+    rm_algo_ikine_check_joint_position_limit = _libs[libname].get(
+        "rm_algo_ikine_check_joint_position_limit", "cdecl")
+    rm_algo_ikine_check_joint_position_limit.argtypes = [POINTER(c_float)]
+    rm_algo_ikine_check_joint_position_limit.restype = c_int
+
+if _libs[libname].has("rm_algo_ikine_check_joint_velocity_limit", "cdecl"):
+    rm_algo_ikine_check_joint_velocity_limit = _libs[libname].get(
+        "rm_algo_ikine_check_joint_velocity_limit", "cdecl")
+    rm_algo_ikine_check_joint_velocity_limit.argtypes = [c_float, POINTER(c_float),POINTER(c_float)]
+    rm_algo_ikine_check_joint_velocity_limit.restype = c_int
+
+if _libs[libname].has("rm_algo_calculate_arm_angle_from_config_rm75", "cdecl"):
+    rm_algo_calculate_arm_angle_from_config_rm75 = _libs[libname].get(
+        "rm_algo_calculate_arm_angle_from_config_rm75", "cdecl")
+    rm_algo_calculate_arm_angle_from_config_rm75.argtypes = [POINTER(c_float),POINTER(c_float)]
+    rm_algo_calculate_arm_angle_from_config_rm75.restype = c_int
+
+if _libs[libname].has("rm_algo_inverse_kinematics_rm75_for_arm_angle", "cdecl"):
+    rm_algo_inverse_kinematics_rm75_for_arm_angle = _libs[libname].get(
+        "rm_algo_inverse_kinematics_rm75_for_arm_angle", "cdecl")
+    rm_algo_inverse_kinematics_rm75_for_arm_angle.argtypes = [rm_inverse_kinematics_params_t, c_float,POINTER(c_float)]
+    rm_algo_inverse_kinematics_rm75_for_arm_angle.restype = c_int
+
 if _libs[libname].has("rm_algo_forward_kinematics", "cdecl"):
     rm_algo_forward_kinematics = _libs[libname].get(
         "rm_algo_forward_kinematics", "cdecl")
@@ -5122,6 +5290,107 @@ if _libs[libname].has("rm_algo_set_dh", "cdecl"):
     rm_algo_set_dh = _libs[libname].get("rm_algo_set_dh", "cdecl")
     rm_algo_set_dh.argtypes = [rm_dh_t]
     rm_algo_set_dh.restype = None
+
+if _libs[libname].has("rm_set_rm_plus_mode", "cdecl"):
+    rm_set_rm_plus_mode = _libs[libname].get(
+        "rm_set_rm_plus_mode", "cdecl")
+    rm_set_rm_plus_mode.argtypes = [
+        POINTER(rm_robot_handle), c_int]
+    rm_set_rm_plus_mode.restype = c_int
+
+if _libs[libname].has("rm_get_rm_plus_mode", "cdecl"):
+    rm_get_rm_plus_mode = _libs[libname].get(
+        "rm_get_rm_plus_mode", "cdecl")
+    rm_get_rm_plus_mode.argtypes = [
+        POINTER(rm_robot_handle), POINTER(c_int)]
+    rm_get_rm_plus_mode.restype = c_int
+
+if _libs[libname].has("rm_set_rm_plus_touch", "cdecl"):
+    rm_set_rm_plus_touch = _libs[libname].get(
+        "rm_set_rm_plus_touch", "cdecl")
+    rm_set_rm_plus_touch.argtypes = [
+        POINTER(rm_robot_handle), c_int]
+    rm_set_rm_plus_touch.restype = c_int
+
+if _libs[libname].has("rm_get_rm_plus_touch", "cdecl"):
+    rm_get_rm_plus_touch = _libs[libname].get(
+        "rm_get_rm_plus_touch", "cdecl")
+    rm_get_rm_plus_touch.argtypes = [
+        POINTER(rm_robot_handle), POINTER(c_int)]
+    rm_get_rm_plus_touch.restype = c_int
+
+if _libs[libname].has("rm_get_rm_plus_base_info", "cdecl"):
+    rm_get_rm_plus_base_info = _libs[libname].get(
+        "rm_get_rm_plus_base_info", "cdecl")
+    rm_get_rm_plus_base_info.argtypes = [
+        POINTER(rm_robot_handle), POINTER(rm_plus_base_info_t)]
+    rm_get_rm_plus_base_info.restype = c_int
+
+if _libs[libname].has("rm_get_rm_plus_state_info", "cdecl"):
+    rm_get_rm_plus_state_info = _libs[libname].get(
+        "rm_get_rm_plus_state_info", "cdecl")
+    rm_get_rm_plus_state_info.argtypes = [
+        POINTER(rm_robot_handle), POINTER(rm_plus_state_info_t)]
+    rm_get_rm_plus_state_info.restype = c_int
+
+
+if _libs[libname].has("rm_algo_universal_singularity_analyse", "cdecl"):
+    rm_algo_universal_singularity_analyse = _libs[libname].get(
+        "rm_algo_universal_singularity_analyse", "cdecl")
+    rm_algo_universal_singularity_analyse.argtypes = [
+        POINTER(c_float), c_float]
+    rm_algo_universal_singularity_analyse.restype = c_int
+
+if _libs[libname].has("rm_algo_kin_set_singularity_thresholds", "cdecl"):
+    rm_algo_kin_set_singularity_thresholds = _libs[libname].get(
+        "rm_algo_kin_set_singularity_thresholds", "cdecl")
+    rm_algo_kin_set_singularity_thresholds.argtypes = [
+        c_float, c_float, c_float]
+    rm_algo_kin_set_singularity_thresholds.restype = None
+
+if _libs[libname].has("rm_algo_kin_get_singularity_thresholds", "cdecl"):
+    rm_algo_kin_get_singularity_thresholds = _libs[libname].get(
+        "rm_algo_kin_get_singularity_thresholds", "cdecl")
+    rm_algo_kin_get_singularity_thresholds.argtypes = [
+        POINTER(c_float), POINTER(c_float), POINTER(c_float)]
+    rm_algo_kin_get_singularity_thresholds.restype = None
+
+
+if _libs[libname].has("rm_algo_kin_singularity_thresholds_init", "cdecl"):
+    rm_algo_kin_singularity_thresholds_init = _libs[libname].get(
+        "rm_algo_kin_singularity_thresholds_init", "cdecl")
+    rm_algo_kin_singularity_thresholds_init.argtypes = []
+    rm_algo_kin_singularity_thresholds_init.restype = None
+
+if _libs[libname].has("rm_algo_kin_robot_singularity_analyse", "cdecl"):
+    rm_algo_kin_robot_singularity_analyse = _libs[libname].get(
+        "rm_algo_kin_robot_singularity_analyse", "cdecl")
+    rm_algo_kin_robot_singularity_analyse.argtypes = [
+        POINTER(c_float), POINTER(c_float)]
+    rm_algo_kin_robot_singularity_analyse.restype = c_int
+
+
+if _libs[libname].has("rm_algo_set_tool_envelope", "cdecl"):
+    rm_algo_set_tool_envelope = _libs[libname].get(
+        "rm_algo_set_tool_envelope", "cdecl")
+    rm_algo_set_tool_envelope.argtypes = [
+        c_int, rm_tool_sphere_t]
+    rm_algo_set_tool_envelope.restype = None
+
+if _libs[libname].has("rm_algo_get_tool_envelope", "cdecl"):
+    rm_algo_get_tool_envelope = _libs[libname].get(
+        "rm_algo_get_tool_envelope", "cdecl")
+    rm_algo_get_tool_envelope.argtypes = [
+        c_int, POINTER(rm_tool_sphere_t)]
+    rm_algo_get_tool_envelope.restype = None
+
+if _libs[libname].has("rm_algo_safety_robot_self_collision_detection", "cdecl"):
+    rm_algo_safety_robot_self_collision_detection = _libs[libname].get(
+        "rm_algo_safety_robot_self_collision_detection", "cdecl")
+    rm_algo_safety_robot_self_collision_detection.argtypes = [
+        POINTER(c_float)]
+    rm_algo_safety_robot_self_collision_detection.restype = c_int
+
 
 try:
     ARM_DOF = 7

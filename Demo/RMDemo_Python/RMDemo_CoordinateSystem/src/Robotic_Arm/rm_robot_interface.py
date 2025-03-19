@@ -628,7 +628,7 @@ class ArmTipVelocityParameters:
                 - -1: 数据发送失败，通信过程中出现问题。
                 - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。
                 - -3: 返回值解析失败，控制器返回的数据无法识别或不完整等情况。
-            - int: 末端最大线速度，单位m/s.
+            - float: 末端最大线速度，单位m/s.
         """
         speed = c_float()
         ret = rm_get_arm_max_line_speed(self.handle, byref(speed))
@@ -646,7 +646,7 @@ class ArmTipVelocityParameters:
                 - -1: 数据发送失败，通信过程中出现问题。
                 - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。
                 - -3: 返回值解析失败，控制器返回的数据无法识别或不完整等情况。
-            - int: 末端最大线加速度，单位m/s^2.
+            - float: 末端最大线加速度，单位m/s^2.
         """
         acc = c_float()
         ret = rm_get_arm_max_line_acc(self.handle, byref(acc))
@@ -663,7 +663,7 @@ class ArmTipVelocityParameters:
                 - -1: 数据发送失败，通信过程中出现问题。
                 - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。
                 - -3: 返回值解析失败，控制器返回的数据无法识别或不完整等情况。
-            - int: 末端最大角速度，单位rad/s.
+            - float: 末端最大角速度，单位rad/s.
         """
         speed = c_float()
         ret = rm_get_arm_max_angular_speed(self.handle, byref(speed))
@@ -680,7 +680,7 @@ class ArmTipVelocityParameters:
                 - -1: 数据发送失败，通信过程中出现问题。
                 - -2: 数据接收失败，通信过程中出现问题或者控制器长久没有返回。
                 - -3: 返回值解析失败，控制器返回的数据无法识别或不完整等情况。
-            - int: 末端最大角加速度，单位rad/s^2.
+            - float: 末端最大角加速度，单位rad/s^2.
         """
         acc = c_float()
         ret = rm_get_arm_max_angular_acc(self.handle, byref(acc))
@@ -2659,6 +2659,95 @@ class GripperControl:
     @details 睿尔曼机械臂末端配备了因时机器人公司的 EG2-4C2 手爪，为了便于用户操作手爪，机械臂控制器
     对用户开放了手爪的控制协议（手爪控制协议与末端modbus 功能互斥）
     """
+    def rm_set_rm_plus_mode(self, mode: int) -> int:
+        """
+        设置末端生态协议模式
+        Args:
+            mode 末端生态协议模式
+            0：禁用协议 
+            9600：开启协议（波特率9600）
+            115200：开启协议（波特率115200）
+            256000：开启协议（波特率256000）
+            460800：开启协议（波特率460800）
+
+        Returns:
+            int 设置末端生态协议模式结果 0成功
+        """
+
+        tag = rm_set_rm_plus_mode(self.handle, mode)
+        return tag
+
+    def rm_get_rm_plus_mode(self) -> tuple[int, int]:
+        """
+        查询末端生态协议模式
+        Returns:
+            tag 函数执行的状态码
+            - 0: 成功
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误
+            - -1: 数据发送失败，通信过程中出现问题
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回
+            - -3: 返回值解析失败，接收到的数据格式不正确或不完整
+            mode 末端生态协议模式
+            - 0：禁用协议 
+            - 9600：开启协议（波特率9600）
+            - 115200：开启协议（波特率115200）
+            - 256000：开启协议（波特率256000）
+            - 460800：开启协议（波特率460800）
+        """
+        plus_mode_type = c_int()
+        tag = rm_get_rm_plus_mode(self.handle, byref(plus_mode_type))
+        return tag, plus_mode_type.value
+    
+    def rm_set_rm_plus_touch(self,mode: int) -> int:
+        """
+        设置触觉传感器模式(末端生态协议支持)
+        Args:
+            mode 触觉传感器开关状态 
+            0：关闭触觉传感器 
+            1：打开触觉传感器（返回处理后数据） 
+            2：打开触觉传感器（返回原始数据）
+        Returns:
+            int 设置触觉传感器模式结果 0成功
+        """
+        tag = rm_set_rm_plus_touch(self.handle, mode)
+        return tag
+    
+    def rm_get_rm_plus_touch(self) -> tuple[int,int]:
+        """
+        查询触觉传感器模式(末端生态协议支持)
+        Returns:
+            -触觉传感器模式查询状态
+            -mode 触觉传感器开关状态 
+              0：关闭触觉传感器 
+              1：打开触觉传感器（返回处理后数据） 
+              2：打开触觉传感器（返回原始数据）
+        """
+        plus_touch_type = c_int()
+        tag = rm_get_rm_plus_touch(self.handle, byref(plus_touch_type))
+        return tag, plus_touch_type.value
+
+    def rm_get_rm_plus_base_info(self) -> tuple[int,dict[str, any]]:
+        """
+        读取末端设备基础信息(末端生态协议支持)
+        Returns:
+            -函数执行的状态码
+            -rm_plus_base_info_t 末端设备基础信息
+        """
+        base_info_type = rm_plus_base_info_t()
+        tag = rm_get_rm_plus_base_info(self.handle, byref(base_info_type))
+        return tag, base_info_type.to_dict()
+    
+    def rm_get_rm_plus_state_info(self) -> tuple[int, dict[str, any]]:
+        """
+        读取末端设备实时信息(末端生态协议支持)
+        Returns:
+            -函数执行的状态码
+            -rm_plus_state_info_t 末端设备实时信息
+        """
+        state_info_type = rm_plus_state_info_t()
+        tag = rm_get_rm_plus_state_info(self.handle, byref(state_info_type))
+        return tag, state_info_type.to_dict()
+
 
     def rm_set_gripper_route(self, min_route: int, max_route: int) -> int:
         """
@@ -3528,11 +3617,10 @@ class ModbusConfig:
     def rm_set_modbustcp_mode(self, ip: str, port: int, timeout: int) -> int:
         """
         配置连接
-
         Args:
             ip (str): 从机IP地址
             port (int): 端口号
-            timeout (int): 超时时间，单位秒。
+            timeout (int): 超时时间，单位毫秒。
 
         Returns:
             int: 函数执行的状态码。
@@ -4770,7 +4858,7 @@ class SelfCollision:
         enable = c_bool()
         tag = rm_get_self_collision_enable(self.handle, byref(enable))
         return tag, enable.value
-
+  
 
 class UdpConfig:
     """
@@ -5068,6 +5156,94 @@ class Algo:
         ret = rm_algo_inverse_kinematics(self.handle, params, q_out)
         out = list(q_out)
         return ret, out[:self.arm_dof]
+
+    def rm_algo_inverse_kinematics_all(self, params:rm_inverse_kinematics_params_t) -> rm_inverse_kinematics_all_solve_t:
+        """
+        计算逆运动学全解(当前仅支持六自由度机器人)
+        Args:
+            params(rm_inverse_kinematics_params_t) 逆解输入参数结构体
+        Returns:
+            rm_inverse_kinematics_all_solve_t 逆解的全解结构体
+        """
+        ret = rm_inverse_kinematics_all_solve_t()
+        ret = rm_algo_inverse_kinematics_all(self.handle, params)
+        return ret
+
+
+    def rm_algo_ikine_select_ik_solve(self, weight:list[float], params:rm_inverse_kinematics_all_solve_t) -> int:
+        """
+        从多解中选取最优解(当前仅支持六自由度机器人)
+        Args:
+            weight(list[float]) 权重,建议默认值为{1,1,1,1,1,1}
+            params(rm_inverse_kinematics_all_solve_t) 待选解的全解结构体
+        Returns:
+            int 最优解索引，选解结果为ik_solve.q_solve[i] -1：当前机器人非六自由度，当前仅支持六自由度机器人
+        """
+        weight_c = (c_float * 6)(*weight)
+        ret = rm_algo_ikine_select_ik_solve(weight_c, params)
+        return ret
+
+
+    def rm_algo_ikine_check_joint_position_limit(self, q_solve_i:list[float]) -> int:
+        """
+        检查逆解结果是否超出关节限位(当前仅支持六自由度机器人)
+        Args:
+            q_solve_i (list[float]) 一组解，即一组关节角度，单位:°
+        Returns:
+            0:表示未超限 i:表示关节i超限，优先报序号小的关节 -1：当前机器人非六自由度，当前仅支持六自由度机器人
+        """
+        ret = rm_algo_ikine_check_joint_position_limit(q_solve_i)
+        return ret
+
+
+    def rm_algo_ikine_check_joint_velocity_limit(self, dt:float, q_ref:list[float], q_solve_i:list[float]) -> int:
+        """
+        检查逆解结果是否超出速度限位(当前仅支持六自由度机器人)
+        Args:
+            dt 两帧数据之间的时间间隔，即控制周期，单位sec
+            q_ref(list[float]) 参考关节角度或者第一帧数据角度，单位：°
+            q_solve_i (list[float]) 一组解，即一组关节角度，单位:°
+        Returns:
+            int 0:表示未超限 i:表示关节i超限，优先报序号小的关节 -1：当前机器人非六自由度，当前仅支持六自由度机器人
+        """
+        q_ref_c = (c_float * 8)(*q_ref)
+        q_solve_c = (c_float * 8)(*q_solve_i)
+        
+        ret = rm_algo_ikine_check_joint_velocity_limit(dt, q_ref_c, q_solve_c)
+        return ret
+    
+    def rm_algo_calculate_arm_angle_from_config_rm75(self,q_ref:list[float]) -> tuple[int, float]:
+        """
+        根据参考位形计算臂角大小（仅支持RM75）
+        Args:
+            q_ref(list[float]),当前参考位形的关节角度，单位°
+        Returns:
+            int: - 0: 求解成功 - -1: 求解失败，或机型非RM75  - -2: 输入关节角度数量错误
+            float: 计算结果，当前参考位形对应的臂角大小，单位°
+        """
+        q_ref_c = (c_float * ARM_DOF)(*q_ref)
+        arm_angle = c_float()
+        ret = rm_algo_calculate_arm_angle_from_config_rm75(q_ref_c, byref(arm_angle))
+        return ret,arm_angle.value
+
+    def rm_algo_inverse_kinematics_rm75_for_arm_angle(self,params:rm_inverse_kinematics_params_t,arm_angle:float) -> tuple[int,list[float]]:
+        """
+        臂角法求解RM75逆运动学
+        Args:
+            params:rm_inverse_kinematics_params_t,逆解参数结构体
+            arm_angle:float,指定轴角大小,单位:°
+        Returns:
+            int 0: 求解成功
+               -1: 求解失败
+               -2: 求解结果超出限位
+               -3: 机型非RM75
+            list[float]: q_solve，求解结果,单位:°
+        """
+        q_solve = (c_float * ARM_DOF)()
+        ret = rm_algo_inverse_kinematics_rm75_for_arm_angle(params,arm_angle,q_solve)
+        out = list(q_solve)
+        return ret, out[:self.arm_dof]
+
 
     def rm_algo_forward_kinematics(self, joint: list[float], flag: int = 1) -> list[float]:
         """
@@ -5386,6 +5562,113 @@ class Algo:
         dh = rm_algo_get_dh()
         return dh.to_dict()
 
+    def rm_algo_universal_singularity_analyse(self, q:list[float], singluar_value_limit:float) -> int:
+        """
+        通过分析雅可比矩阵最小奇异值, 判断机器人是否处于奇异状态
+        Args:
+            -q 要判断的关节角度（机械零位描述），单位：°
+            -singluar_value_limit 最小奇异值阈值，若传NULL，则使用内部默认值，默认值为0.01（该值在0-1之间）
+        Returns:
+            int 
+             0:在当前阈值条件下正常
+             -1:表示在当前阈值条件下判断为奇异区
+             -2:表示计算失败
+        """
+        q_c = (c_float * 7)(*q)
+        # singluar_value_limit_c = (c_float * 6)(*singluar_value_limit)
+        ret = rm_algo_universal_singularity_analyse(q_c, singluar_value_limit)
+        return ret
+
+    def rm_algo_kin_singularity_thresholds_init(self)-> None:
+        """
+        恢复初始阈值(仅适用于解析法分析机器人奇异状态),阈值初始化为：limit_qe=10deg,limit_qw=10deg,limit_d = 0.05m 
+        """
+        rm_algo_kin_singularity_thresholds_init()        
+
+    def rm_algo_kin_set_singularity_thresholds(self,limit_qe:float,limit_qw:float, limit_d:float)-> None:
+        """
+        设置自定义阈值(仅适用于解析法分析机器人奇异状态)
+        Args:
+            limit_qe  肘部奇异区域范围设置(即J3接近0的范围,若为RML63，则是J3接近-9.68的范围),单位: °,default: 10°
+            limit_qw  腕部奇异区域范围设置(即J5接近0的范围),单位: °,default: 10°
+            limit_d 肩部奇异区域范围设置(即腕部中心点距离奇异平面的距离), 单位: m, default: 0.05
+        Returns:
+            None
+        """
+        rm_algo_kin_set_singularity_thresholds(limit_qe,limit_qw,limit_d)
+
+
+
+    def rm_algo_kin_get_singularity_thresholds(self)-> tuple[float,float,float]:
+        """
+        获取自定义阈值(仅适用于解析法分析机器人奇异状态)
+        Args:
+            None
+        Returns:
+            limit_qe  肘部奇异区域范围设置(即J3接近0的范围,若为RML63，则是J3接近-9.68的范围),单位: °,default: 10°
+            limit_qw  腕部奇异区域范围设置(即J5接近0的范围),单位: °,default: 10°
+            limit_d 肩部奇异区域范围设置(即腕部中心点距离奇异平面的距离), 单位: m, default: 0.05
+        """
+        limit_qe = c_float()
+        limit_qw = c_float()
+        limit_d = c_float()
+        rm_algo_kin_get_singularity_thresholds(byref(limit_qe),byref(limit_qw),byref(limit_d))
+        return limit_qe.value,limit_qw.value,limit_d.value
+
+
+
+    def rm_algo_kin_robot_singularity_analyse(self,q:list[float]) -> tuple[int,float]:
+        """
+        解析法判断机器人是否处于奇异位形（仅支持六自由度）
+        Args:
+            q:list[float] 要判断的关节角度,单位°
+        Returns:
+            tuple[int,float]: 包含两个元素的元组。
+            - int: 0:正常 -1:肩部奇异 -2:肘部奇异 -3:腕部奇异
+            - float: 返回腕部中心点到肩部奇异平面的距离，该值越接近0说明越接近肩部奇异,单位m
+        """      
+        q_c = (c_float * 6)(*q)
+        distance_c = c_float()
+        ret = rm_algo_kin_robot_singularity_analyse(q_c, byref(distance_c))
+        return ret, distance_c.value
+
+  
+    def rm_algo_set_tool_envelope(self, toolSphere_i:int, data:rm_tool_sphere_t) -> None:
+        """
+        设置工具包络球参数
+        Args:
+            toolSphere_i 工具包络球编号 (0~4)
+            data 工具包络球参数,注意其参数在末端法兰坐标系下描述
+        """
+        rm_algo_set_tool_envelope(toolSphere_i, data)
+
+
+    def rm_algo_get_tool_envelope(self, toolSphere_i:int) -> rm_tool_sphere_t:
+        """
+        获取工具包络球参数
+        Args:
+            toolSphere_i 工具rm_get_tool_voltage包络球编号 (0~4)
+        Returns:
+            (rm_tool_sphere_t) 工具包络球参数,注意其参数在末端法兰坐标系下描述
+        """
+        tool_sphere_type = rm_tool_sphere_t()
+        rm_algo_get_tool_envelope(toolSphere_i, byref(tool_sphere_type))
+        return tool_sphere_type
+        
+
+    def rm_algo_safety_robot_self_collision_detection(self,joint_deg:list[float]) -> int:
+        """
+        自碰撞检测
+        Args:
+            joint_deg(list[float]) 要判断的关节角度，单位°
+        Returns:
+            int 
+             -0: 无碰撞
+             1: 发生碰撞,超出关节限位将被认为发生碰撞
+        """
+        joint_deg_c = (c_float * 7)(*joint_deg)
+        ret = rm_algo_safety_robot_self_collision_detection(joint_deg_c)
+        return ret
 
 class RoboticArm(ArmState, MovePlan, JointConfigSettings, JointConfigReader, ArmTipVelocityParameters,
                  ToolCoordinateConfig, WorkCoordinateConfig, ArmTeachMove, ArmMotionControl, ControllerConfig,
@@ -5469,6 +5752,15 @@ class RoboticArm(ArmState, MovePlan, JointConfigSettings, JointConfigReader, Arm
             path (string): 日志保存文件路径
         """
         rm_set_log_save(path)
+
+    def rm_set_timeout(self,timeout: int) -> None:
+        """
+        设置全局超时时间
+        Args:
+            timeout(int):接收控制器返回指令超时时间，多数接口默认超时时间为500ms，单位ms
+        """
+        rm_set_timeout(timeout)
+
 
     def rm_set_arm_run_mode(self, mode: int) -> int:
         """设置真实/仿真模式
