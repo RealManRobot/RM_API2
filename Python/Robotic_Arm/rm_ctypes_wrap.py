@@ -940,11 +940,12 @@ class rm_robot_arm_model_e(IntEnum):
         RM_MODEL_RM_75_E (int): RM_75型号  
         RM_MODEL_RM_63_I_E (int): RML_63I型号（已弃用）  
         RM_MODEL_RM_63_II_E (int): RML_63II型号  
-        RM_MODEL_RM_63_III_E (int): RML_63III型号（已弃用）  
+        RM_MODEL_RM_63_III_E (int): RML_63III型号
         RM_MODEL_ECO_65_E (int): ECO_65型号  
         RM_MODEL_ECO_62_E (int): ECO_62型号  
         RM_MODEL_GEN_72_E (int): GEN_72型号  
         RM_MODEL_ECO_63_E (int): ECO_63型号  
+        RM_MODEL_UNIVERSAL_E (int): 通用型，非标准机械臂型号
     """
     # RM_65型号
     RM_MODEL_RM_65_E = 0
@@ -964,6 +965,8 @@ class rm_robot_arm_model_e(IntEnum):
     RM_MODEL_GEN_72_E = RM_MODEL_ECO_62_E + 1
     # ECO_63
     RM_MODEL_ECO_63_E = RM_MODEL_GEN_72_E + 1
+    # 通用型，非标准机械臂型号
+    RM_MODEL_UNIVERSAL_E = RM_MODEL_ECO_63_E + 1
 
 
 class rm_force_type_e(IntEnum):
@@ -1634,27 +1637,11 @@ class rm_ctrl_version_t(Structure):
     ]
 
     def to_dict(self, recurse=True):
-        """将类的变量返回为字典，如果recurse为True，则递归处理ctypes结构字段"""
-        result = {}
-        for field, ctype in self._fields_:
-            value = getattr(self, field)
-
-            if recurse and isinstance(ctype, type) and issubclass(ctype, Structure):
-                value = value.to_dict(recurse=recurse)
-            result[field] = value
-
-        for key, value in result.items():
-            if isinstance(value, bytes):
-                try:
-                    # 尝试使用 UTF-8 解码
-                    result[key] = value.decode('utf-8')
-                except UnicodeDecodeError:
-                    # 如果不是 UTF-8 编码，则可能需要根据实际情况处理
-                    # 这里简单地将字节转换为十六进制字符串作为替代方案
-                    result[key] = value.hex()
-            else:
-                # 值不是字节类型，直接保留
-                result[key] = value
+        result = {
+            "build_time": self.build_time.decode("utf-8"),
+            "version": self.version.decode("utf-8")
+        }
+        
         return result
 
 
@@ -1672,28 +1659,11 @@ class rm_dynamic_version_t(Structure):
         ('model_version', c_char * int(5)),
     ]
 
-    def to_dict(self, recurse=True):
-        """将类的变量返回为字典，如果recurse为True，则递归处理ctypes结构字段"""
-        result = {}
-        for field, ctype in self._fields_:
-            value = getattr(self, field)
-
-            if recurse and isinstance(ctype, type) and issubclass(ctype, Structure):
-                value = value.to_dict(recurse=recurse)
-            result[field] = value
-
-        for key, value in result.items():
-            if isinstance(value, bytes):
-                try:
-                    # 尝试使用 UTF-8 解码
-                    result[key] = value.decode('utf-8')
-                except UnicodeDecodeError:
-                    # 如果不是 UTF-8 编码，则可能需要根据实际情况处理
-                    # 这里简单地将字节转换为十六进制字符串作为替代方案
-                    result[key] = value.hex()
-            else:
-                # 值不是字节类型，直接保留
-                result[key] = value
+    def to_dict(self):
+        result = {
+            "model_version": self.model_version.decode("utf-8")
+        }
+        
         return result
 
 
@@ -1710,31 +1680,15 @@ class rm_planinfo_t(Structure):
     """
     _fields_ = [
         ('build_time', c_char * int(20)),
-        ('version', c_char * int(10)),
+        ('version', c_char * int(20)),
     ]
 
-    def to_dict(self, recurse=True):
-        """将类的变量返回为字典，如果recurse为True，则递归处理ctypes结构字段"""
-        result = {}
-        for field, ctype in self._fields_:
-            value = getattr(self, field)
-
-            if recurse and isinstance(ctype, type) and issubclass(ctype, Structure):
-                value = value.to_dict(recurse=recurse)
-            result[field] = value
-
-        for key, value in result.items():
-            if isinstance(value, bytes):
-                try:
-                    # 尝试使用 UTF-8 解码
-                    result[key] = value.decode('utf-8')
-                except UnicodeDecodeError:
-                    # 如果不是 UTF-8 编码，则可能需要根据实际情况处理
-                    # 这里简单地将字节转换为十六进制字符串作为替代方案
-                    result[key] = value.hex()
-            else:
-                # 值不是字节类型，直接保留
-                result[key] = value
+    def to_dict(self):
+        result = {
+            "build_time": self.build_time.decode("utf-8"),
+            "version": self.version.decode("utf-8")
+        }
+        
         return result
 
 
@@ -1752,30 +1706,36 @@ class rm_algorithm_version_t(Structure):
         ('version', c_char * int(20)),
     ]
 
-    def to_dict(self, recurse=True):
-        """将类的变量返回为字典，如果recurse为True，则递归处理ctypes结构字段"""
-        result = {}
-        for field, ctype in self._fields_:
-            value = getattr(self, field)
-
-            if recurse and isinstance(ctype, type) and issubclass(ctype, Structure):
-                value = value.to_dict(recurse=recurse)
-            result[field] = value
-
-        for key, value in result.items():
-            if isinstance(value, bytes):
-                try:
-                    # 尝试使用 UTF-8 解码
-                    result[key] = value.decode('utf-8')
-                except UnicodeDecodeError:
-                    # 如果不是 UTF-8 编码，则可能需要根据实际情况处理
-                    # 这里简单地将字节转换为十六进制字符串作为替代方案
-                    result[key] = value.hex()
-            else:
-                # 值不是字节类型，直接保留
-                result[key] = value
+    def to_dict(self):
+        result = {
+            "version": self.version.decode("utf-8")
+        }
+        
         return result
 
+
+class rm_software_build_info_t(Structure):
+    """  
+    表示软件版本信息的结构体  
+
+    **Args:**  
+        - 无（此结构体通常为调用接口获取数据填充）。  
+
+    **Attributes:**  
+        - build_time (bytes): 编译时间。
+        - version (bytes): 版本号。
+    """
+    _fields_ = [
+        ('build_time', c_char * int(20)),
+        ('version', c_char * int(20)),
+    ]
+
+    def to_dict(self):
+        out_dict = {
+            "build_time": self.build_time.decode("utf-8"),
+            "version": self.version.decode("utf-8")
+        }
+        return out_dict
 
 class rm_arm_software_version_t(Structure):
     """  
@@ -1787,42 +1747,39 @@ class rm_arm_software_version_t(Structure):
 
     Attributes:  
         product_version (bytes): 机械臂型号
+        robot_controller_version (bytes): 机械臂控制器版本，若为四代控制器，则该字段为"4.0"
         algorithm_info (rm_algorithm_version_t): 算法库信息
-        ctrl_info (rm_ctrl_version_t): ctrl 层软件信息
-        dynamic_info (rm_dynamic_version_t): 动力学版本
-        plan_info (rm_planinfo_t): plan 层软件信息
+        ctrl_info (rm_software_build_info_t): ctrl 层软件信息
+        dynamic_info (rm_dynamic_version_t): 动力学版本（三代）
+        plan_info (rm_software_build_info_t): plan 层软件信息（三代）
+        com_info (rm_software_build_info_t): communication 模块软件信息（四代）
+        program_info (rm_software_build_info_t): 流程图编程模块软件信息（四代）
     """
     _fields_ = [
-        ('product_version', c_char * int(10)),
+        ('product_version', c_char * int(20)),
+        ('robot_controller_version', c_char * int(10)),
         ('algorithm_info', rm_algorithm_version_t),
-        ('ctrl_info', rm_ctrl_version_t),
+        ('ctrl_info', rm_software_build_info_t),
         ('dynamic_info', rm_dynamic_version_t),
         ('plan_info', rm_planinfo_t),
+        ('com_info', rm_software_build_info_t),
+        ('program_info', rm_software_build_info_t),
     ]
 
-    def to_dict(self, recurse=True):
-        """将类的变量返回为字典，如果recurse为True，则递归处理ctypes结构字段"""
-        result = {}
-        for field, ctype in self._fields_:
-            value = getattr(self, field)
-
-            if recurse and isinstance(ctype, type) and issubclass(ctype, Structure):
-                value = value.to_dict(recurse=recurse)
-            result[field] = value
-
-        for key, value in result.items():
-            if isinstance(value, bytes):
-                try:
-                    # 尝试使用 UTF-8 解码
-                    result[key] = value.decode('utf-8')
-                except UnicodeDecodeError:
-                    # 如果不是 UTF-8 编码，则可能需要根据实际情况处理
-                    # 这里简单地将字节转换为十六进制字符串作为替代方案
-                    result[key] = value.hex()
-            else:
-                # 值不是字节类型，直接保留
-                result[key] = value
-        return result
+    def to_dict(self, robot_controller_version = 4):
+        out_dict = {
+            "product_version": self.product_version.decode("utf-8"),
+            "algorithm_info": self.algorithm_info.to_dict(),
+            "ctrl_info": self.ctrl_info.to_dict(),
+        }
+        if(robot_controller_version == 3):
+            out_dict["dynamic_info"] = self.dynamic_info.to_dict()
+            out_dict["plan_info"] = self.plan_info.to_dict()
+        elif(robot_controller_version == 4):
+            out_dict["com_info"] = self.com_info.to_dict()
+            out_dict["program_info"] = self.program_info.to_dict()
+            out_dict["robot_controller_version"] = self.robot_controller_version.decode("utf-8")
+        return out_dict
 
 
 class rm_err_t(Structure):
@@ -2507,6 +2464,43 @@ class rm_program_run_state_t(Structure):
 
         return result
 
+
+
+class rm_flowchart_run_state_t(Structure):
+    """  
+    机械臂程序运行状态结构体  
+
+    **Args:**  
+        - 无（无直接构造参数，此结构体通常由机械臂提供数据并填充，通过访问对应的属性读取信息）  
+
+    **Attributes:**  
+        - run_state (int): 运行状态 0 未开始 1运行中 2暂停中  
+        - id (int): 当前使能的文件id。
+        - name (str): 当前使能的文件名称。
+        - plan_speed (int): 当前使能的文件全局规划速度比例 1-100。
+        - step_mode (int): 单步模式，0为空，1为正常, 2为单步。 
+        - modal_id (str): 运行到的流程图块的id。未运行则不返回
+
+    """
+    _fields_ = [
+        ('run_state', c_int),
+        ('id', c_int),
+        ('name', c_char * int(32)),
+        ('plan_speed', c_int),
+        ('step_mode', c_int),
+        ('modal_id', c_char * int(50)),
+    ]
+
+    def to_dict(self, recurse=True):
+        output_dict = {
+            "run_state": self.run_state,
+            "id": self.id,
+            "name": self.name.decode("utf-8"),
+            "plan_speed": self.plan_speed,
+            "step_mode": self.step_mode,
+            "modal_id": self.modal_id.decode("utf-8"),   
+        }
+        return output_dict
 
 class rm_waypoint_t(Structure):
     """  
@@ -3488,11 +3482,13 @@ class rm_robot_info_t(Structure):
         arm_dof (int): 机械臂的自由度数量。  
         arm_model (int): 机械臂型号。  
         force_type (int): 机械臂末端力控类型。 
+        robot_controller_version (int): 机械臂控制器版本，4：四代控制器，3：三代控制器。
     """
     _fields_ = [
-        ('arm_dof', c_int),
+        ('arm_dof', uint8_t),
         ('arm_model', c_int),
         ('force_type', c_int),
+        ('robot_controller_version', uint8_t)
     ]
 
     def to_dictionary(self):
@@ -3508,7 +3504,8 @@ class rm_robot_info_t(Structure):
             rm_robot_arm_model_e.RM_MODEL_RM_63_III_E: "RML_63",
             rm_robot_arm_model_e.RM_MODEL_ECO_65_E: "ECO_65",
             rm_robot_arm_model_e.RM_MODEL_ECO_62_E: "ECO_62",
-            rm_robot_arm_model_e.RM_MODEL_GEN_72_E: "GEN_72"
+            rm_robot_arm_model_e.RM_MODEL_GEN_72_E: "GEN_72",
+            rm_robot_arm_model_e.RM_MODEL_UNIVERSAL_E: "RM_UNIVERSAL",
         }
         force_to_string = {
             rm_force_type_e.RM_MODEL_RM_B_E: "B",
@@ -3532,8 +3529,6 @@ class rm_robot_info_t(Structure):
         }
 
         return output_dict
-
-
 
 
 class rm_robot_handle(Structure):
@@ -3657,12 +3652,189 @@ class rm_dh_t(Structure):
         return output_dict
         
 
-
 class rm_tool_sphere_t(Structure):
     _fields_ = [
         ("radius", c_float),                # 球体半径（单位：m）
         ("centrePoint", c_float * int(3)),        # 球体中心位置（单位：m，以法兰坐标系为参考坐标系）
     ]
+
+
+class rm_version_t(Structure):
+    _fields_ = [
+        ('version', c_char * int(10)),
+    ]
+
+class rm_trajectory_info_t(Structure):
+    _fields_ = [
+        ('point_num', c_int),       # 轨迹点数量
+        ('name', c_char * int(20)),     # 轨迹名称	
+        ('create_time', c_char * int(20)),      # 创建时间
+    ]
+
+    def to_dict(self, recurse=True):
+        output_dict = {
+            "point_num": self.point_num,
+            "name": self.name.decode('utf-8'),
+            "create_time": self.create_time.decode('utf-8')
+        }
+        return output_dict
+
+class rm_trajectory_list_t(Structure):
+    _fields_ = [
+        ('page_num', c_int),        # 页码
+        ('page_size', c_int),       # 每页大小
+        ('total_size', c_int),      # 列表长度
+        ('vague_search', c_char * int(32)),     # 模糊搜索 
+        ('list_len', c_int),        # 返回符合的轨迹列表长度
+        ('tra_list', rm_trajectory_info_t * int(100)),      # 返回符合的轨迹列表
+    ]
+
+    def to_dict(self, recurse=True):
+        vague_search = self.vague_search.decode("utf-8")
+        non_empty_outputs = []
+        for i in range(self.list_len):
+            output = self.tra_list[i].to_dict()
+            non_empty_outputs.append(output)
+
+        output_dict = {
+            "page_num": self.page_num,
+            "page_size": self.page_size,
+            "total_size": self.total_size,
+            "vague_search": self.vague_search.decode('utf-8'),
+            "list_len": self.list_len,
+            "tra_list": non_empty_outputs
+        }
+        return output_dict
+
+class rm_modbus_tcp_master_info_t(Structure):
+    _fields_ = [
+        ('master_name', c_char * int(20)),      # Modbus 主站名称，最大长度15个字符，不超过15个字符
+        ('ip', c_char * int(16)),       # TCP主站 IP 地址
+        ('port', c_int),        # TCP主站端口号	
+    ]
+
+    def __init__(self, master_name: str = None, ip: str = None, port: int = None):
+        if all(param is None for param in [master_name, ip, port]):
+            return
+        else:
+            self.master_name = master_name.encode('utf-8')
+            self.ip = ip.encode('utf-8')
+            self.port = port
+
+
+    def to_dict(self, recurse=True):
+        output_dict = {
+            "master_name": self.master_name.decode('utf-8'),
+            "ip": self.ip.decode('utf-8'),
+            "port": self.port
+        }
+        return output_dict
+
+
+class rm_modbus_tcp_master_list_t(Structure):
+    _fields_ = [
+        ('page_num', c_int),        # 页码
+        ('page_size', c_int),       # 每页大小
+        ('total_size', c_int),      # 列表长度
+        ('vague_search', c_char * int(32)),     # 模糊搜索	
+        ('list_len', c_int),        # 返回符合的TCP主站列表长度
+        ('master_list', rm_modbus_tcp_master_info_t * int(100)),        # 返回符合的TCP主站列表
+    ]
+    def to_dict(self, recurse=True):
+        output_dict = {
+            "page_num": self.page_num,
+            "page_size": self.page_size,
+            "total_size": self.total_size,
+            "vague_search": self.vague_search.decode('utf-8'),
+            "list_len": self.list_len,
+            "master_list": [self.master_list[i].to_dict() for i in range(self.list_len)]
+        }
+        return output_dict
+
+class rm_modbus_rtu_read_params_t(Structure):
+    _fields_ = [
+        ('address', c_int),     # 数据起始地址
+        ('device', c_int),      # 外设设备地址	
+        ('type', c_int),        # 0-控制器端modbus主机；1-工具端modbus主机。
+        ('num', c_int),     # 要读的数据的数量，数据长度不超过109
+    ]
+
+    def __init__(self, address: int = None, device: int = None, type: int = None, num: int = None):
+        if all(param is None for param in [address, device, type, num]):
+            return
+        else:
+            self.address = address
+            self.device = device
+            self.type = type
+            self.num = num
+
+class rm_modbus_rtu_write_params_t(Structure):
+    _fields_ = [
+        ('address', c_int),     # 数据起始地址
+        ('device', c_int),      # 外设设备地址
+        ('type', c_int),        # 0-控制器端modbus主机；1-工具端modbus主机。
+        ('num', c_int),     # 要写的数据的数量，最大不超过100
+        ('data', c_int * int(120)),     # 要写的数据，数据长度不超过100
+    ]
+    def __init__(self, address: int = None, device: int = None, type: int = None, num: int = None, data: list[int] = None):
+        if all(param is None for param in [address, device, type, num, data]):
+            return
+        else:
+            self.address = address
+            self.device = device
+            self.type = type
+            self.num = num
+            self.data = (c_int * int(120))(*data)
+
+
+class rm_modbus_tcp_read_params_t(Structure):
+    _fields_ = [
+        ('address', c_int),     # 数据起始地址
+        ('master_name', c_char * int(20)),      # Modbus 主站名称，最大长度15个字符，不超过15个字符（master_name与IP二选一，若有IP和port优先使用IP和port）
+        ('ip', c_char * int(16)),       # 主机连接的 IP 地址（master_name与IP二选一，若有IP和port优先使用IP和port）
+        ('port', c_int),        # 主机连接的端口号
+        ('num', c_int),     # 读取数据数量，最大不超过100
+    ]
+    def __init__(self, address: int = None, master_name: str = '', ip: str = '', port: int = None, num: int = None):
+        if all(param is None for param in [address, num]):
+            return
+        else:
+            if(master_name == None):
+                master_name = ""
+            if(ip == None):
+                ip = ""
+            self.address = address
+            self.master_name = master_name.encode('utf-8')
+            self.ip = ip.encode('utf-8')
+            self.port = port
+            self.num = num
+
+
+class rm_modbus_tcp_write_params_t(Structure):
+    _fields_ = [
+        ('address', c_int),     # 数据起始地址
+        ('master_name', c_char * int(20)),      # Modbus 主站名称，最大长度15个字符，不超过15个字符（master_name与IP二选一，若有IP和port优先使用IP和port）
+        ('ip', c_char * int(16)),       # 主机连接的 IP 地址（master_name与IP二选一，若有IP和port优先使用IP和port）
+        ('port', c_int),        # 主机连接的端口号
+        ('num', c_int),     # 写入数据数量，最大不超过100
+        ('data', c_int * int(120)),     # 写入的数据，数据长度不超过100
+    ]
+    def __init__(self, address: int = None, master_name: str = '', ip: str = '', port: int = None, num: int = None, data: list[int] = None):
+        if all(param is None for param in [address, num, data]):
+            return
+        else:
+            if(master_name == None):
+                master_name = ""
+            if(ip == None):
+                ip = ""
+            self.address = address
+            self.master_name = master_name.encode('utf-8')
+            self.ip = ip.encode('utf-8')
+            self.port = port
+            self.num = num
+            self.data = (c_int * int(120))(*data)
+
+
 
 if _libs[libname].has("rm_api_version", "cdecl"):
     rm_api_version = _libs[libname].get("rm_api_version", "cdecl")
@@ -4129,6 +4301,12 @@ if _libs[libname].has("rm_movel", "cdecl"):
     rm_movel.argtypes = [
         POINTER(rm_robot_handle), rm_pose_t, c_int, c_int, c_int, c_int]
     rm_movel.restype = c_int
+
+if _libs[libname].has("rm_movel_offset", "cdecl"):
+    rm_movel_offset = _libs[libname].get("rm_movel_offset", "cdecl")
+    rm_movel_offset.argtypes = [
+        POINTER(rm_robot_handle), rm_pose_t, c_int, c_int, c_int, c_int, c_int]
+    rm_movel_offset.restype = c_int
 
 if _libs[libname].has("rm_moves", "cdecl"):
     rm_moves = _libs[libname].get("rm_moves", "cdecl")
@@ -4763,17 +4941,14 @@ if _libs[libname].has("rm_get_install_pose", "cdecl"):
     rm_get_install_pose.restype = c_int
 
 if _libs[libname].has("rm_get_joint_software_version", "cdecl"):
-    rm_get_joint_software_version = _libs[libname].get(
-        "rm_get_joint_software_version", "cdecl")
-    rm_get_joint_software_version.argtypes = [
-        POINTER(rm_robot_handle), POINTER(c_int)]
+    rm_get_joint_software_version = _libs[libname].get("rm_get_joint_software_version", "cdecl")
+    rm_get_joint_software_version.argtypes = [POINTER(rm_robot_handle), POINTER(c_int), POINTER(rm_version_t)]
     rm_get_joint_software_version.restype = c_int
 
 if _libs[libname].has("rm_get_tool_software_version", "cdecl"):
     rm_get_tool_software_version = _libs[libname].get(
         "rm_get_tool_software_version", "cdecl")
-    rm_get_tool_software_version.argtypes = [
-        POINTER(rm_robot_handle), POINTER(c_int)]
+    rm_get_tool_software_version.argtypes = [POINTER(rm_robot_handle), POINTER(c_int), POINTER(rm_version_t)]
     rm_get_tool_software_version.restype = c_int
 
 if _libs[libname].has("rm_start_force_position_move", "cdecl"):
@@ -5390,6 +5565,142 @@ if _libs[libname].has("rm_algo_safety_robot_self_collision_detection", "cdecl"):
     rm_algo_safety_robot_self_collision_detection.argtypes = [
         POINTER(c_float)]
     rm_algo_safety_robot_self_collision_detection.restype = c_int
+
+if _libs[libname].has("rm_get_flowchart_program_run_state", "cdecl"):
+    rm_get_flowchart_program_run_state = _libs[libname].get("rm_get_flowchart_program_run_state", "cdecl")
+    rm_get_flowchart_program_run_state.argtypes = [POINTER(rm_robot_handle), POINTER(rm_flowchart_run_state_t)]
+    rm_get_flowchart_program_run_state.restype = c_int
+
+if _libs[libname].has("rm_get_trajectory_file_list", "cdecl"):
+    rm_get_trajectory_file_list = _libs[libname].get("rm_get_trajectory_file_list", "cdecl")
+    rm_get_trajectory_file_list.argtypes = [POINTER(rm_robot_handle), c_int, c_int, String,
+                                             POINTER(rm_trajectory_list_t)]
+    rm_get_trajectory_file_list.restype = c_int
+
+if _libs[libname].has("rm_set_run_trajectory", "cdecl"):
+    rm_set_run_trajectory = _libs[libname].get("rm_set_run_trajectory", "cdecl")
+    rm_set_run_trajectory.argtypes = [POINTER(rm_robot_handle), String]
+    rm_set_run_trajectory.restype = c_int
+
+if _libs[libname].has("rm_delete_trajectory_file", "cdecl"):
+    rm_delete_trajectory_file = _libs[libname].get("rm_delete_trajectory_file", "cdecl")
+    rm_delete_trajectory_file.argtypes = [POINTER(rm_robot_handle), String]
+    rm_delete_trajectory_file.restype = c_int
+
+if _libs[libname].has("rm_save_trajectory_file", "cdecl"):
+    rm_save_trajectory_file = _libs[libname].get("rm_save_trajectory_file", "cdecl")
+    rm_save_trajectory_file.argtypes = [POINTER(rm_robot_handle), String]
+    rm_save_trajectory_file.restype = c_int
+
+if _libs[libname].has("rm_set_arm_emergency_stop", "cdecl"):
+    rm_set_arm_emergency_stop = _libs[libname].get("rm_set_arm_emergency_stop", "cdecl")
+    rm_set_arm_emergency_stop.argtypes = [POINTER(rm_robot_handle), c_bool]
+    rm_set_arm_emergency_stop.restype = c_int
+
+if _libs[libname].has("rm_add_modbus_tcp_master", "cdecl"):
+    rm_add_modbus_tcp_master = _libs[libname].get("rm_add_modbus_tcp_master", "cdecl")
+    rm_add_modbus_tcp_master.argtypes = [POINTER(rm_robot_handle), rm_modbus_tcp_master_info_t]
+    rm_add_modbus_tcp_master.restype = c_int
+
+if _libs[libname].has("rm_update_modbus_tcp_master", "cdecl"):
+    rm_update_modbus_tcp_master = _libs[libname].get("rm_update_modbus_tcp_master", "cdecl")
+    rm_update_modbus_tcp_master.argtypes = [POINTER(rm_robot_handle), String, rm_modbus_tcp_master_info_t]
+    rm_update_modbus_tcp_master.restype = c_int
+
+if _libs[libname].has("rm_delete_modbus_tcp_master", "cdecl"):
+    rm_delete_modbus_tcp_master = _libs[libname].get("rm_delete_modbus_tcp_master", "cdecl")
+    rm_delete_modbus_tcp_master.argtypes = [POINTER(rm_robot_handle), String]
+    rm_delete_modbus_tcp_master.restype = c_int
+
+if _libs[libname].has("rm_get_modbus_tcp_master", "cdecl"):
+    rm_get_modbus_tcp_master = _libs[libname].get("rm_get_modbus_tcp_master", "cdecl")
+    rm_get_modbus_tcp_master.argtypes = [POINTER(rm_robot_handle), String, POINTER(rm_modbus_tcp_master_info_t)]
+    rm_get_modbus_tcp_master.restype = c_int
+
+if _libs[libname].has("rm_get_modbus_tcp_master_list", "cdecl"):
+    rm_get_modbus_tcp_master_list = _libs[libname].get("rm_get_modbus_tcp_master_list", "cdecl")
+    rm_get_modbus_tcp_master_list.argtypes = [POINTER(rm_robot_handle), c_int, c_int, String, POINTER(rm_modbus_tcp_master_list_t)]
+    rm_get_modbus_tcp_master_list.restype = c_int
+
+if _libs[libname].has("rm_set_controller_rs485_mode", "cdecl"):
+    rm_set_controller_rs485_mode = _libs[libname].get("rm_set_controller_rs485_mode", "cdecl")
+    rm_set_controller_rs485_mode.argtypes = [POINTER(rm_robot_handle), c_int, c_int]
+    rm_set_controller_rs485_mode.restype = c_int
+
+if _libs[libname].has("rm_get_controller_rs485_mode_v4", "cdecl"):
+    rm_get_controller_rs485_mode_v4 = _libs[libname].get("rm_get_controller_rs485_mode_v4", "cdecl")
+    rm_get_controller_rs485_mode_v4.argtypes = [POINTER(rm_robot_handle), POINTER(c_int), POINTER(c_int)]
+    rm_get_controller_rs485_mode_v4.restype = c_int
+
+if _libs[libname].has("rm_set_tool_rs485_mode", "cdecl"):
+    rm_set_tool_rs485_mode = _libs[libname].get("rm_set_tool_rs485_mode", "cdecl")
+    rm_set_tool_rs485_mode.argtypes = [POINTER(rm_robot_handle), c_int, c_int]
+    rm_set_tool_rs485_mode.restype = c_int
+
+if _libs[libname].has("rm_get_tool_rs485_mode_v4", "cdecl"):
+    rm_get_tool_rs485_mode_v4 = _libs[libname].get("rm_get_tool_rs485_mode_v4", "cdecl")
+    rm_get_tool_rs485_mode_v4.argtypes = [POINTER(rm_robot_handle), POINTER(c_int), POINTER(c_int)]
+    rm_get_tool_rs485_mode_v4.restype = c_int
+
+if _libs[libname].has("rm_read_modbus_rtu_coils", "cdecl"):
+    rm_read_modbus_rtu_coils = _libs[libname].get("rm_read_modbus_rtu_coils", "cdecl")
+    rm_read_modbus_rtu_coils.argtypes = [POINTER(rm_robot_handle), rm_modbus_rtu_read_params_t, POINTER(c_int)]
+    rm_read_modbus_rtu_coils.restype = c_int
+
+if _libs[libname].has("rm_write_modbus_rtu_coils", "cdecl"):
+    rm_write_modbus_rtu_coils = _libs[libname].get("rm_write_modbus_rtu_coils", "cdecl")
+    rm_write_modbus_rtu_coils.argtypes = [POINTER(rm_robot_handle), rm_modbus_rtu_write_params_t]
+    rm_write_modbus_rtu_coils.restype = c_int
+
+if _libs[libname].has("rm_read_modbus_rtu_input_status", "cdecl"):
+    rm_read_modbus_rtu_input_status = _libs[libname].get("rm_read_modbus_rtu_input_status", "cdecl")
+    rm_read_modbus_rtu_input_status.argtypes = [POINTER(rm_robot_handle), rm_modbus_rtu_read_params_t, POINTER(c_int)]
+    rm_read_modbus_rtu_input_status.restype = c_int
+
+if _libs[libname].has("rm_read_modbus_rtu_holding_registers", "cdecl"):
+    rm_read_modbus_rtu_holding_registers = _libs[libname].get("rm_read_modbus_rtu_holding_registers", "cdecl")
+    rm_read_modbus_rtu_holding_registers.argtypes = [POINTER(rm_robot_handle), rm_modbus_rtu_read_params_t, POINTER(c_int)]
+    rm_read_modbus_rtu_holding_registers.restype = c_int
+
+if _libs[libname].has("rm_write_modbus_rtu_registers", "cdecl"):
+    rm_write_modbus_rtu_registers = _libs[libname].get("rm_write_modbus_rtu_registers", "cdecl")
+    rm_write_modbus_rtu_registers.argtypes = [POINTER(rm_robot_handle), rm_modbus_rtu_write_params_t]
+    rm_write_modbus_rtu_registers.restype = c_int
+
+if _libs[libname].has("rm_read_modbus_rtu_input_registers", "cdecl"):
+    rm_read_modbus_rtu_input_registers = _libs[libname].get("rm_read_modbus_rtu_input_registers", "cdecl")
+    rm_read_modbus_rtu_input_registers.argtypes = [POINTER(rm_robot_handle), rm_modbus_rtu_read_params_t, POINTER(c_int)]
+    rm_read_modbus_rtu_input_registers.restype = c_int
+
+if _libs[libname].has("rm_read_modbus_tcp_coils", "cdecl"):
+    rm_read_modbus_tcp_coils = _libs[libname].get("rm_read_modbus_tcp_coils", "cdecl")
+    rm_read_modbus_tcp_coils.argtypes = [POINTER(rm_robot_handle), rm_modbus_tcp_read_params_t, POINTER(c_int)]
+    rm_read_modbus_tcp_coils.restype = c_int
+
+if _libs[libname].has("rm_write_modbus_tcp_coils", "cdecl"):
+    rm_write_modbus_tcp_coils = _libs[libname].get("rm_write_modbus_tcp_coils", "cdecl")
+    rm_write_modbus_tcp_coils.argtypes = [POINTER(rm_robot_handle), rm_modbus_tcp_write_params_t]
+    rm_write_modbus_tcp_coils.restype = c_int
+
+if _libs[libname].has("rm_read_modbus_tcp_input_status", "cdecl"):
+    rm_read_modbus_tcp_input_status = _libs[libname].get("rm_read_modbus_tcp_input_status", "cdecl")
+    rm_read_modbus_tcp_input_status.argtypes = [POINTER(rm_robot_handle), rm_modbus_tcp_read_params_t, POINTER(c_int)]
+    rm_read_modbus_tcp_input_status.restype = c_int
+
+if _libs[libname].has("rm_read_modbus_tcp_holding_registers", "cdecl"):
+    rm_read_modbus_tcp_holding_registers = _libs[libname].get("rm_read_modbus_tcp_holding_registers", "cdecl")
+    rm_read_modbus_tcp_holding_registers.argtypes = [POINTER(rm_robot_handle), rm_modbus_tcp_read_params_t, POINTER(c_int)]
+    rm_read_modbus_tcp_holding_registers.restype = c_int
+
+if _libs[libname].has("rm_write_modbus_tcp_registers", "cdecl"):
+    rm_write_modbus_tcp_registers = _libs[libname].get("rm_write_modbus_tcp_registers", "cdecl")
+    rm_write_modbus_tcp_registers.argtypes = [POINTER(rm_robot_handle), rm_modbus_tcp_write_params_t]
+    rm_write_modbus_tcp_registers.restype = c_int
+
+if _libs[libname].has("rm_read_modbus_tcp_input_registers", "cdecl"):
+    rm_read_modbus_tcp_input_registers = _libs[libname].get("rm_read_modbus_tcp_input_registers", "cdecl")
+    rm_read_modbus_tcp_input_registers.argtypes = [POINTER(rm_robot_handle), rm_modbus_tcp_read_params_t, POINTER(c_int)]
+    rm_read_modbus_tcp_input_registers.restype = c_int
 
 
 try:
