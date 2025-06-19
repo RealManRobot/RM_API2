@@ -733,7 +733,7 @@ class ArmTipVelocityParameters:
         """
         DH_data = rm_dh_t()
         ret = rm_get_DH_data(self.handle, DH_data)
-        return ret, DH_data.to_dict()
+        return ret, DH_data.to_dict(self.dh_dof)
 
 class ToolCoordinateConfig:
     """
@@ -1464,9 +1464,9 @@ class MovePlan:
 
         return tag
     
-    def rm_movel_offset(self, pose: list[float], v: int, r: int, connect: int, frame_type: int, block: int) -> int:
+    def rm_movel_offset(self, offset: list[float], v: int, r: int, connect: int, frame_type: int, block: int) -> int:
         """
-        笛卡尔空间直线偏移运动 
+        笛卡尔空间直线偏移运动 (四代控制器支持)
 
         该函数用于机械臂末端在当前位姿的基础上沿某坐标系（工具或工作）进行位移或旋转运动。
 
@@ -1499,8 +1499,8 @@ class MovePlan:
             - -5: 单线程模式超时未接收到返回，请确保超时时间设置合理。
         """
         po1 = rm_pose_t()
-        po1.position = rm_position_t(*pose[:3])
-        po1.euler = rm_euler_t(*pose[3:])
+        po1.position = rm_position_t(*offset[:3])
+        po1.euler = rm_euler_t(*offset[3:])
 
         tag = rm_movel_offset(self.handle, po1, v, r, connect, frame_type, block)
 
@@ -2259,12 +2259,14 @@ class ControllerConfig:
 
         return ret, version.to_dict(self.robot_controller_version)
 
-    def rm_set_netip(self, ip: str) -> int:
+    def rm_set_NetIP(self, ip: str, netmask: str, gw: str) -> int:
         """
         配置有线网口 IP 地址
 
         Args:
-            ip (str): _description_
+            ip (str): 有线网口 IP 地址
+            netmask(str): 有线网口子网掩码
+            gw(str): 有线网口网关地址
 
         Returns:
             int: 函数执行的状态码。
@@ -2274,7 +2276,7 @@ class ControllerConfig:
                 - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。
                 - -3: 返回值解析失败，接收到的数据格式不正确或不完整。
         """
-        tag = rm_set_NetIP(self.handle, ip)
+        tag = rm_set_NetIP(self.handle, ip, netmask, gw)
         return tag
 
     def rm_clear_system_err(self) -> int:
@@ -2556,12 +2558,13 @@ class ControllerIOConfig:
 
         return ret, list(DO)
 
-    def rm_set_voltage(self, voltage_type: int) -> int:
+    def rm_set_voltage(self, voltage_type: int, start_enable: bool) -> int:
         """
         设置控制器电源输出
 
         Args:
             voltage_type (int): 电源输出类型，0：0V，2：12V，3：24V
+            start_enable (bool): true：开机启动时输出此配置电压，false：取消开机启动即配置电压
 
         Returns:
             int: 函数执行的状态码。
@@ -2571,7 +2574,7 @@ class ControllerIOConfig:
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。
         """
-        tag = rm_set_voltage(self.handle, voltage_type)
+        tag = rm_set_voltage(self.handle, voltage_type, start_enable)
         return tag
 
     def rm_get_voltage(self) -> tuple[int, int]:
@@ -3504,12 +3507,14 @@ class HandControl:
         tag = rm_set_hand_seq(self.handle, seq_num, block, timeout)
         return tag
 
-    def rm_set_hand_angle(self, hand_angle: list[int]) -> int:
+    def rm_set_hand_angle(self, hand_angle: list[int], block:bool, timeout: int) -> int:
         """
         设置灵巧手各自由度角度
         @details 设置灵巧手角度，灵巧手有6个自由度，从1~6分别为小拇指，无名指，中指，食指，大拇指弯曲，大拇指旋转
         Args:
             hand_angle (list[int]): 手指角度数组，范围：0~1000. 另外，-1代表该自由度不执行任何操作，保持当前状态
+            block (bool): true 表示阻塞模式，等待灵巧手运动结束后返回；false 表示非阻塞模式，发送后立即返回
+            timeout (int): 阻塞模式下超时时间设置，单位：秒
 
         Returns:
             int: 函数执行的状态码。
@@ -3518,10 +3523,11 @@ class HandControl:
             - -1: 数据发送失败，通信过程中出现问题。
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。
-            - -4: 超时未返回
+            - -4: 当前到位设备校验失败，即当前到位设备不为灵巧手
+            - -5: 超时未返回。 
         """
         angle = (c_int * 6)(*hand_angle)
-        tag = rm_set_hand_angle(self.handle, angle)
+        tag = rm_set_hand_angle(self.handle, angle, block, timeout)
         return tag
 
     def rm_set_hand_follow_angle(self, hand_angle: list[int], block:bool) -> int:
@@ -3530,7 +3536,7 @@ class HandControl:
         @details 设置灵巧手跟随角度，灵巧手有6个自由度，从1~6分别为小拇指，无名指，中指，食指，大拇指弯曲，大拇指旋转
         Args:
             hand_angle (list[int]): 手指角度数组，最大表示范围为-32768到+32767，按照灵巧手厂商定义的角度做控制，例如因时的范围为0-2000
-            block (int): 设置0时为非阻塞模式；1位阻塞模式，超时时间20ms
+            block (int): 0：表示非阻塞模式，发送成功后返回，1：表示阻塞模式，接收设置成功指令后返回。
 
         Returns:
             int: 函数执行的状态码。
@@ -3539,7 +3545,6 @@ class HandControl:
             - -1: 数据发送失败，通信过程中出现问题。
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。
-            - -4: 超时未返回
         """
         angle = (c_int * 6)(*hand_angle)
         tag = rm_set_hand_follow_angle(self.handle, angle, block)
@@ -3551,7 +3556,7 @@ class HandControl:
         @details 设置灵巧手跟随角度，灵巧手有6个自由度，从1~6分别为小拇指，无名指，中指，食指，大拇指弯曲，大拇指旋转
         Args:
             hand_pos (list[int]): 手指位置数组，最大范围为0-65535，按照灵巧手厂商定义的角度做控制，例如因时的范围为0-1000
-            block (int): 设置0时为非阻塞模式；1位阻塞模式，超时时间20ms
+            block (int): 0：表示非阻塞模式，发送成功后返回，1：表示阻塞模式，接收设置成功指令后返回。
 
         Returns:
             int: 函数执行的状态码。
@@ -3560,7 +3565,6 @@ class HandControl:
             - -1: 数据发送失败，通信过程中出现问题。
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。
-            - -4: 超时未返回
         """
         pos = (c_int * 6)(*hand_pos)
         tag = rm_set_hand_follow_pos(self.handle, pos, block)
@@ -3580,7 +3584,6 @@ class HandControl:
             - -1: 数据发送失败，通信过程中出现问题。
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。
-            - -4: 超时未返回
         """
         tag = rm_set_hand_speed(self.handle, speed)
         return tag
@@ -3599,7 +3602,6 @@ class HandControl:
             - -1: 数据发送失败，通信过程中出现问题。
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。
-            - -4: 超时未返回
         """
         tag = rm_set_hand_force(self.handle, force)
         return tag
@@ -4341,6 +4343,22 @@ class ProjectManagement:
         err_line = c_int()
         tag = rm_send_project(self.handle, send_project, byref(err_line))
         return tag, err_line.value if tag != 0 else -1
+
+    def rm_set_plan_speed(self, speed: int) -> int:
+        """
+        规划过程中改变速度系数
+        Args:
+            speed (int): 速度系数，1-100
+        Returns:
+            int: 函数执行的状态码。
+            - 0: 成功。
+            - 1: 控制器返回false，参数错误或机械臂状态发生错误。
+            - -1: 数据发送失败，通信过程中出现问题。
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。
+            - -3: 返回值解析失败，控制器返回的数据无法识别或不完整等情况。
+        """
+        tag = rm_set_plan_speed(self.handle, speed)
+        return tag
 
     def rm_get_program_trajectory_list(self, page_num: int, page_size: int, vague_search: str) -> tuple[int, dict[str, any]]:
         """
@@ -5508,20 +5526,46 @@ class Algo:
     @details 针对睿尔曼机械臂，提供正逆解、各种位姿参数转换等工具接口。既可通过RoboticArm类连接机械臂使用该类中的成员函数，也可单独使用该类
     """
 
-    def __init__(self, arm_model: rm_robot_arm_model_e, force_type: rm_force_type_e):
+    def __init__(self, arm_model: rm_robot_arm_model_e, force_type: rm_force_type_e, arm_dof: int = -1, dh: rm_dh_t = None):
         """初始化算法依赖
 
         Args:
             arm_model (rm_robot_arm_model_e): 机械臂型号
             force_type (rm_force_type_e): 传感器类型
+            arm_dof (int, optional): 机械臂自由度，设置机械臂型号为通用型（RM_MODEL_UNIVERSAL_E）时需设置机械臂自由度. Defaults to -1.
+            dh (rm_dh_t, optional): 根据给定的DH参数判断机械臂类型，设置为None时根据arm_model判断机械臂类型. Defaults to None.
         """
         self.handle = rm_robot_handle()
-        rm_algo_init_sys_data(arm_model, force_type)
+        if(dh is not None):
+            arm_model = rm_robot_arm_model_e.RM_MODEL_UNIVERSAL_E
+            rm_algo_init_sys_data_by_dh(force_type, dh, arm_dof)
+        else:
+            rm_algo_init_sys_data(arm_model, force_type)
 
-        if arm_model == 1 or arm_model == 7:
+        ARM_7DOF_MODELS = {
+            rm_robot_arm_model_e.RM_MODEL_RM_75_E,
+            rm_robot_arm_model_e.RM_MODEL_GEN_72_E,
+            rm_robot_arm_model_e.RM_MODEL_ZM7L_E,
+            rm_robot_arm_model_e.RM_MODEL_ZM7R_E,
+            rm_robot_arm_model_e.RM_MODEL_RXL75_E,
+            rm_robot_arm_model_e.RM_MODEL_RXR75_E,
+        }
+        if arm_model == rm_robot_arm_model_e.RM_MODEL_UNIVERSAL_E:
+            if arm_dof == -1:
+                raise Exception("arm_dof is not set")
+            else:
+                rm_algo_set_robot_dof(arm_dof)
+                self.arm_dof = arm_dof
+        elif arm_model in ARM_7DOF_MODELS:
             self.arm_dof = 7
         else:
             self.arm_dof = 6
+
+        if(arm_model == rm_robot_arm_model_e.RM_MODEL_ZM7L_E or arm_model == rm_robot_arm_model_e.RM_MODEL_ZM7R_E or 
+           arm_model == rm_robot_arm_model_e.RM_MODEL_RXL75_E or arm_model == rm_robot_arm_model_e.RM_MODEL_RXR75_E):
+            self.dh_dof = 8
+        else:
+            self.dh_dof = self.arm_dof
 
     def rm_algo_version(self) -> str:
         """获取算法库版本
@@ -5554,7 +5598,7 @@ class Algo:
 
         return x.value, y.value, z.value
 
-    def rm_algo_set_redundant_parameter_traversal_mode(self, mode: int) -> None:
+    def rm_algo_set_redundant_parameter_traversal_mode(self, mode: bool) -> None:
         """
         设置逆解求解模式
 
@@ -6140,7 +6184,7 @@ class Algo:
             list[float]: DH参数列表
         """
         dh = rm_algo_get_dh()
-        return dh.to_dict()
+        return dh.to_dict(self.dh_dof)
 
     def rm_algo_universal_singularity_analyse(self, q:list[float], singluar_value_limit:float) -> int:
         """
@@ -6308,7 +6352,11 @@ class RoboticArm(ArmState, MovePlan, JointConfigSettings, JointConfigReader, Arm
             if rm_get_robot_info(self.handle, info) == 0:
                 self.arm_dof = info.arm_dof
                 self.robot_controller_version = info.robot_controller_version
-
+                if(info.arm_model == rm_robot_arm_model_e.RM_MODEL_ZM7L_E or info.arm_model == rm_robot_arm_model_e.RM_MODEL_ZM7R_E or
+                   info.arm_model == rm_robot_arm_model_e.RM_MODEL_RXL75_E or info.arm_model == rm_robot_arm_model_e.RM_MODEL_RXR75_E):
+                    self.dh_dof = 8
+                else:
+                    self.dh_dof = self.arm_dof
         return self.handle.contents
 
     def rm_delete_robot_arm(self) -> int:
@@ -6321,13 +6369,13 @@ class RoboticArm(ArmState, MovePlan, JointConfigSettings, JointConfigReader, Arm
         return rm_delete_robot_arm(self.handle)
 
     @classmethod  
-    def rm_destory(cls) -> int:
+    def rm_destroy(cls) -> int:
         """关闭所有机械臂连接，销毁所有线程
         Returns:
             int: 0 表示成功，非0 表示失败
 
         """
-        return rm_destory()
+        return rm_destroy()
 
     def rm_set_log_save(self, path) -> None:
         """保存日志到文件

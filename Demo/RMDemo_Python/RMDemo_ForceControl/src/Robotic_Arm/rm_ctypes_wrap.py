@@ -7,8 +7,7 @@
 此模块通过ctypes库封装了对C库接口的调用，简化了Python与C库之间的交互过程。它会自动加载对应环境的C库，  
 封装了设置参数类型、返回值类型等复杂步骤，并创建了与C库中定义的结构体相对应的Python类。  
  
-**重要提示**  
-- 在使用此模块前，请确保已经根据当前操作系统和Python环境正确安装了C版本的API库，并且库文件的路径正确配置。   
+**重要提示**    
 - 请勿直接修改此文件，除非您了解其内部实现并清楚修改可能带来的后果。  
 """
 
@@ -946,6 +945,10 @@ class rm_robot_arm_model_e(IntEnum):
         RM_MODEL_GEN_72_E (int): GEN_72型号  
         RM_MODEL_ECO_63_E (int): ECO_63型号  
         RM_MODEL_UNIVERSAL_E (int): 通用型，非标准机械臂型号
+        RM_MODEL_ZM7L_E (int): ZM7L型号
+        RM_MODEL_ZM7R_E (int): ZM7R型号
+        RM_MODEL_RXL75_E (int): 人型机器人左臂
+        RM_MODEL_RXR75_E (int): 人型机器人右臂
     """
     # RM_65型号
     RM_MODEL_RM_65_E = 0
@@ -967,6 +970,14 @@ class rm_robot_arm_model_e(IntEnum):
     RM_MODEL_ECO_63_E = RM_MODEL_GEN_72_E + 1
     # 通用型，非标准机械臂型号
     RM_MODEL_UNIVERSAL_E = RM_MODEL_ECO_63_E + 1
+    # ZM7L
+    RM_MODEL_ZM7L_E = RM_MODEL_UNIVERSAL_E + 1
+    # ZM7R
+    RM_MODEL_ZM7R_E = RM_MODEL_ZM7L_E + 1
+    # 人型机器人左臂
+    RM_MODEL_RXL75_E = RM_MODEL_ZM7R_E + 1
+    # 人型机器人右臂
+    RM_MODEL_RXR75_E = RM_MODEL_RXL75_E + 1
 
 
 class rm_force_type_e(IntEnum):
@@ -1564,9 +1575,9 @@ class rm_frame_t(Structure):
             frame_name (str, optional): 坐标系名称，不超过10个字符。默认为 None。  
             pose (tuple[float, float, float, float, float, float], optional): 表示坐标系位姿的元组，包含三个位置坐标（x, y, z）和三个欧拉角（rx, ry, rz）。  
             payload (float, optional): 坐标系末端负载重量，单位：kg。默认为 None。  
-            x (float, optional): 坐标系末端负载质心位置的 x 坐标，单位：m。默认为 None。  
-            y (float, optional): 坐标系末端负载质心位置的 y 坐标，单位：m。默认为 None。  
-            z (float, optional): 坐标系末端负载质心位置的 z 坐标，单位：m。默认为 None。  
+            x (float, optional): 坐标系末端负载质心位置的 x 坐标，单位：mm。默认为 None。  
+            y (float, optional): 坐标系末端负载质心位置的 y 坐标，单位：mm。默认为 None。  
+            z (float, optional): 坐标系末端负载质心位置的 z 坐标，单位：mm。默认为 None。  
 
         Raises:
             ValueError: 如果frame_name的长度超过10个字符
@@ -3505,7 +3516,12 @@ class rm_robot_info_t(Structure):
             rm_robot_arm_model_e.RM_MODEL_ECO_65_E: "ECO_65",
             rm_robot_arm_model_e.RM_MODEL_ECO_62_E: "ECO_62",
             rm_robot_arm_model_e.RM_MODEL_GEN_72_E: "GEN_72",
+            rm_robot_arm_model_e.RM_MODEL_ECO_63_E: "ECO_63",
             rm_robot_arm_model_e.RM_MODEL_UNIVERSAL_E: "RM_UNIVERSAL",
+            rm_robot_arm_model_e.RM_MODEL_ZM7L_E: "ZM7L",
+            rm_robot_arm_model_e.RM_MODEL_ZM7R_E: "ZM7R",
+            rm_robot_arm_model_e.RM_MODEL_RXL75_E: "RXL75",
+            rm_robot_arm_model_e.RM_MODEL_RXR75_E: "RXR75",
         }
         force_to_string = {
             rm_force_type_e.RM_MODEL_RM_B_E: "B",
@@ -3515,6 +3531,8 @@ class rm_robot_info_t(Structure):
         }
 
         # 使用字典来查找对应的字符串表示
+        model_string = "Unknown"
+        force_type = "Unknown"
         try:
             model_string = model_to_string[self.arm_model]
             force_type = force_to_string[self.force_type]
@@ -3524,8 +3542,9 @@ class rm_robot_info_t(Structure):
 
         output_dict = {
             "arm_dof": arm_dof,
-            "arm_model": arm_model if arm_dof != 0 else None,
+            "arm_model": model_string if arm_dof != 0 else None,
             "force_type": force_type if arm_dof != 0 else None,
+            "robot_controller_version": self.robot_controller_version,
         }
 
         return output_dict
@@ -3642,12 +3661,12 @@ class rm_dh_t(Structure):
             self.alpha = (c_float * 8)(*alpha)
             self.offset = (c_float * 8)(*offset)
 
-    def to_dict(self, recurse=True):
+    def to_dict(self, dof, recurse=True):
         output_dict = {
-            "d": list(self.d),
-            "a": list(self.a),
-            "alpha": list(self.alpha),
-            "offset": list(self.offset)
+            "d": list(self.d[:dof]),
+            "a": list(self.a[:dof]),
+            "alpha": list(self.alpha[:dof]),
+            "offset": list(self.offset[:dof])
         }
         return output_dict
         
@@ -3850,10 +3869,10 @@ if _libs[libname].has("rm_init", "cdecl"):
     rm_init.argtypes = [c_int]
     rm_init.restype = c_int
 
-if _libs[libname].has("rm_destory", "cdecl"):
-    rm_destory = _libs[libname].get("rm_destory", "cdecl")
-    rm_destory.argtypes = []
-    rm_destory.restype = c_int
+if _libs[libname].has("rm_destroy", "cdecl"):
+    rm_destroy = _libs[libname].get("rm_destroy", "cdecl")
+    rm_destroy.argtypes = []
+    rm_destroy.restype = c_int
 
 if _libs[libname].has("rm_set_log_call_back", "cdecl"):
     rm_set_log_call_back = _libs[libname].get("rm_set_log_call_back", "cdecl")
@@ -4480,7 +4499,7 @@ if _libs[libname].has("rm_clear_joint_odom", "cdecl"):
 
 if _libs[libname].has("rm_set_NetIP", "cdecl"):
     rm_set_NetIP = _libs[libname].get("rm_set_NetIP", "cdecl")
-    rm_set_NetIP.argtypes = [POINTER(rm_robot_handle), String]
+    rm_set_NetIP.argtypes = [POINTER(rm_robot_handle), String, String, String]
     rm_set_NetIP.restype = c_int
 
 if _libs[libname].has("rm_clear_system_err", "cdecl"):
@@ -4585,7 +4604,7 @@ if _libs[libname].has("rm_get_IO_output", "cdecl"):
 
 if _libs[libname].has("rm_set_voltage", "cdecl"):
     rm_set_voltage = _libs[libname].get("rm_set_voltage", "cdecl")
-    rm_set_voltage.argtypes = [POINTER(rm_robot_handle), c_int]
+    rm_set_voltage.argtypes = [POINTER(rm_robot_handle), c_int, c_bool]
     rm_set_voltage.restype = c_int
 
 if _libs[libname].has("rm_get_voltage", "cdecl"):
@@ -4809,7 +4828,7 @@ if _libs[libname].has("rm_set_hand_seq", "cdecl"):
 
 if _libs[libname].has("rm_set_hand_angle", "cdecl"):
     rm_set_hand_angle = _libs[libname].get("rm_set_hand_angle", "cdecl")
-    rm_set_hand_angle.argtypes = [POINTER(rm_robot_handle), POINTER(c_int)]
+    rm_set_hand_angle.argtypes = [POINTER(rm_robot_handle), POINTER(c_int), c_bool, c_int]
     rm_set_hand_angle.restype = c_int
 
 if _libs[libname].has("rm_set_hand_follow_angle", "cdecl"):
@@ -5250,6 +5269,17 @@ if _libs[libname].has("rm_algo_init_sys_data", "cdecl"):
         "rm_algo_init_sys_data", "cdecl")
     rm_algo_init_sys_data.argtypes = [c_int, c_int]
     rm_algo_init_sys_data.restype = None
+    
+if _libs[libname].has("rm_algo_init_sys_data_by_dh", "cdecl"):
+    rm_algo_init_sys_data_by_dh = _libs[libname].get("rm_algo_init_sys_data_by_dh", "cdecl")
+    rm_algo_init_sys_data_by_dh.argtypes = [c_int, rm_dh_t, c_int]
+    rm_algo_init_sys_data_by_dh.restype = None
+
+if _libs[libname].has("rm_algo_set_robot_dof", "cdecl"):
+    rm_algo_set_robot_dof = _libs[libname].get(
+        "rm_algo_set_robot_dof", "cdecl")
+    rm_algo_set_robot_dof.argtypes = [c_int]
+    rm_algo_set_robot_dof.restype = None
 
 if _libs[libname].has("rm_algo_set_angle", "cdecl"):
     rm_algo_set_angle = _libs[libname].get("rm_algo_set_angle", "cdecl")
@@ -5702,6 +5732,24 @@ if _libs[libname].has("rm_read_modbus_tcp_input_registers", "cdecl"):
     rm_read_modbus_tcp_input_registers.argtypes = [POINTER(rm_robot_handle), rm_modbus_tcp_read_params_t, POINTER(c_int)]
     rm_read_modbus_tcp_input_registers.restype = c_int
 
+if _libs[libname].has("rm_set_current_canfd_enable", "cdecl"):
+    rm_set_current_canfd_enable = _libs[libname].get(
+        "rm_set_current_canfd_enable", "cdecl")
+    rm_set_current_canfd_enable.argtypes = [POINTER(rm_robot_handle), c_bool]
+    rm_set_current_canfd_enable.restype = c_int
+
+if _libs[libname].has("rm_get_current_canfd_enable", "cdecl"):
+    rm_get_current_canfd_enable = _libs[libname].get(
+        "rm_get_current_canfd_enable", "cdecl")
+    rm_get_current_canfd_enable.argtypes = [
+        POINTER(rm_robot_handle), POINTER(c_bool)]
+    rm_get_current_canfd_enable.restype = c_int
+
+if _libs[libname].has("rm_current_canfd", "cdecl"):
+    rm_current_canfd = _libs[libname].get(
+        "rm_current_canfd", "cdecl")
+    rm_current_canfd.argtypes = [POINTER(rm_robot_handle), POINTER(c_float)]
+    rm_current_canfd.restype = c_int
 
 try:
     ARM_DOF = 7

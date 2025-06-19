@@ -1,0 +1,24 @@
+# 创建导入的库目标
+add_library(rm_api2 SHARED IMPORTED)
+
+# 设置库的公共头文件路径
+set_target_properties(rm_api2 PROPERTIES
+  INTERFACE_INCLUDE_DIRECTORIES "@CMAKE_INSTALL_PREFIX@/include"
+)
+
+# 设置C库文件路径
+set_target_properties(rm_api2 PROPERTIES
+  IMPORTED_LOCATION_DEBUG "@CMAKE_INSTALL_PREFIX@/lib/libapi_c_debug.so"
+  IMPORTED_LOCATION_RELEASE "@CMAKE_INSTALL_PREFIX@/lib/libapi_c.so"
+  IMPORTED_LOCATION "@CMAKE_INSTALL_PREFIX@/lib/libapi_c.so"
+)
+
+# 添加额外的库到链接接口
+set_target_properties(rm_api2 PROPERTIES
+  IMPORTED_LINK_INTERFACE_LIBRARIES_DEBUG "@CMAKE_INSTALL_PREFIX@/lib/libapi_cpp_debug.so"
+  IMPORTED_LINK_INTERFACE_LIBRARIES_RELEASE "@CMAKE_INSTALL_PREFIX@/lib/libapi_cpp.so"
+  IMPORTED_LINK_INTERFACE_LIBRARIES "@CMAKE_INSTALL_PREFIX@/lib/libapi_cpp.so"
+)
+
+# 引入版本文件
+include("${CMAKE_CURRENT_LIST_DIR}/@ConfigFileVersionName@")
