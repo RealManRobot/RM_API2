@@ -265,7 +265,7 @@ typedef struct
     float joint_position[ARM_DOF];              ///< 关节角度，单位°，精度：0.001°
     float joint_temperature[ARM_DOF];           ///< 当前关节温度，精度0.001℃
     float joint_voltage[ARM_DOF];               ///< 当前关节电压，精度0.001V
-    float joint_speed[ARM_DOF];                 ///< 当前关节速度，精度0.01RPM。
+    float joint_speed[ARM_DOF];                 ///< 当前关节速度，精度0.01°/s。
 }rm_joint_status_t;
 
 /**
@@ -399,6 +399,21 @@ typedef struct
     int trajectory_mode;        ///< 高跟随模式下，0-完全透传模式、1-曲线拟合模式、2-滤波模式
     int radio;                  ///< 曲线拟合模式0-100和滤波模式下的平滑系数（数值越大效果越好），滤波模式下取值范围0~1000，曲线拟合模式下取值范围0~100
 }rm_force_position_move_t;
+
+/**
+ * @brief 笛卡尔速度透传模式结构体
+ * 建议初始化方式，避免一些未知错误
+ * rm_movev_canfd_mode_t my_v_canfd = (rm_movev_canfd_mode_t){ 0 };
+ */
+typedef struct
+{
+    float* cartesian_velocity;           // 笛卡尔速度，单位：m/s，rad/s。
+    bool follow;            // 表示驱动器的运动跟随效果，true 为高跟随，false 为低跟随。若使用高跟随，透传周期要求不超过 10ms。
+    int trajectory_mode;    // 高跟随模式下，支持多种模式，0-完全透传模式、1-曲线拟合模式、2-滤波模式。
+    int radio;              // trajectory_mode=0，完全透传模式：此为默认模式，将原始数据直接透传给关节，关节完全按照发送的轨迹进行支持。
+                            // trajectory_mode=1，曲线拟合模式：此模式下，可输入平滑系数（0-100），平滑系数越大，轨迹越平滑；但同时跟随滞后效果会越明显，滞后最大约透传15个周期。
+                            // trajectory_mode=2，滤波模式：在此模式下，用户可以输入滤波参数（范围在0至1000之间）。参数值越大，机械臂的运动轨迹将会越平滑。由于采用了滤波技术，当用户输入完最后一个目标点后，为了确保机械臂能够准确到达该目标位置，用户需要持续发送该最后一个目标点的指令，直至查询确认机械臂已经到达最终位置。
+}rm_movev_canfd_mode_t;
 
 /**
  * @brief 角度透传模式结构体
@@ -589,7 +604,7 @@ typedef struct
  */
 typedef struct
 {
-    char point_name[20];    ///< 路点名称
+    char point_name[40];    ///< 路点名称
     float joint[ARM_DOF];   ///< 关节角度
     rm_pose_t pose;     ///< 位姿信息
     char work_frame[12];    ///< 工作坐标系名称
@@ -778,7 +793,8 @@ typedef enum {
     RM_SENSOR_DRAG_E,              // 六维力拖动状态
     RM_TECH_DEMONSTRATION_E,        // 示教状态
     RM_TRAJECTORY_REPRODUCTON_E,   //轨迹复现状态
-    RM_MOVE_INIT_POSITION_E        // 长按蓝色按钮运动到初始位置状态
+    RM_MOVE_INIT_POSITION_E,        // 长按蓝色按钮运动到初始位置状态
+    RM_MOVEV_CANFD_E                //笛卡尔速度透传
 } rm_udp_arm_current_status_e;
 
 /***

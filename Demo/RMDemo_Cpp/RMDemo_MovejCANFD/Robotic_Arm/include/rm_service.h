@@ -4622,7 +4622,7 @@ RM_INTERFACE_EXPORT int rm_save_tool_action(rm_robot_handle *handle, const char 
  */
 RM_INTERFACE_EXPORT int rm_update_tool_action(rm_robot_handle *handle, const char *action_name, const char *new_name, int *selected_array,int array_size, int array_type);
 /**
- * @brief 设置避奇异模式（只支持6自由度机械臂）
+ * @brief 设置避奇异模式
  * 
  * @param handle 机械臂控制句柄
  * @param mode 模式 0-不规避奇异点，1-规避奇异点
@@ -4635,7 +4635,7 @@ RM_INTERFACE_EXPORT int rm_update_tool_action(rm_robot_handle *handle, const cha
  */
 RM_INTERFACE_EXPORT int rm_set_avoid_singularity_mode(rm_robot_handle *handle, int mode);
 /**
- * @brief 获取避奇异模式（只支持6自由度机械臂）
+ * @brief 获取避奇异模式
  * 
  * @param handle 机械臂控制句柄
  * @param mode 模式 0-不规避奇异点，1-规避奇异点
@@ -4647,6 +4647,93 @@ RM_INTERFACE_EXPORT int rm_set_avoid_singularity_mode(rm_robot_handle *handle, i
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 RM_INTERFACE_EXPORT int rm_get_avoid_singularity_mode(rm_robot_handle *handle, int* mode);
+/**
+ * @brief 设置静止状态碰撞检测开关(三代控制器)
+ * 
+ * @param handle 机械臂控制句柄
+ * @param mode 0：关闭静止状态碰撞检测功能；1：开启静止状态碰撞检测功能。
+ * @return int 函数执行的状态码。  
+            - 0: 成功。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
+            - -1: 数据发送失败，通信过程中出现问题。
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
+            - -3: 返回值解析失败，接收到的数据格式不正确或不完整。
+ */
+RM_INTERFACE_EXPORT int rm_set_collision_detection(rm_robot_handle *handle, int mode);
+/**
+ * @brief 查询碰撞防护等级
+ * 
+ * @param handle 机械臂控制句柄
+ * @param mode 0：关闭静止状态碰撞检测功能；1：开启静止状态碰撞检测功能。
+ * @return int 函数执行的状态码。  
+            - 0: 成功。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
+            - -1: 数据发送失败，通信过程中出现问题。
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
+            - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
+ */
+RM_INTERFACE_EXPORT int rm_get_collision_detection(rm_robot_handle *handle, int *mode);
+/**
+ * @brief 笛卡尔速度透传
+ * @details 使用这个接口前先进性笛卡尔速度透传初始化
+ * @param handle 机械臂控制句柄 
+ * @param cartesian_velocity 笛卡尔速度，单位：m/s，rad/s, 线速度最大值：0.250m/s,角速度最大值：0.6rad/s
+ * @param follow true-高跟随，false-低跟随。若使用高跟随，透传周期要求不超过 10ms。
+ * @param trajectory_mode 高跟随模式下，0-完全透传模式、1-曲线拟合模式、2-滤波模式
+ * @param radio trajectory_mode=0，完全透传模式：此为默认模式，将原始数据直接透传给关节，关节完全按照发送的轨迹进行支持。
+                trajectory_mode=1，曲线拟合模式：此模式下，可输入平滑系数（0-100），平滑系数越大，轨迹越平滑；但同时跟随滞后效果会越明显，滞后最大约透传15个周期。
+                trajectory_mode=2，滤波模式：在此模式下，用户可以输入滤波参数（范围在0至1000之间）。参数值越大，机械臂的运动轨迹将会越平滑。由于采用了滤波技术，当用户输入完最后一个目标点后，为了确保机械臂能够准确到达该目标位置，用户需要持续发送该最后一个目标点的指令，直至查询确认机械臂已经到达最终位置。
+ * @return int 函数执行的状态码。  
+            - 0: 成功。  
+            - -1: 数据发送失败，通信过程中出现问题。
+ */
+RM_INTERFACE_EXPORT int rm_movev_canfd(rm_robot_handle *handle, float *cartesian_velocity, bool follow, int trajectory_mode, int radio);
+/**
+ * @brief 笛卡尔速度透传初始化
+ * 
+ * @param handle 机械臂控制句柄
+ * @param avoid_singularity_flag	int	是否开启避奇异。1:开启；0:关闭.
+ * @param frame_type	int	参考坐标系选择。1：速度在工作坐标系下表示；0：速度在工具坐标系下表示。
+ * @param dt	int	周期，单位ms。
+ * @return int 函数执行的状态码。  
+            - 0: 成功。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
+            - -1: 数据发送失败，通信过程中出现问题。
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
+            - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
+ */
+RM_INTERFACE_EXPORT int rm_set_movev_canfd_init(rm_robot_handle *handle, int avoid_singularity_flag, int frame_type, int dt);
+/**
+ * @brief 读末端生态设备寄存器
+ * 
+ * @param handle 机械臂控制句柄
+ * @param addr	int	寄存器起始地址，寄存器具体功能需参考末端生态协议定义。
+ * @param length	int	寄存器长度。注意：寄存器有效地址范围1000~1653。
+ * @param regarr	intarray	数据读取存放处。
+ * @return int 函数执行的状态码。  
+            - 0: 成功。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
+            - -1: 数据发送失败，通信过程中出现问题。
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
+            - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
+ */
+RM_INTERFACE_EXPORT int rm_get_rm_plus_reg(rm_robot_handle *handle, int addr, int length, int *regarr);
+
+/**
+ * @brief 写末端生态设备寄存器
+ * 
+ * @param handle 机械臂控制句柄
+ * @param addr	int	寄存器起始地址，寄存器具体功能需参考末端生态协议定义。
+ * @param length	int	寄存器长度。注意：寄存器有效地址范围1000~1653。
+ * @param data	intarray	写入数据。
+ * @return int 函数执行的状态码。  
+            - 0: 成功。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
+            - -1: 数据发送失败，通信过程中出现问题。
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
+            - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
+ */
+RM_INTERFACE_EXPORT int rm_set_rm_plus_reg(rm_robot_handle *handle, int addr, int length, int *data);
 };  
   
 #endif // __cplusplus  

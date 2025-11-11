@@ -1385,7 +1385,7 @@ class ArmState:
     
     def rm_set_avoid_singularity_mode(self, mode: int) -> int:
         """
-        设置避奇异模式(仅支持6自由度机械臂)
+        设置避奇异模式
 
         Args:
             mode: 模式 0-不规避奇异点，1-规避奇异点
@@ -1405,7 +1405,7 @@ class ArmState:
     
     def rm_get_avoid_singularity_mode(self) -> tuple[int, int]:
         """
-        获取避奇异模式(仅支持6自由度机械臂)
+        获取避奇异模式
 
         Returns:
             tuple[int, int]: 包含两个元素的元组。
@@ -1420,7 +1420,36 @@ class ArmState:
         ret = rm_get_avoid_singularity_mode(self.handle, byref(mode))
         return ret, mode.value
     
+    def rm_set_collision_detection(self, mode: int) -> int:
+            """
+            设置静止状态碰撞检测开关(三代控制器)
 
+            Args:
+                mode: 碰撞检测模式，0-关闭，1-开启
+
+            Returns:
+                int: 函数执行的状态码。
+                    - 0: 成功。
+                    - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。
+                    - -1: 数据发送失败，通信过程中出现问题。
+                    - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。
+                    - -3: 返回值解析失败，接收到的数据格式不正确或不完整。
+            """
+            tag = rm_set_collision_detection(self.handle, mode)
+            return tag
+    
+    def rm_get_collision_detection(self) -> tuple[int, int]:
+            """
+            查询碰撞防护等级
+
+            Returns:
+                tuple[int, int]: 包含两个元素的元组。
+                - int: 函数执行的状态码（含义同set方法）。
+                - int: 碰撞检测模式，0-关闭，1-开启。
+            """
+            mode = c_int()
+            ret = rm_get_collision_detection(self.handle, byref(mode))
+            return ret, mode.value
     
 
 class MovePlan:
@@ -1664,6 +1693,45 @@ class MovePlan:
         tag = rm_movej_p(self.handle, po1, v, r, connect, block)
 
         return tag
+
+    def rm_set_movev_canfd_init(self, avoid_singularity_flag: int, frame_type: int, dt: int) -> int:
+            """
+            笛卡尔速度透传初始化
+
+            Args:
+                avoid_singularity_flag: 是否避奇异，1-开启，0-关闭。
+                frame_type: 参考坐标系，1-工作坐标系，0-工具坐标系。
+                dt: 周期（单位：ms）。
+
+            Returns:
+                int: 函数执行的状态码（含义同前）。
+            """
+            tag = rm_set_movev_canfd_init(self.handle, avoid_singularity_flag, frame_type, dt)
+            return tag
+
+    def rm_movev_canfd(self, cartesian_velocity: list[float], follow: bool, trajectory_mode: int = 0, radio: int = 0) -> int:
+            """
+            角度透传（CANFD 模式）- 严格匹配 ctypes 接口定义
+            
+            Args:
+                cartesian_velocity (POINTER(c_float * 6)):（6个元素，对应x、y、z、rx、ry、rz），单位：m/s（平移）、rad/s（旋转）,线速度最大值：0.250m/s,角速度最大值：0.6rad/s）
+                follow: 驱动器跟随效果，True-高跟随，False-低跟随。
+                trajectory_mode: 高跟随模式类型，0-完全透传，1-曲线拟合，2-滤波。
+                radio: 模式参数（平滑系数/滤波参数，需参考模式类型）。
+
+            Returns:
+                int: 函数执行的状态码（含义同前）。
+            """
+            config = rm_movev_canfd_mode_t()
+            cartesian_velocity_array = (c_float * 6)(*cartesian_velocity)
+            config.cartesian_velocity = ctypes.pointer(cartesian_velocity_array)
+            config.follow = follow
+            config.trajectory_mode = trajectory_mode
+            config.radio = radio
+
+            tag = rm_movev_canfd(self.handle, config)
+
+            return tag
 
     def rm_movej_canfd(self, joint: list[float], follow: bool, expand: float = 0, trajectory_mode: int = 0, radio: int = 0) -> int:
         """
@@ -2835,6 +2903,39 @@ class GripperControl:
         tag = rm_get_rm_plus_state_info(self.handle, byref(state_info_type))
         return tag, state_info_type.to_dict()
 
+    def rm_get_rm_plus_reg(self, addr: int, length: int) -> tuple[int, list[int]]:
+        """
+        读末端生态设备寄存器
+
+        Args:
+            addr: 寄存器起始地址（1000~1653）。
+            length: 寄存器长度。
+
+        Returns:
+            tuple[int, list[int]]: 包含两个元素的元组。
+            - int: 函数执行的状态码（含义同前）。
+            - list[int]: 读取的寄存器数据列表。
+        """
+
+        regarr = (c_int * length)()
+        ret = rm_get_rm_plus_reg(self.handle, addr, length, regarr)
+        return ret, list(regarr)
+    
+    def rm_set_rm_plus_reg(self, addr: int, length: int, data: list[int]) -> int:
+            """
+            写末端生态设备寄存器（修正参数传递方式）
+
+            Args:
+                addr: 寄存器起始地址（1000~1653）。
+                length: 寄存器长度。
+                data: 要写入的寄存器数据列表。
+
+            Returns:
+                int: 函数执行的状态码。
+            """
+            data_arr = (c_int * length)(*data)
+            ret = rm_set_rm_plus_reg(self.handle, addr, length, data_arr)
+            return ret
 
     def rm_set_gripper_route(self, min_route: int, max_route: int) -> int:
         """
@@ -5558,7 +5659,6 @@ class ModbusV4:
         data = (c_int * param.num)()
         tag = rm_read_modbus_tcp_input_registers(self.handle, param, data)
         return tag, [data[i] for i in range(param.num)]
-
 
 class ActionV4:
     """四代控制器末端动作接口类
