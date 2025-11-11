@@ -413,6 +413,13 @@ def UNCHECKED(type):
         return ctypes.c_void_p
 
 
+class GBKString(String):  # 继承原String类
+    @classmethod
+    def from_param(cls, obj):
+        if isinstance(obj, str):
+            return cls(obj.encode('gbk'))
+        return super().from_param(obj)
+
 # ctypes doesn't have direct support for variadic functions, so we have to write
 # our own wrapper class
 class _variadic_function(object):
@@ -1869,6 +1876,7 @@ class rm_joint_status_t(Structure):
         joint_position (list[float]): 关节角度，单位°，精度：0.001°
         joint_temperature (list[float]): 当前关节温度，精度0.001℃
         joint_voltage (list[float]): 当前关节电压，精度0.001V
+        joint_speed (list[float]): 当前关节速度，精度0.01°/s。
     """
     _fields_ = [
         ('joint_current', c_float * int(7)),
@@ -2518,7 +2526,7 @@ class rm_waypoint_t(Structure):
     机械臂全局路点结构体  
     """
     _fields_ = [
-        ('point_name', c_char * int(20)),
+        ('point_name', c_char * int(40)),
         ('joint', c_float * int(7)),
         ('pose', rm_pose_t),
         ('work_frame', c_char * int(12)),
@@ -2542,7 +2550,7 @@ class rm_waypoint_t(Structure):
             return
         else:
             # 路点名称
-            self.point_name = point_name.encode('utf-8')
+            self.point_name = point_name.encode('GBK')
             # 关节角度
             self.joint = (c_float * ARM_DOF)(*joint)
 
@@ -2562,7 +2570,7 @@ class rm_waypoint_t(Structure):
 
     def to_dict(self):
         """将类的变量返回为字典"""
-        name = self.point_name.decode("utf-8")
+        name = self.point_name.decode("GBK")
         work_name = self.work_frame.decode("utf-8")
         tool_name = self.tool_frame.decode("utf-8")
         time = self.time.decode("utf-8")
@@ -2989,7 +2997,6 @@ class rm_electronic_fence_enable_t(Structure):
 
         return result
 
-   
 class rm_movej_canfd_mode_t(Structure):
     """
     角度透传模式结构体
@@ -3009,6 +3016,27 @@ class rm_movej_canfd_mode_t(Structure):
         ('radio', c_int)
     ]
 
+class rm_movev_canfd_mode_t(Structure):
+    """
+    笛卡尔速度透传模式结构体
+
+    建议初始化方式：rm_movev_canfd_mode_t() （自动初始化为0值，避免未知错误）
+
+    **Attributes**:
+        - cartesian_velocity (POINTER(c_float * 6)): 笛卡尔速度数组指针（6个元素，对应x、y、z、rx、ry、rz），单位：0.001mm/s（平移）、0.001rad/s（旋转）,线速度最大值：0.250m/s,角速度最大值：0.6rad/s）
+        - follow (c_bool): 驱动器运动跟随模式，True为高跟随（透传周期需≤10ms），False为低跟随
+        - trajectory_mode (c_int): 高跟随模式下的轨迹模式，0-完全透传模式、1-曲线拟合模式、2-滤波模式
+        - radio (c_int): 模式参数：
+            - trajectory_mode=0（完全透传）：无效（默认模式，直接透传原始数据）
+            - trajectory_mode=1（曲线拟合）：平滑系数（0~100，值越大轨迹越平滑，滞后越明显）
+            - trajectory_mode=2（滤波模式）：滤波参数（0~1000，值越大轨迹越平滑，需持续发送最终目标点直至到达）
+    """
+    _fields_ = [
+        ('cartesian_velocity', POINTER(c_float * 6)),  # 指向6元素float数组的指针（笛卡尔6自由度）
+        ('follow', c_bool),
+        ('trajectory_mode', c_int),
+        ('radio', c_int)
+    ]
 
 class rm_movep_canfd_mode_t(Structure):
     """
@@ -3231,7 +3259,9 @@ class rm_udp_arm_current_status_e(IntEnum):
     RM_CURRENT_DRAG_E = RM_PAUSE_E + 1      # 电流环拖动状态
     RM_SENSOR_DRAG_E = RM_CURRENT_DRAG_E + 1        # 六维力拖动状态
     RM_TECH_DEMONSTRATION_E = RM_SENSOR_DRAG_E + 1      # 示教状态
-
+    RM_TRAJECTORY_REPRODUCTON_E = RM_TECH_DEMONSTRATION_E + 1  #轨迹复现状态
+    RM_MOVE_INIT_POSITION_E = RM_TRAJECTORY_REPRODUCTON_E + 1  #长按蓝色按钮运动到初始位置状态
+    RM_MOVEV_CANFD_E = RM_MOVE_INIT_POSITION_E + 1      #笛卡尔速度透传
 
 class rm_plus_base_info_t(Structure):
     _fields_ = [
@@ -3249,14 +3279,14 @@ class rm_plus_base_info_t(Structure):
         ("touch_num", c_int),              # 触觉个数
         ("touch_sw", c_int),           # 触觉开关
         ("hand", c_int),                   # 手方向 1 ：左手 2： 右手
-        ("pos_up", c_int * 12),            # 位置上限
-        ("pos_low", c_int * 12),           # 位置下限
-        ("angle_up", c_int * 12),           # 角度上限
-        ("angle_low", c_int * 12),          # 角度下限
-        ("speed_up", c_int * 12),           # 速度上限
-        ("speed_low", c_int * 12),          # 速度下限
-        ("force_up", c_int * 12),           # 力上限
-        ("force_low", c_int * 12),           # 力下限
+        ("pos_up", c_int * 6),            # 位置上限
+        ("pos_low", c_int * 6),           # 位置下限
+        ("angle_up", c_int * 6),           # 角度上限
+        ("angle_low", c_int * 6),          # 角度下限
+        ("speed_up", c_int * 6),           # 速度上限
+        ("speed_low", c_int * 6),          # 速度下限
+        ("force_up", c_int * 6),           # 力上限
+        ("force_low", c_int * 6),           # 力下限
     ]
 
     def to_dict(self, recurse=True):
@@ -3289,19 +3319,19 @@ class rm_plus_base_info_t(Structure):
 class rm_plus_state_info_t(Structure):
     _fields_ = [
         ("sys_state", c_int),                  # 系统状态
-        ("dof_state", c_int * 12),              # 各自由度当前状态
-        ("dof_err", c_int * 12),                # 各自由度错误信息
-        ("pos", c_int * 12),                    # 各自由度当前位置
-        ("speed", c_int * 12),                  # 各自由度当前速度,闭合正，松开负，单位：无量纲
-        ("angle", c_int * 12),                  # 各自由度当前角度
-        ("current", c_int * 12),                # 各自由度当前电流
+        ("dof_state", c_int * 6),              # 各自由度当前状态
+        ("dof_err", c_int * 6),                # 各自由度错误信息
+        ("pos", c_int * 6),                    # 各自由度当前位置
+        ("speed", c_int * 6),                  # 各自由度当前速度,闭合正，松开负，单位：无量纲
+        ("angle", c_int * 6),                  # 各自由度当前角度
+        ("current", c_int * 6),                # 各自由度当前电流
         ("normal_force", c_int * 18),          # 自由度触觉三维力的法向力
         ("tangential_force", c_int * 18),      # 自由度触觉三维力的切向力
         ("tangential_force_dir", c_int * 18),  # 自由度触觉三维力的切向力方向
         ("tsa", c_uint32 * 12),                    # 自由度触觉自接近
         ("tma", c_uint32 * 12),                    # 自由度触觉互接近
         ("touch_data",c_int * 18),              # 触觉传感器原始数据
-        ("force",c_int * 12),                   # 自由度力矩,闭合正，松开负，单位0.001N
+        ("force",c_int * 6),                   # 自由度力矩,闭合正，松开负，单位0.001N
     ]
 
     def to_dict(self, recurse=True):
@@ -3852,6 +3882,80 @@ class rm_modbus_tcp_write_params_t(Structure):
             self.port = port
             self.num = num
             self.data = (c_int * int(120))(*data)
+
+
+class rm_tool_action_info_t(Structure):
+    _fields_ = [
+        ('name', c_char * int(20)),    #动作名称
+        ('hand_pos', c_int * int(100)),   #动作位置
+        ('hand_angle', c_int * int(100)),   #动作角度
+    ]
+
+    def to_dict(self, recurse=True):
+        """将类的变量返回为字典，如果recurse为True，则递归处理ctypes结构字段"""
+        result = {}
+        for field, ctype in self._fields_:
+            value = getattr(self, field)
+
+            if recurse and isinstance(ctype, type) and issubclass(ctype, Structure):
+                value = value.to_dict(recurse=recurse)
+            result[field] = value
+
+        for key, value in result.items():
+            if isinstance(value, bytes):
+                try:
+                    # 尝试使用 UTF-8 解码
+                    result[key] = value.decode('utf-8')
+                except UnicodeDecodeError:
+                    # 如果不是 UTF-8 编码，则可能需要根据实际情况处理
+                    # 这里简单地将字节转换为十六进制字符串作为替代方案
+                    result[key] = value.hex()
+            else:
+                # 值不是字节类型，直接保留
+                result[key] = value
+        return result
+
+
+class rm_tool_action_list_t(Structure):
+    _fields_ = [
+        ('page_num', c_int),     #页码
+        ('page_size', c_int),      #每页大小
+        ('total_size', c_int),      #列表长度
+        ('vague_search', c_char * int(32)),       #模糊搜索 
+        ('list_len', c_int),     #返回符合的动作列表长度
+        ('act_list', rm_tool_action_info_t * int(100)),      #返回符合的动作列表
+    ]
+
+    def to_dict(self, recurse=True):
+        """将类的变量返回为字典，如果recurse为True，则递归处理ctypes结构字段"""
+        result = {}
+        for field, ctype in self._fields_:
+            value = getattr(self, field)
+
+            if recurse and isinstance(ctype, type) and issubclass(ctype, Structure):
+                value = value.to_dict(recurse=recurse)
+            result[field] = value
+
+        non_empty_outputs = []
+        for i in range(self.total_size):
+            if self.act_list[i].name != b'':  # 判断列表是否为空
+                output = self.act_list[i].to_dict()
+                non_empty_outputs.append(output)
+        result["act_list"] = non_empty_outputs
+
+        for key, value in result.items():
+            if isinstance(value, bytes):
+                try:
+                    # 尝试使用 UTF-8 解码
+                    result[key] = value.decode('utf-8')
+                except UnicodeDecodeError:
+                    # 如果不是 UTF-8 编码，则可能需要根据实际情况处理
+                    # 这里简单地将字节转换为十六进制字符串作为替代方案
+                    result[key] = value.hex()
+            else:
+                # 值不是字节类型，直接保留
+                result[key] = value
+        return result
 
 
 
@@ -5127,20 +5231,20 @@ if _libs[libname].has("rm_update_global_waypoint", "cdecl"):
 if _libs[libname].has("rm_delete_global_waypoint", "cdecl"):
     rm_delete_global_waypoint = _libs[libname].get(
         "rm_delete_global_waypoint", "cdecl")
-    rm_delete_global_waypoint.argtypes = [POINTER(rm_robot_handle), String]
+    rm_delete_global_waypoint.argtypes = [POINTER(rm_robot_handle), GBKString]
     rm_delete_global_waypoint.restype = c_int
 
 if _libs[libname].has("rm_get_given_global_waypoint", "cdecl"):
     rm_get_given_global_waypoint = _libs[libname].get(
         "rm_get_given_global_waypoint", "cdecl")
     rm_get_given_global_waypoint.argtypes = [
-        POINTER(rm_robot_handle), String, POINTER(rm_waypoint_t)]
+        POINTER(rm_robot_handle), GBKString, POINTER(rm_waypoint_t)]
     rm_get_given_global_waypoint.restype = c_int
 
 if _libs[libname].has("rm_get_global_waypoints_list", "cdecl"):
     rm_get_global_waypoints_list = _libs[libname].get(
         "rm_get_global_waypoints_list", "cdecl")
-    rm_get_global_waypoints_list.argtypes = [POINTER(rm_robot_handle), c_int, c_int, String,
+    rm_get_global_waypoints_list.argtypes = [POINTER(rm_robot_handle), c_int, c_int, GBKString,
                                              POINTER(rm_waypoint_list_t)]
     rm_get_global_waypoints_list.restype = c_int
 
@@ -5750,6 +5854,73 @@ if _libs[libname].has("rm_current_canfd", "cdecl"):
         "rm_current_canfd", "cdecl")
     rm_current_canfd.argtypes = [POINTER(rm_robot_handle), POINTER(c_float)]
     rm_current_canfd.restype = c_int
+
+if _libs[libname].has("rm_get_tool_action_list", "cdecl"):
+    rm_get_tool_action_list = _libs[libname].get(
+        "rm_get_tool_action_list", "cdecl")
+    rm_get_tool_action_list.argtypes = [POINTER(rm_robot_handle), c_int, c_int, String,
+                                               POINTER(rm_tool_action_list_t)]
+    rm_get_tool_action_list.restype = c_int
+
+if _libs[libname].has("rm_run_tool_action", "cdecl"):
+    rm_run_tool_action = _libs[libname].get("rm_run_tool_action", "cdecl")
+    rm_run_tool_action.argtypes = [POINTER(rm_robot_handle), String]
+    rm_run_tool_action.restype = c_int
+
+if _libs[libname].has("rm_delete_tool_action", "cdecl"):
+    rm_delete_tool_action = _libs[libname].get("rm_delete_tool_action", "cdecl")
+    rm_delete_tool_action.argtypes = [POINTER(rm_robot_handle), String]
+    rm_delete_tool_action.restype = c_int
+
+if _libs[libname].has("rm_save_tool_action", "cdecl"):
+    rm_save_tool_action = _libs[libname].get("rm_save_tool_action", "cdecl")
+    rm_save_tool_action.argtypes = [POINTER(rm_robot_handle), String, POINTER(c_int), c_int, c_int]
+    rm_save_tool_action.restype = c_int
+
+if _libs[libname].has("rm_update_tool_action", "cdecl"):
+    rm_update_tool_action = _libs[libname].get("rm_update_tool_action", "cdecl")
+    rm_update_tool_action.argtypes = [POINTER(rm_robot_handle), String, String, POINTER(c_int), c_int, c_int]
+    rm_update_tool_action.restype = c_int
+
+if _libs[libname].has("rm_set_avoid_singularity_mode", "cdecl"):
+    rm_set_avoid_singularity_mode = _libs[libname].get("rm_set_avoid_singularity_mode", "cdecl")
+    rm_set_avoid_singularity_mode.argtypes = [POINTER(rm_robot_handle), c_int]
+    rm_set_avoid_singularity_mode.restype = c_int
+
+if _libs[libname].has("rm_get_avoid_singularity_mode", "cdecl"):
+    rm_get_avoid_singularity_mode = _libs[libname].get("rm_get_avoid_singularity_mode", "cdecl")
+    rm_get_avoid_singularity_mode.argtypes = [POINTER(rm_robot_handle), POINTER(c_int)]
+    rm_get_avoid_singularity_mode.restype = c_int
+
+if _libs[libname].has("rm_set_collision_detection", "cdecl"):
+    rm_set_collision_detection = _libs[libname].get("rm_set_collision_detection", "cdecl")
+    rm_set_collision_detection.argtypes = [POINTER(rm_robot_handle), c_int]
+    rm_set_collision_detection.restype = c_int
+
+if _libs[libname].has("rm_get_collision_detection", "cdecl"):
+    rm_get_collision_detection = _libs[libname].get("rm_get_collision_detection", "cdecl")
+    rm_get_collision_detection.argtypes = [POINTER(rm_robot_handle), POINTER(c_int)]
+    rm_get_collision_detection.restype = c_int
+
+if _libs[libname].has("rm_movev_canfd", "cdecl"):
+    rm_movev_canfd = _libs[libname].get("rm_movev_canfd", "cdecl")
+    rm_movev_canfd.argtypes = [POINTER(rm_robot_handle), rm_movev_canfd_mode_t]
+    rm_movev_canfd.restype = c_int
+
+if _libs[libname].has("rm_set_movev_canfd_init", "cdecl"):
+    rm_set_movev_canfd_init = _libs[libname].get("rm_set_movev_canfd_init", "cdecl")
+    rm_set_movev_canfd_init.argtypes = [POINTER(rm_robot_handle), c_int, c_int, c_int]
+    rm_set_movev_canfd_init.restype = c_int
+
+if _libs[libname].has("rm_get_rm_plus_reg", "cdecl"):
+    rm_get_rm_plus_reg = _libs[libname].get("rm_get_rm_plus_reg", "cdecl")
+    rm_get_rm_plus_reg.argtypes = [POINTER(rm_robot_handle), c_int, c_int, POINTER(c_int)]
+    rm_get_rm_plus_reg.restype = c_int
+
+if _libs[libname].has("rm_set_rm_plus_reg", "cdecl"):
+    rm_set_rm_plus_reg = _libs[libname].get("rm_set_rm_plus_reg", "cdecl")
+    rm_set_rm_plus_reg.argtypes = [POINTER(rm_robot_handle), c_int, c_int, POINTER(c_int)]
+    rm_set_rm_plus_reg.restype = c_int
 
 try:
     ARM_DOF = 7

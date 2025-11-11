@@ -28,7 +28,6 @@ typedef enum {
 
 /**
  * @brief 机械臂型号
- * @ingroup Algo
  */
 typedef enum{
     RM_MODEL_RM_65_E,       ///< RM_65
@@ -40,6 +39,11 @@ typedef enum{
     RM_MODEL_ECO_62_E,      ///< ECO_62
     RM_MODEL_GEN_72_E,       ///< GEN_72
     RM_MODEL_ECO_63_E,       ///< ECO63
+    RM_MODEL_UNIVERSAL_E,    ///< 通用型
+    RM_MODEL_ZM7L_E,        ///< ZM7L,
+    RM_MODEL_ZM7R_E,        ///< ZM7R,
+    RM_MODEL_RXL75_E,    ///< 人型机器人左臂
+    RM_MODEL_RXR75_E,    ///< 人型机器人右臂
 }rm_robot_arm_model_e;
 
 /**
@@ -185,14 +189,14 @@ typedef struct
     char frame_name[12];    ///< 坐标系名称
     rm_pose_t pose;         ///< 坐标系位姿
     float payload;      ///< 坐标系末端负载重量，单位：kg
-    float x;    ///< 坐标系末端负载质心位置，单位：m
-    float y;    ///< 坐标系末端负载质心位置，单位：m
-    float z;    ///< 坐标系末端负载质心位置，单位：m
+    float x;    ///< 坐标系末端负载质心位置，单位：mm
+    float y;    ///< 坐标系末端负载质心位置，单位：mm
+    float z;    ///< 坐标系末端负载质心位置，单位：mm
 }rm_frame_t;
 
 typedef struct{
     char build_time[20];    ///< 编译时间
-    char version[10];       ///< 版本号
+    char version[20];       ///< 版本号
 }rm_ctrl_version_t;
 
 typedef struct{
@@ -201,24 +205,31 @@ typedef struct{
 
 typedef struct{
     char build_time[20];    ///<编译时间
-    char version[10];       ///< 版本号
+    char version[20];       ///< 版本号
 }rm_planinfo_t;
 
 typedef struct {
     char version[20];   ///< 算法库版本号
 }rm_algorithm_version_t;
 
+typedef struct {
+    char build_time[20];    ///<编译时间
+    char version[20];       ///< 版本号
+}rm_software_build_info_t;
 /**
  * @brief  机械臂软件信息
  * 
  */
 typedef struct
 {
-    char product_version[15];           ///< 机械臂型号
+    char product_version[20];           ///< 机械臂型号
+    char robot_controller_version[10];  ///< 机械臂控制器版本，若为四代控制器，则该字段为"4.0"
     rm_algorithm_version_t algorithm_info;      ///< 算法库信息
-    rm_ctrl_version_t ctrl_info;        ///< ctrl 层软件信息
-    rm_dynamic_version_t dynamic_info;      ///< 动力学版本
-    rm_planinfo_t plan_info;        ///< plan 层软件信息
+    rm_software_build_info_t ctrl_info;        ///< ctrl 层软件信息
+    rm_dynamic_version_t dynamic_info;      ///< 动力学版本（三代）
+    rm_software_build_info_t plan_info;        ///< plan 层软件信息（三代）
+    rm_software_build_info_t com_info;        ///< communication 模块软件信息（四代）
+    rm_software_build_info_t program_info;        ///< 流程图编程模块软件信息（四代）
 }rm_arm_software_version_t;
 
 /**
@@ -254,7 +265,7 @@ typedef struct
     float joint_position[ARM_DOF];              ///< 关节角度，单位°，精度：0.001°
     float joint_temperature[ARM_DOF];           ///< 当前关节温度，精度0.001℃
     float joint_voltage[ARM_DOF];               ///< 当前关节电压，精度0.001V
-    float joint_speed[ARM_DOF];                 ///< 当前关节速度，精度0.01RPM。
+    float joint_speed[ARM_DOF];                 ///< 当前关节速度，精度0.01°/s。
 }rm_joint_status_t;
 
 /**
@@ -388,6 +399,21 @@ typedef struct
     int trajectory_mode;        ///< 高跟随模式下，0-完全透传模式、1-曲线拟合模式、2-滤波模式
     int radio;                  ///< 曲线拟合模式0-100和滤波模式下的平滑系数（数值越大效果越好），滤波模式下取值范围0~1000，曲线拟合模式下取值范围0~100
 }rm_force_position_move_t;
+
+/**
+ * @brief 笛卡尔速度透传模式结构体
+ * 建议初始化方式，避免一些未知错误
+ * rm_movev_canfd_mode_t my_v_canfd = (rm_movev_canfd_mode_t){ 0 };
+ */
+typedef struct
+{
+    float* cartesian_velocity;           // 笛卡尔速度，单位：m/s，rad/s。
+    bool follow;            // 表示驱动器的运动跟随效果，true 为高跟随，false 为低跟随。若使用高跟随，透传周期要求不超过 10ms。
+    int trajectory_mode;    // 高跟随模式下，支持多种模式，0-完全透传模式、1-曲线拟合模式、2-滤波模式。
+    int radio;              // trajectory_mode=0，完全透传模式：此为默认模式，将原始数据直接透传给关节，关节完全按照发送的轨迹进行支持。
+                            // trajectory_mode=1，曲线拟合模式：此模式下，可输入平滑系数（0-100），平滑系数越大，轨迹越平滑；但同时跟随滞后效果会越明显，滞后最大约透传15个周期。
+                            // trajectory_mode=2，滤波模式：在此模式下，用户可以输入滤波参数（范围在0至1000之间）。参数值越大，机械臂的运动轨迹将会越平滑。由于采用了滤波技术，当用户输入完最后一个目标点后，为了确保机械臂能够准确到达该目标位置，用户需要持续发送该最后一个目标点的指令，直至查询确认机械臂已经到达最终位置。
+}rm_movev_canfd_mode_t;
 
 /**
  * @brief 角度透传模式结构体
@@ -560,12 +586,25 @@ typedef struct
 }rm_program_run_state_t;
 
 /**
+ * @brief 流程图程序运行状态
+ */
+typedef struct
+{
+    int run_state;  ///< 运行状态 0 未开始 1运行中 2暂停中
+    int id;         ///< 当前使能的文件id。
+    char name[32];  ///< 当前使能的文件名称。
+    int plan_speed;     ///< 当前使能的文件全局规划速度比例 1-100。
+    int step_mode;    ///< 单步模式，0为空，1为正常, 2为单步。
+    char modal_id[50];   ///< 运行到的流程图块的id。未运行则不返回
+}rm_flowchart_run_state_t;
+
+/**
  * @brief 全局路点存储信息
  * @ingroup OnlineProgramming
  */
 typedef struct
 {
-    char point_name[20];    ///< 路点名称
+    char point_name[40];    ///< 路点名称
     float joint[ARM_DOF];   ///< 关节角度
     rm_pose_t pose;     ///< 位姿信息
     char work_frame[12];    ///< 工作坐标系名称
@@ -752,7 +791,10 @@ typedef enum {
     RM_PAUSE_E,                    // 暂停状态
     RM_CURRENT_DRAG_E,             // 电流环拖动状态
     RM_SENSOR_DRAG_E,              // 六维力拖动状态
-    RM_TECH_DEMONSTRATION_E        // 示教状态
+    RM_TECH_DEMONSTRATION_E,        // 示教状态
+    RM_TRAJECTORY_REPRODUCTON_E,   //轨迹复现状态
+    RM_MOVE_INIT_POSITION_E,        // 长按蓝色按钮运动到初始位置状态
+    RM_MOVEV_CANFD_E                //笛卡尔速度透传
 } rm_udp_arm_current_status_e;
 
 /***
@@ -782,14 +824,14 @@ typedef struct{
     int touch_num;          // 触觉个数
     int touch_sw;       // 触觉开关
     int hand;               // 手方向 1 ：左手 2： 右手
-    int pos_up[12];         // 位置上限,单位：无量纲
-    int pos_low[12];        // 位置下限,单位：无量纲
-    int angle_up[12];        // 角度上限,单位：0.01度
-    int angle_low[12];       // 角度下限,单位：0.01度
-    int speed_up[12];        // 速度上限,单位：无量纲
-    int speed_low[12];       // 速度下限,单位：无量纲
-    int force_up[12];        // 力上限,单位：0.001N 
-    int force_low[12];       // 力下限,单位：0.001N 
+    int pos_up[6];         // 位置上限,单位：无量纲
+    int pos_low[6];        // 位置下限,单位：无量纲
+    int angle_up[6];        // 角度上限,单位：0.01度
+    int angle_low[6];       // 角度下限,单位：0.01度
+    int speed_up[6];        // 速度上限,单位：无量纲
+    int speed_low[6];       // 速度下限,单位：无量纲
+    int force_up[6];        // 力上限,单位：0.001N 
+    int force_low[6];       // 力下限,单位：0.001N 
 } rm_plus_base_info_t;
 // 单位：无量纲
 /**
@@ -797,19 +839,19 @@ typedef struct{
 */
 typedef struct{
     int sys_state;      // 系统状态:0正常1设备故障
-    int dof_state[12];   // 各自由度当前状态:0正在松开1正在闭合2位置到位停止3力控到位停止4触觉到位停止5电流保护停止6发生故障
-    int dof_err[12];     // 各自由度错误信息
-    int pos[12];       // 各自由度当前位置,单位：无量纲
-    int speed[12];  //各自由度当前速度,闭合正，松开负，单位：无量纲
-    int angle[12];     // 各自由度当前角度，单位：0.01度
-    int current[12];   // 各自由度当前电流，单位：mA
+    int dof_state[6];   // 各自由度当前状态:0正在松开1正在闭合2位置到位停止3力控到位停止4触觉到位停止5电流保护停止6发生故障
+    int dof_err[6];     // 各自由度错误信息
+    int pos[6];       // 各自由度当前位置,单位：无量纲
+    int speed[6];  //各自由度当前速度,闭合正，松开负，单位：无量纲
+    int angle[6];     // 各自由度当前角度，单位：0.01度
+    int current[6];   // 各自由度当前电流，单位：mA
     int normal_force[18];         // 自由度触觉三维力的法向力,1-6自由度触觉三维力的法向力*3
     int tangential_force[18];     // 自由度触觉三维力的切向力
     int tangential_force_dir[18]; // 自由度触觉三维力的切向力方向
     uint32_t tsa[12];         // 自由度触觉自接近
     uint32_t tma[12];         // 自由度触觉互接近
     int touch_data[18];    // 触觉传感器原始数据(示例中有，但未显示数据的JSON情况)
-    int force[12]; //自由度力矩,闭合正，松开负，单位0.001N
+    int force[6]; //自由度力矩,闭合正，松开负，单位0.001N
 } rm_plus_state_info_t;
 
 
@@ -889,9 +931,10 @@ typedef void (*rm_realtime_arm_state_callback_ptr)(rm_realtime_arm_joint_state_t
  */
 typedef struct
 {
-    int arm_dof;    ///< 机械臂自由度
+    uint8_t arm_dof;    ///< 机械臂自由度
     rm_robot_arm_model_e arm_model;              ///< 机械臂型号
     rm_force_type_e force_type;                  ///< 末端力传感器版本
+    uint8_t robot_controller_version;                      ///< 机械臂控制器版本，4：四代控制器，3：三代控制器。
 }rm_robot_info_t;
 
 /**
@@ -910,6 +953,124 @@ typedef struct
     float alpha[8]; //* unit: °
     float offset[8];    //* unit: °
 } rm_dh_t;
+
+/**
+ * @brief 版本号结构体
+ * 不超过10个字符
+ * @ingroup ToolCoordinateConfig
+ * @ingroup WorkCoordinateConfig
+ */
+typedef struct {
+    char version[10];
+} rm_version_t;
+
+/**
+ * @brief 轨迹信息结构体
+ */
+typedef struct {
+    int point_num;           ///< 轨迹点数量
+    char name[20];      ///< 轨迹名称	
+    char create_time[20];    ///< 创建时间
+}rm_trajectory_info_t;
+/**
+ * @brief 轨迹列表结构体
+ * @ingroup OnlineProgramming
+ */
+typedef struct{
+    int page_num;       ///< 页码
+    int page_size;      ///< 每页大小
+    int total_size;     ///< 列表长度
+    char vague_search[32];  ///< 模糊搜索 
+    int list_len;       ///<返回符合的轨迹列表长度
+    rm_trajectory_info_t tra_list[100];   ///< 返回符合的轨迹列表
+}rm_trajectory_list_t;
+/**
+ * @brief Modbus TCP主站信息结构体
+ */
+typedef struct {
+    char master_name[20]; // Modbus 主站名称，最大长度15个字符，不超过15个字符
+    char ip[16];          // TCP主站 IP 地址
+    int port;             // TCP主站端口号	
+}rm_modbus_tcp_master_info_t;
+/**
+ * @brief Modbus TCP主站列表结构体
+ */
+typedef struct{
+    int page_num;       ///< 页码
+    int page_size;      ///< 每页大小
+    int total_size;     ///< 列表长度
+    char vague_search[32];  ///< 模糊搜索	
+    int list_len;       ///<返回符合的TCP主站列表长度
+    rm_modbus_tcp_master_info_t master_list[100];   ///< 返回符合的TCP主站列表
+}rm_modbus_tcp_master_list_t;
+
+/**
+ * @brief Modbus RTU读数据参数结构体
+ */
+typedef struct {
+    int address;    ///< 数据起始地址
+    int device;     ///< 外设设备地址	
+    int type;       ///< 0-控制器端modbus主机；1-工具端modbus主机。
+    int num;        ///< 要读的数据的数量，数据长度不超过109
+}rm_modbus_rtu_read_params_t;
+/**
+ * @brief Modbus RTU写数据结构体
+ */
+typedef struct {
+    int address;    ///< 数据起始地址
+    int device;     ///< 外设设备地址
+    int type;       ///< 0-控制器端modbus主机；1-工具端modbus主机。
+    int num;        ///< 要写的数据的数量，最大不超过100
+    int data[120];  ///< 要写的数据，数据长度不超过100
+}rm_modbus_rtu_write_params_t;
+
+/**
+ * @brief Modbus TCP读数据参数结构体
+ */
+typedef struct {
+    int address;          // 数据起始地址
+    char master_name[20]; // Modbus 主站名称，最大长度15个字符，不超过15个字符（master_name与IP二选一，若有IP和port优先使用IP和port）
+    char ip[16];          // 主机连接的 IP 地址（master_name与IP二选一，若有IP和port优先使用IP和port）
+    int port;             // 主机连接的端口号
+    int num;              // 读取数据数量，最大不超过100
+}rm_modbus_tcp_read_params_t;
+/**
+ * @brief Modbus TCP写数据结构体
+ */
+typedef struct {
+    int address;          // 数据起始地址
+    char master_name[20]; // Modbus 主站名称，最大长度15个字符，不超过15个字符（master_name与IP二选一，若有IP和port优先使用IP和port）
+    char ip[16];          // 主机连接的 IP 地址（master_name与IP二选一，若有IP和port优先使用IP和port）
+    int port;             // 主机连接的端口号
+    int num;              // 写入数据数量，最大不超过100
+    int data[120];        // 写入的数据，数据长度不超过100
+}rm_modbus_tcp_write_params_t;
+/**
+ * @brief 动作信息结构体
+ */
+typedef struct {
+    char name[20];      ///< 动作名称	
+    int hand_pos[100];    ///< 动作位置
+    int hand_angle[100];  ///< 动作角度
+}rm_tool_action_info_t;
+/**
+ * @brief 动作列表结构体
+ * @ingroup OnlineProgramming
+ */
+typedef struct{
+    int page_num;       ///< 页码
+    int page_size;      ///< 每页大小
+    int total_size;     ///< 列表长度
+    char vague_search[32];  ///< 模糊搜索 
+    int list_len;       ///<返回符合的动作列表长度
+    rm_tool_action_info_t act_list[100];   ///< 返回符合的动作列表
+}rm_tool_action_list_t;
+
+
+
+
+
+
 
 #ifdef __cplusplus
 }

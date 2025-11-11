@@ -117,6 +117,7 @@ int main(int argc, char *argv[]) {
         printf("Control Layer Software Version:  %s\n", software_info.ctrl_info.version);
         printf("Dynamics Version:  %s\n", software_info.dynamic_info.model_version);
         printf("Planning Layer Software Version:  %s\n", software_info.plan_info.version);
+        printf("robot_controller_version: %s\n",software_info.robot_controller_version );
         printf("==============================================================\n");
     }
 

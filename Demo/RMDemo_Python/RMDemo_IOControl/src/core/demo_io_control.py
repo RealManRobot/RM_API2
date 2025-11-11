@@ -277,7 +277,12 @@ def main():
     robot_controller.add_lines_to_file(file_path_test, 6, lines)
 
     # Send project and query running state
-    robot_controller.demo_send_project(file_path_test, only_save=1, save_id=test_id)
+    status_code, software_info = robot_controller.robot.rm_get_arm_software_info()
+    robot_controller_version = software_info.get('robot_controller_version', '')
+    if robot_controller_version == '4.0':
+        print('send_project is only for robot_controller_version 3')
+    else:
+        robot_controller.demo_send_project(file_path_test, only_save=1, save_id=test_id)
 
     # Set default running program
     robot_controller.set_default_run_program(test_id)
