@@ -24,7 +24,12 @@ partial class Program
         RM_MODEL_ECO_65_E,      // ECO_65
         RM_MODEL_ECO_62_E,      // ECO_62
         RM_MODEL_GEN_72_E,      // GEN_72
-        RM_MODEL_ECO_63_E       // ECO63
+        RM_MODEL_ECO_63_E,       // ECO63
+        RM_MODEL_UNIVERSAL_E,    // 通用型
+        RM_MODEL_ZM7L_E,        // ZM7L
+        RM_MODEL_ZM7R_E,        // ZM7R
+        RM_MODEL_RXL75_E,    // 人型机器人左臂
+        RM_MODEL_RXR75_E,    // 人型机器人右臂
     }
 
     public enum rm_force_type_e
@@ -86,9 +91,14 @@ partial class Program
     [StructLayout(LayoutKind.Sequential, Pack = 8)]
     public struct rm_udp_custom_config_t
     {
-        public int joint_speed;   ///< 关节速度。1：上报；0：关闭上报；-1：不设置，保持之前的状态
-        public int lift_state;    ///< 升降关节信息。1：上报；0：关闭上报；-1：不设置，保持之前的状态
-        public int expand_state;  ///< 扩展关节信息（升降关节和扩展关节为二选一，优先显示升降关节）1：上报；0：关闭上报；-1：不设置，保持之前的状态
+        public int joint_speed;   // 关节速度。1：上报；0：关闭上报；-1：不设置，保持之前的状态
+        public int lift_state;    // 升降关节信息。1：上报；0：关闭上报；-1：不设置，保持之前的状态
+        public int expand_state;  // 扩展关节信息（升降关节和扩展关节为二选一，优先显示升降关节）1：上报；0：关闭上报；-1：不设置，保持之前的状态
+        public int hand_state;          // 灵巧手状态。1：上报；0：关闭上报；-1：不设置，保持之前的状态
+        public int arm_current_status;     // 机械臂当前状态。1：上报；0：关闭上报；-1：不设置，保持之前的状态
+        public int aloha_state;     // aloha主臂状态是否上报。1：上报；0：关闭上报；-1：不设置，保持之前的状态
+        public int plus_base;   // 末端设备基础信息。1：上报；0：关闭上报；-1：不设置，保持之前的状态
+        public int plus_state;  // 末端设备实时信息。1：上报；0：关闭上报；-1：不设置，保持之前的状态
     }
 
     // 机械臂主动上报接口配置  
@@ -717,8 +727,8 @@ partial class Program
     [DllImport("api_c.dll", EntryPoint = "rm_init", CharSet = CharSet.Auto, CallingConvention = CallingConvention.Cdecl)]
     public static extern int rm_init(rm_thread_mode_e mode);
 
-    [DllImport("api_c.dll", EntryPoint = "rm_destory", CharSet = CharSet.Auto, CallingConvention = CallingConvention.Cdecl)]
-    public static extern int rm_destory();
+    [DllImport("api_c.dll", EntryPoint = "rm_destroy", CharSet = CharSet.Auto, CallingConvention = CallingConvention.Cdecl)]
+    public static extern int rm_destroy();
 
     // 创建连接句柄，IntPtr代替指针类型
     [DllImport("api_c.dll", EntryPoint = "rm_create_robot_arm", CharSet = CharSet.Auto, CallingConvention = CallingConvention.Cdecl)]
@@ -1180,7 +1190,7 @@ partial class Program
     public static extern int rm_set_hand_seq(IntPtr handle, int seq_num, bool block, int timeout);
 
     [DllImport("api_c.dll", EntryPoint = "rm_set_hand_angle", CharSet = CharSet.Auto, CallingConvention = CallingConvention.Cdecl)]
-    public static extern int rm_set_hand_angle(IntPtr handle, int hand_angle);
+    public static extern int rm_set_hand_angle(IntPtr handle, IntPtr hand_angle, bool block, int timeout);
 
     [DllImport("api_c.dll", EntryPoint = "rm_set_hand_speed", CharSet = CharSet.Auto, CallingConvention = CallingConvention.Cdecl)]
     public static extern int rm_set_hand_speed(IntPtr handle, int speed);
@@ -1624,12 +1634,12 @@ partial class Program
         int ret = Demo_Move_Cmd(robotHandlePtr);
         if (ret == 0)
         {
-            _ = rm_destory();
+            _ = rm_destroy();
             Console.WriteLine("Demo_Move_Cmd Completely! Robotic arm disconnect!");
         }
         else
         {
-            _ = rm_destory();
+            _ = rm_destroy();
             Console.WriteLine("Demo_Move_Cmd execution failed!");
         }
 

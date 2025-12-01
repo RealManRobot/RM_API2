@@ -52,7 +52,7 @@ RM_INTERFACE_EXPORT int rm_init(rm_thread_mode_e mode);
  * @return int 函数执行的状态码。  
             - 0: 成功。  
  */
-RM_INTERFACE_EXPORT int rm_destory(void);
+RM_INTERFACE_EXPORT int rm_destroy(void);
 
 /**
  * @brief 日志打印配置
@@ -84,18 +84,6 @@ RM_INTERFACE_EXPORT void rm_set_timeout(int timeout);
  * @return rm_robot_handle* 创建成功后，返回机械臂控制句柄，连接成功句柄id大于0，连接失败句柄id返回-1，达到最大连接数5创建失败返回空
  */
 RM_INTERFACE_EXPORT rm_robot_handle *rm_create_robot_arm(const char *ip,int port);
-
-/**
- * @brief 手动设置机械臂自由度
- * 
- * @param handle 机械臂控制句柄
- * @param dof 机械臂自由度
- * @return int 函数执行的状态码。
-            - 0: 成功。
-            - -1: 未找到对应句柄,句柄为空或已被删除。
-            - -2: 设置失败，自由度设置不合理（负数或者大于10）。
- */
-RM_INTERFACE_EXPORT int rm_set_robot_dof(rm_robot_handle *handle, int dof);
 
 /**
  * @brief 根据句柄删除机械臂
@@ -1112,10 +1100,11 @@ RM_INTERFACE_EXPORT int rm_movej(rm_robot_handle *handle, const float *joint, in
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
             - -4: 当前到位设备校验失败，即当前到位设备不为关节。
             - -5: 单线程模式超时未接收到返回，请确保超时时间设置合理。
+            - -6: 机械臂停止运动规划，外部发送了停止运动指令。
  */
 RM_INTERFACE_EXPORT int rm_movel(rm_robot_handle *handle,rm_pose_t pose, int v, int r, int trajectory_connect, int block);
 /**
- * @brief 笛卡尔空间直线偏移运动
+ * @brief 笛卡尔空间偏移运动(四代控制器支持)
  * @details 该函数用于机械臂末端在当前位姿的基础上沿某坐标系（工具或工作）进行位移或旋转运动。
  * @param handle 机械臂控制句柄 
  * @param offset 位置姿态偏移，位置单位：米，姿态单位：弧度
@@ -1141,6 +1130,7 @@ RM_INTERFACE_EXPORT int rm_movel(rm_robot_handle *handle,rm_pose_t pose, int v, 
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
             - -4: 当前到位设备校验失败，即当前到位设备不为关节。
             - -5: 单线程模式超时未接收到返回，请确保超时时间设置合理。
+            - -6: 机械臂停止运动规划，外部发送了停止运动指令。
  */
 RM_INTERFACE_EXPORT int rm_movel_offset(rm_robot_handle *handle,rm_pose_t offset, int v, int r, int trajectory_connect, int frame_type, int block);
 /**
@@ -1170,6 +1160,7 @@ RM_INTERFACE_EXPORT int rm_movel_offset(rm_robot_handle *handle,rm_pose_t offset
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
             - -4: 当前到位设备校验失败，即当前到位设备不为关节。
             - -5: 单线程模式超时未接收到返回，请确保超时时间设置合理。
+            - -6: 机械臂停止运动规划，外部发送了停止运动指令。
  */
 RM_INTERFACE_EXPORT int rm_moves(rm_robot_handle *handle,rm_pose_t pose, int v, int r, int trajectory_connect, int block);
 /**
@@ -1200,6 +1191,7 @@ RM_INTERFACE_EXPORT int rm_moves(rm_robot_handle *handle,rm_pose_t pose, int v, 
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。
             - -4: 当前到位设备校验失败，即当前到位设备不为关节。 
             - -5: 单线程模式超时未接收到返回，请确保超时时间设置合理。
+            - -6: 机械臂停止运动规划，外部发送了停止运动指令。
  */
 RM_INTERFACE_EXPORT int rm_movec(rm_robot_handle *handle,rm_pose_t pose_via, rm_pose_t pose_to, int v, int r, int loop, int trajectory_connect, int block);
 /**
@@ -1228,6 +1220,7 @@ RM_INTERFACE_EXPORT int rm_movec(rm_robot_handle *handle,rm_pose_t pose_via, rm_
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。
             - -4: 当前到位设备校验失败，即当前到位设备不为关节。 
             - -5: 单线程模式超时未接收到返回，请确保超时时间设置合理。
+            - -6: 机械臂停止运动规划，外部发送了停止运动指令。
  */
 RM_INTERFACE_EXPORT int rm_movej_p(rm_robot_handle *handle,rm_pose_t pose, int v, int r, int trajectory_connect, int block);
 /**
@@ -1652,6 +1645,8 @@ RM_INTERFACE_EXPORT int rm_clear_joint_odom(rm_robot_handle *handle);
  * 
  * @param handle 机械臂控制句柄 
  * @param ip 有线网口 IP 地址
+ * @param netmask 有线网口子网掩码
+ * @param gw 有线网口网关地址
  * @return int 函数执行的状态码。  
             - 0: 成功。  
             - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
@@ -1659,7 +1654,7 @@ RM_INTERFACE_EXPORT int rm_clear_joint_odom(rm_robot_handle *handle);
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-RM_INTERFACE_EXPORT int rm_set_NetIP(rm_robot_handle *handle, const char* ip);
+RM_INTERFACE_EXPORT int rm_set_NetIP(rm_robot_handle *handle, const char* ip, const char* netmask, const char* gw);
 /**
  * @brief 清除系统错误
  * 
@@ -1926,6 +1921,7 @@ RM_INTERFACE_EXPORT int rm_get_IO_output(rm_robot_handle *handle, int *DO_state)
  * 
  * @param handle 机械臂控制句柄 
  * @param voltage_type 电源输出类型，0：0V，2：12V，3：24V
+ * @param start_enable  true：开机启动时输出此配置电压，false：取消开机启动即配置电压
  * @return int 函数执行的状态码。  
             - 0: 成功。  
             - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
@@ -1933,7 +1929,7 @@ RM_INTERFACE_EXPORT int rm_get_IO_output(rm_robot_handle *handle, int *DO_state)
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
-RM_INTERFACE_EXPORT int rm_set_voltage(rm_robot_handle *handle, int voltage_type);
+RM_INTERFACE_EXPORT int rm_set_voltage(rm_robot_handle *handle, int voltage_type, bool start_enable);
 /**
  * @brief 获取控制器电源输出类
  * 
@@ -2610,14 +2606,18 @@ RM_INTERFACE_EXPORT int rm_set_hand_seq(rm_robot_handle *handle, int seq_num, bo
  * @details 设置灵巧手角度，灵巧手有6个自由度，从1~6分别为小拇指，无名指，中指，食指，大拇指弯曲，大拇指旋转
  * @param handle 机械臂控制句柄 
  * @param hand_angle 手指角度数组，6个元素分别代表6个自由度的角度，范围：0~1000. 另外，-1代表该自由度不执行任何操作，保持当前状态
+ * @param block 0：表示非阻塞模式，发送成功后返回，1：表示阻塞模式，接收设置成功指令后返回。
+ * @param timeout 阻塞模式下超时时间设置，单位：秒
  * @return int 函数执行的状态码。  
             - 0: 成功。  
             - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
             - -1: 数据发送失败，通信过程中出现问题。
             - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
+            - -4: 当前到位设备校验失败，即当前到位设备不为灵巧手
+            - -5: 超时未返回。 
  */
-RM_INTERFACE_EXPORT int rm_set_hand_angle(rm_robot_handle *handle, const int *hand_angle);
+RM_INTERFACE_EXPORT int rm_set_hand_angle(rm_robot_handle *handle, const int *hand_angle, bool block, int timeout);
 /**
  * @brief 设置灵巧手角度跟随控制
  * @details 设置灵巧手跟随角度，灵巧手有6个自由度，从1~6分别为小拇指，无名指，中指，食指，大拇指弯曲，大拇指旋转，最高50Hz的控制频率
@@ -2637,7 +2637,7 @@ RM_INTERFACE_EXPORT int rm_set_hand_follow_angle(rm_robot_handle *handle, const 
  * @details 设置灵巧手跟随位置，灵巧手有6个自由度，从1~6分别为小拇指，无名指，中指，食指，大拇指弯曲，大拇指旋转，最高50Hz的控制频率
  * @param handle 机械臂控制句柄 
  * @param hand_pos 手指位置数组，最大范围为0-65535，按照灵巧手厂商定义的角度做控制，例如因时的范围为0-1000
- * @param block 设置0时为非阻塞模式；设置1时为阻塞模式，阻塞模式时超时20ms未返回认为接受失败。
+ * @param block 0：表示非阻塞模式，发送成功后返回，1：表示阻塞模式，接收设置成功指令后返回。
  * @return int 函数执行的状态码。  
             - 0: 成功。  
             - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
@@ -3191,10 +3191,10 @@ RM_INTERFACE_EXPORT int rm_set_expand_pos(rm_robot_handle *handle, int speed, in
  */
 RM_INTERFACE_EXPORT int rm_send_project(rm_robot_handle *handle, rm_send_project_t project, int *errline);
 /**
- * @brief 轨迹规划中改变速度比例系数
+ * @brief 规划过程中改变速度系数
  * 
  * @param handle 机械臂控制句柄
- * @param speed 当前进度条的速度数据
+ * @param speed 速度
  * @return int 函数执行的状态码。  
             - 0: 成功。  
             - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
@@ -3795,6 +3795,22 @@ RM_INTERFACE_EXPORT char* rm_algo_version(void);
  */
 RM_INTERFACE_EXPORT void rm_algo_init_sys_data(rm_robot_arm_model_e Mode, rm_force_type_e Type);
 /**
+ * @brief 初始化算法依赖数据(不连接机械臂时调用)
+ * @details 初始化算法依赖数据，根据给定的DH参数判断机械臂类型，适用于通用型机械臂（RM_MODEL_UNIVERSAL_E）。
+ * 
+ * @param sensor_type 传感器型号
+ * @param dh DH参数
+ * @param dof 自由度
+ */
+RM_INTERFACE_EXPORT void rm_algo_init_sys_data_by_dh(rm_force_type_e sensor_type, rm_dh_t dh, int dof);
+/**
+ * @brief 设置算法机械臂自由度
+ * @details 通用构型(RM_MODEL_UNIVERSAL_E)设置机器人自由度
+ * 
+ * @param dof 机械臂自由度
+ */
+RM_INTERFACE_EXPORT void rm_algo_set_robot_dof(int dof);
+/**
  * @brief 设置安装角度
  * 
  * @param x X轴安装角度 单位°
@@ -4193,7 +4209,7 @@ RM_INTERFACE_EXPORT int rm_set_run_trajectory(rm_robot_handle *handle, const cha
  */
 RM_INTERFACE_EXPORT int rm_delete_trajectory_file(rm_robot_handle *handle, const char *trajectory_name);
 /**
- * @brief 保存轨迹到控制机器
+ * @brief 保存轨迹到控制器
  * @param handle 机械臂控制句柄
  * @param trajectory_name 轨迹名称
  * @return int 函数执行的状态码。

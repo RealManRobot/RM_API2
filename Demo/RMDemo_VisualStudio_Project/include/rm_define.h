@@ -28,7 +28,6 @@ typedef enum {
 
 /**
  * @brief 机械臂型号
- * @ingroup Algo
  */
 typedef enum{
     RM_MODEL_RM_65_E,       ///< RM_65
@@ -40,7 +39,11 @@ typedef enum{
     RM_MODEL_ECO_62_E,      ///< ECO_62
     RM_MODEL_GEN_72_E,       ///< GEN_72
     RM_MODEL_ECO_63_E,       ///< ECO63
-    RM_MODEL_UNIVERSAL_E
+    RM_MODEL_UNIVERSAL_E,    ///< 通用型
+    RM_MODEL_ZM7L_E,        ///< ZM7L,
+    RM_MODEL_ZM7R_E,        ///< ZM7R,
+    RM_MODEL_RXL75_E,    ///< 人型机器人左臂
+    RM_MODEL_RXR75_E,    ///< 人型机器人右臂
 }rm_robot_arm_model_e;
 
 /**
@@ -186,9 +189,9 @@ typedef struct
     char frame_name[12];    ///< 坐标系名称
     rm_pose_t pose;         ///< 坐标系位姿
     float payload;      ///< 坐标系末端负载重量，单位：kg
-    float x;    ///< 坐标系末端负载质心位置，单位：m
-    float y;    ///< 坐标系末端负载质心位置，单位：m
-    float z;    ///< 坐标系末端负载质心位置，单位：m
+    float x;    ///< 坐标系末端负载质心位置，单位：mm
+    float y;    ///< 坐标系末端负载质心位置，单位：mm
+    float z;    ///< 坐标系末端负载质心位置，单位：mm
 }rm_frame_t;
 
 typedef struct{
