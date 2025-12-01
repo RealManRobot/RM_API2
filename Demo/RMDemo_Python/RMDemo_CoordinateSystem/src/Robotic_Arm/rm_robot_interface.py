@@ -1382,7 +1382,46 @@ class ArmState:
         }
 
         return result_dict
+    
+    def rm_set_avoid_singularity_mode(self, mode: int) -> int:
+        """
+        设置避奇异模式(仅支持6自由度机械臂)
 
+        Args:
+            mode: 模式 0-不规避奇异点，1-规避奇异点
+
+        Returns:
+            int: 函数执行的状态码。
+                - 0: 成功。
+                - 1: 控制器返回false，参数错误或机械臂状态发生错误。
+                - -1: 数据发送失败，通信过程中出现问题。
+                - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。
+                - -3: 返回值解析失败，接收到的数据格式不正确或不完整。
+        """
+
+        tag = rm_set_avoid_singularity_mode(self.handle, mode)
+
+        return tag
+    
+    def rm_get_avoid_singularity_mode(self) -> tuple[int, int]:
+        """
+        获取避奇异模式(仅支持6自由度机械臂)
+
+        Returns:
+            tuple[int, int]: 包含两个元素的元组。
+            - int: 函数执行的状态码。
+                - 0: 成功。
+                - -1: 数据发送失败，通信过程中出现问题。
+                - -2: 数据接收失败，通信过程中出现问题或控制器超时没有返回。
+                - -3: 返回值解析失败，控制器返回的数据无法识别或不完整等情况。
+            - int: 当前避奇异模式 0-不规避奇异点，1-规避奇异点
+        """
+        mode = c_int()
+        ret = rm_get_avoid_singularity_mode(self.handle, byref(mode))
+        return ret, mode.value
+    
+
+    
 
 class MovePlan:
     """
@@ -1497,6 +1536,8 @@ class MovePlan:
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。
             - -4: 当前到位设备校验失败，即当前到位设备不为关节。
             - -5: 单线程模式超时未接收到返回，请确保超时时间设置合理。
+            - -6: 机械臂停止运动规划，外部发送了停止运动指令。
+            - -7: 三代控制器不支持该接口。
         """
         po1 = rm_pose_t()
         po1.position = rm_position_t(*offset[:3])
@@ -1637,7 +1678,7 @@ class MovePlan:
             follow              (bool): true-高跟随，false-低跟随。若使用高跟随，透传周期要求不超过 10ms。
             expand              (float, optional): 如果存在通用扩展轴，并需要进行透传，可使用该参数进行透传发送。Defaults to 0.
             trajectory_mode     (int): 高跟随模式下，0-完全透传模式、1-曲线拟合模式、2-滤波模式
-            radio               (int): 曲线拟合模式和滤波模式下的平滑系数（数值越大效果越好），滤波模式下取值范围0~100，曲线拟合模式下取值范围0~999
+            radio               (int): 曲线拟合模式和滤波模式下的平滑系数（数值越大效果越好），曲线拟合模式下取值范围0~100，滤波模式下取值范围0~999
 
         Returns:
             int: 函数执行的状态码。
@@ -1671,7 +1712,7 @@ class MovePlan:
             pose (list[float]): 位姿 (若位姿列表长度为7则认为使用四元数表达位姿，长度为6则认为使用欧拉角表达位姿)
             follow (bool): true-高跟随，false-低跟随。若使用高跟随，透传周期要求不超过 10ms。
             trajectory_mode     (int): 高跟随模式下，0-完全透传模式、1-曲线拟合模式、2-滤波模式
-            radio               (int): 曲线拟合模式和滤波模式下的平滑系数（数值越大效果越好），滤波模式下取值范围0~100，曲线拟合模式下取值范围0~999
+            radio               (int): 曲线拟合模式和滤波模式下的平滑系数（数值越大效果越好），曲线拟合模式下取值范围0~100，滤波模式下取值范围0~999
 
         Returns:
             int: 函数执行的状态码。
@@ -3167,7 +3208,7 @@ class DragTeach:
     def rm_start_multi_drag_teach(self, mode: int, singular_wall: int) -> int:
         """
         开始复合模式拖动示教
-        仅支持三代控制器，四代控制器使用rm_start_multi_drag_teach_new
+        仅支持三代控制器
 
         Args:
             mode (int): 拖动示教模式 0-电流环模式，1-使用末端六维力，只动位置，2-使用末端六维力，只动姿态，3-使用末端六维力，位置和姿态同时动
@@ -3536,7 +3577,7 @@ class HandControl:
         @details 设置灵巧手跟随角度，灵巧手有6个自由度，从1~6分别为小拇指，无名指，中指，食指，大拇指弯曲，大拇指旋转
         Args:
             hand_angle (list[int]): 手指角度数组，最大表示范围为-32768到+32767，按照灵巧手厂商定义的角度做控制，例如因时的范围为0-2000
-            block (int): 0：表示非阻塞模式，发送成功后返回，1：表示阻塞模式，接收设置成功指令后返回。
+            block (bool): false：表示非阻塞模式，发送成功后返回，true：表示阻塞模式，接收设置成功指令后返回。
 
         Returns:
             int: 函数执行的状态码。
@@ -3556,7 +3597,7 @@ class HandControl:
         @details 设置灵巧手跟随角度，灵巧手有6个自由度，从1~6分别为小拇指，无名指，中指，食指，大拇指弯曲，大拇指旋转
         Args:
             hand_pos (list[int]): 手指位置数组，最大范围为0-65535，按照灵巧手厂商定义的角度做控制，例如因时的范围为0-1000
-            block (int): 0：表示非阻塞模式，发送成功后返回，1：表示阻塞模式，接收设置成功指令后返回。
+            block (bool): false：表示非阻塞模式，发送成功后返回，true：表示阻塞模式，接收设置成功指令后返回。
 
         Returns:
             int: 函数执行的状态码。
@@ -4441,7 +4482,7 @@ class ProjectManagement:
                     - -1: 数据发送失败，通信过程中出现问题。
                     - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。
                     - -3: 返回值解析失败，控制器返回的数据无法识别或不完整等情况。
-                    - -4: 四代控制器不支持该接口
+                    - -4: 三代控制器不支持该接口
                 -dict[str,any] 获取到的在线编程运行状态字典，键为rm_program_run_state_t结构体的字段名称
         """
         run_state = rm_flowchart_run_state_t()
@@ -5042,7 +5083,7 @@ class TrajectoryManage:
     """
     def rm_get_trajectory_file_list(self, page_num: int, page_size: int, vague_search: str) -> tuple[int, dict[str, any]]:
         """
-        查询多个拖动示教轨迹
+        查询多个拖动示教轨迹(第四代控制器接口)
         Args:
             page_num (int): 页码
             page_size (int): 每页大小
@@ -5065,7 +5106,7 @@ class TrajectoryManage:
 
     def rm_set_run_trajectory(self, trajectory_name: str) -> int:
         """
-        运行指定拖动示教轨迹
+        运行指定拖动示教轨迹(第四代控制器接口)
         Args:
             trajectory_name (str): 拖动示教轨迹名称
         Returns:
@@ -5082,7 +5123,7 @@ class TrajectoryManage:
     
     def rm_delete_trajectory_file(self, trajectory_name: str) -> int:
         """
-        删除指定拖动示教轨迹
+        删除指定拖动示教轨迹(第四代控制器接口)
         Args:
             trajectory_name (str): 拖动示教轨迹名称
         Returns:
@@ -5099,7 +5140,7 @@ class TrajectoryManage:
 
     def rm_save_trajectory_file(self, trajectory_name: str) -> int:
         """
-        保存拖动示教轨迹
+        保存拖动示教轨迹(第四代控制器接口)
         Args:
             trajectory_name (str): 拖动示教轨迹名称
         Returns:
@@ -5122,7 +5163,7 @@ class ModbusV4:
     """
     def rm_add_modbus_tcp_master(self, modbus_tcp_master: rm_modbus_tcp_master_info_t) -> int:
         """
-        添加Modbus TCP主站
+        添加Modbus TCP主站(第四代控制器接口)
         Args:
             modbus_tcp_master (rm_modbus_tcp_master_info_t): Modbus TCP主站配置结构体
         Returns:
@@ -5139,7 +5180,7 @@ class ModbusV4:
     
     def rm_update_modbus_tcp_master(self, master_name:str, modbus_tcp_master: rm_modbus_tcp_master_info_t) -> int:
         """
-        更新Modbus TCP主站
+        更新Modbus TCP主站(第四代控制器接口)
         Args:
             master_name (str): Modbus TCP主站名称
             modbus_tcp_master (rm_modbus_tcp_master_t): 要修改的Modbus TCP主站信息
@@ -5157,7 +5198,7 @@ class ModbusV4:
     
     def rm_delete_modbus_tcp_master(self, master_name:str) -> int:
         """
-        删除Modbus TCP主站
+        删除Modbus TCP主站(第四代控制器接口)
         Args:
             master_name (str): Modbus TCP主站名称
         Returns:
@@ -5174,7 +5215,7 @@ class ModbusV4:
 
     def rm_get_modbus_tcp_master(self, master_name:str) -> tuple[int, dict[str, any]]:
         """
-        查询Modbus TCP主站
+        查询Modbus TCP主站(第四代控制器接口)
         Returns:
             tuple[int,dict[str,any]]: 包含两个元素的元组。
                 -int 函数执行的状态码。
@@ -5192,7 +5233,7 @@ class ModbusV4:
     
     def rm_get_modbus_tcp_master_list(self, page_num: int, page_size: int, vague_search: str) -> tuple[int, dict[str, any]]:
         """
-        查询多个Modbus TCP主站
+        查询多个Modbus TCP主站(第四代控制器接口)
         Args:
             page_num (int): 页码
             page_size (int): 每页大小
@@ -5214,7 +5255,7 @@ class ModbusV4:
     
     def rm_set_controller_rs485_mode(self, mode:int, baudrate:int) -> int:
         """
-        设置控制器RS485模式
+        设置控制器RS485模式(第四代控制器接口)
         Args:
             mode (int): 0代表默认RS485串行通讯，1代表modbus-RTU主站模式，2-代表modbus-RTU从站模式。
             baudrate (int): 波特率(当前支持9600 19200 38400 57600 115200 230400 460800)
@@ -5232,7 +5273,7 @@ class ModbusV4:
     
     def rm_get_controller_rs485_mode_v4(self) -> tuple[int, dict[str, any]]:
         """
-        获取控制器RS485模式
+        获取控制器RS485模式(第四代控制器接口)
         Returns:
             tuple[int,dict[str,any]]: 包含两个元素的元组。
                 -int 函数执行的状态码。
@@ -5253,7 +5294,7 @@ class ModbusV4:
     
     def rm_set_tool_rs485_mode(self, mode:int, baudrate:int) -> int:
         """
-        设置工具端RS485模式(四代控制器支持)
+        设置工具端RS485模式(第四代控制器接口)
         Args:
             mode (int): 通讯端口，0-设置工具端RS485端口为RTU主站，1-设置工具端RS485端口为灵巧手模式，2-设置工具端RS485端口为夹爪模式。
             baudrate (int): 波特率(当前支持9600,115200,460800)
@@ -5271,7 +5312,7 @@ class ModbusV4:
 
     def rm_get_tool_rs485_mode_v4(self) -> tuple[int, dict[str, any]]:
         """
-        查询工具端RS485模式(四代控制器支持)
+        查询工具端RS485模式(第四代控制器接口)
         Returns:
             tuple[int,dict[str,any]]: 包含两个元素的元组。
                 -int 函数执行的状态码。
@@ -5292,7 +5333,7 @@ class ModbusV4:
     
     def rm_read_modbus_rtu_coils(self, param:rm_modbus_rtu_read_params_t) -> tuple[int, list[int]]:
         """
-       Modbus RTU协议读线圈
+       Modbus RTU协议读线圈(第四代控制器接口)
         Args:
             param (rm_modbus_rtu_read_params_t): Modbus RTU读取参数结构体
         Returns:
@@ -5312,7 +5353,7 @@ class ModbusV4:
     
     def rm_write_modbus_rtu_coils(self, param:rm_modbus_rtu_write_params_t) -> int:
         """
-        Modbus RTU协议写线圈
+        Modbus RTU协议写线圈(第四代控制器接口)
         Args:
             param (rm_modbus_rtu_write_params_t): Modbus RTU写入参数结构体
         Returns:
@@ -5329,7 +5370,7 @@ class ModbusV4:
 
     def rm_read_modbus_rtu_input_status(self, param:rm_modbus_rtu_read_params_t) -> tuple[int, list[int]]:
         """
-        Modbus RTU协议读离散量输入
+        Modbus RTU协议读离散量输入(第四代控制器接口)
         Args:
             param (rm_modbus_rtu_read_params_t): Modbus RTU读取参数结构体
         Returns:
@@ -5349,7 +5390,7 @@ class ModbusV4:
 
     def rm_read_modbus_rtu_holding_registers(self, param:rm_modbus_rtu_read_params_t) -> tuple[int, list[int]]:
         """
-        Modbus RTU协议读保持寄存器
+        Modbus RTU协议读保持寄存器(第四代控制器接口)
         Args:
             param (rm_modbus_rtu_read_params_t): Modbus RTU读取参数结构体
         Returns:
@@ -5369,7 +5410,7 @@ class ModbusV4:
     
     def rm_write_modbus_rtu_registers(self, param:rm_modbus_rtu_write_params_t) -> int:
         """
-        Modbus RTU协议写保持寄存器
+        Modbus RTU协议写保持寄存器(第四代控制器接口)
         Args:
             param (rm_modbus_rtu_write_params_t): Modbus RTU写入参数结构体
         Returns:
@@ -5386,7 +5427,7 @@ class ModbusV4:
     
     def rm_read_modbus_rtu_input_registers(self, param:rm_modbus_rtu_read_params_t) -> tuple[int, list[int]]:
         """
-        Modbus RTU协议读输入寄存器
+        Modbus RTU协议读输入寄存器(第四代控制器接口)
         Args:
             param (rm_modbus_rtu_read_params_t): Modbus RTU读取参数结构体
         Returns:
@@ -5406,7 +5447,7 @@ class ModbusV4:
     
     def rm_read_modbus_tcp_coils(self, param:rm_modbus_tcp_read_params_t) -> tuple[int, list[int]]:
         """
-        Modbus TCP协议读线圈
+        Modbus TCP协议读线圈(第四代控制器接口)
         Args:
             param (rm_modbus_tcp_read_params_t): Modbus TCP读取参数结构体
         Returns:
@@ -5426,7 +5467,7 @@ class ModbusV4:
 
     def rm_write_modbus_tcp_coils(self, param:rm_modbus_tcp_write_params_t) -> int:
         """
-        Modbus TCP协议写线圈
+        Modbus TCP协议写线圈(第四代控制器接口)
         Args:
             param (rm_modbus_tcp_write_params_t): Modbus TCP写入参数结构体
         Returns:
@@ -5443,7 +5484,7 @@ class ModbusV4:
     
     def rm_read_modbus_tcp_input_status(self, param:rm_modbus_tcp_read_params_t) -> tuple[int, list[int]]:
         """
-        Modbus TCP协议读离散量输入
+        Modbus TCP协议读离散量输入(第四代控制器接口)
         Args:
             param (rm_modbus_tcp_read_params_t): Modbus TCP读取参数结构体
         Returns:
@@ -5463,7 +5504,7 @@ class ModbusV4:
     
     def rm_read_modbus_tcp_holding_registers(self, param:rm_modbus_tcp_read_params_t) -> tuple[int, list[int]]:
         """
-        Modbus TCP协议读保持寄存器
+        Modbus TCP协议读保持寄存器(第四代控制器接口)
         Args:
             param (rm_modbus_tcp_read_params_t): Modbus TCP读取参数结构体
         Returns:
@@ -5483,7 +5524,7 @@ class ModbusV4:
 
     def rm_write_modbus_tcp_registers(self, param:rm_modbus_tcp_write_params_t) -> int:
         """
-        Modbus TCP协议写保持寄存器
+        Modbus TCP协议写保持寄存器(第四代控制器接口)
         Args:
             param (rm_modbus_tcp_write_params_t): Modbus TCP写入参数结构体
         Returns:
@@ -5500,7 +5541,7 @@ class ModbusV4:
 
     def rm_read_modbus_tcp_input_registers(self, param:rm_modbus_tcp_read_params_t) -> tuple[int, list[int]]:
         """
-        Modbus TCP协议读输入寄存器
+        Modbus TCP协议读输入寄存器(第四代控制器接口)
         Args:
             param (rm_modbus_tcp_read_params_t): Modbus TCP读取参数结构体
         Returns:
@@ -5517,8 +5558,124 @@ class ModbusV4:
         data = (c_int * param.num)()
         tag = rm_read_modbus_tcp_input_registers(self.handle, param, data)
         return tag, [data[i] for i in range(param.num)]
+
+
+class ActionV4:
+    """四代控制器末端动作接口类
+    @details 四代控制器末端动作接口类，可通过该类提供的接口，实现对四代控制器的末端动作功能的控制。
+    @attention 仅在四代控制器上可用。
+    """
+
+    def rm_get_tool_action_list(self, page_num: int, page_size: int, vague_search: str) -> tuple[int, dict[str, any]]:
+        """
+        获取动作列表(第四代控制器接口)
+
+        Args:
+            page_num (int): 页码
+            page_size (int): 每页大小
+            vague_search (str): 模糊搜索
+
+        Returns:
+            tuple[int, dict[str,any]]: 包含两个元素的元组。
+                -int 函数执行的状态码。
+                    - 0: 成功。
+                    - 1: 控制器返回false，参数错误或机械臂状态发生错误。
+                    - -1: 数据发送失败，通信过程中出现问题。
+                    - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。
+                    - -3: 返回值解析失败，控制器返回的数据无法识别或不完整等情况。
+                    - -4: 三代控制器不支持该接口。
+                -dict[str,any] 获取到的动作列表字典，键为rm_tool_action_list_t结构体的字段名称
+        """
+        list = rm_tool_action_list_t()
+        ret = rm_get_tool_action_list(
+            self.handle, page_num, page_size, vague_search, byref(list))
+        return ret, list.to_dict()
+    
+    def rm_run_tool_action(self, action_name: str) -> int:
+        """
+        运行指定末端动作(第四代控制器接口)
+        Args:
+            action_name (str): 末端动作名称
+        Returns:
+            int: 函数执行的状态码。
+                - 0: 成功。
+                - 1: 控制器返回false，参数错误或机械臂状态发生错误。
+                - -1: 数据发送失败，通信过程中出现问题。
+                - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。
+                - -3: 返回值解析失败，控制器返回的数据无法识别或不完整等情况。
+                - -4: 三代控制器不支持该接口
+                - -5: 当前到位设备校验失败，即当前到位设备不为末端工具动作。
+        """
+        tag = rm_run_tool_action(self.handle, action_name)
+        return tag
+    
+    def rm_delete_tool_action(self, action_name: str) -> int:
+        """
+        删除指定末端动作(第四代控制器接口)
+        Args:
+            action_name (str): 末端动作名称
+        Returns:
+            int: 函数执行的状态码。
+                - 0: 成功。
+                - 1: 控制器返回false，参数错误或机械臂状态发生错误。
+                - -1: 数据发送失败，通信过程中出现问题。
+                - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。
+                - -3: 返回值解析失败，控制器返回的数据无法识别或不完整等情况。
+                - -4: 三代控制器不支持该接口
+        """
+        tag = rm_delete_tool_action(self.handle, action_name)
+        return tag
+
+    def rm_save_tool_action(self, action_name: str, selected_array: list, array_size: int, array_type: int) -> int:
+        """
+        保存末端动作(第四代控制器接口)
+        Args:
+            action_name (str): 末端动作名称
+            selected_array(list): 保存数组的值
+            array_size(int): 保存数组的大小
+            array_type(int): 保存数字的类型（0-表示保存类型为hand_pos。 1-表示保存类型为hand_angle）
+
+        Returns:
+            int: 函数执行的状态码。
+                - 0: 成功。
+                - 1: 控制器返回false，参数错误或机械臂状态发生错误。
+                - -1: 数据发送失败，通信过程中出现问题。
+                - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。
+                - -3: 返回值解析失败，控制器返回的数据无法识别或不完整等情况。
+                - -4: 三代控制器不支持该接口
+        """
+        c_array = (c_long * array_size)(*selected_array)
+        array_ptr = cast(c_array, POINTER(c_long))
+        tag = rm_save_tool_action(self.handle, action_name, array_ptr, array_size, array_type)
+        return tag
+    
+    def rm_update_tool_action(self, action_name: str, new_name: str, selected_array: list[int], array_size: int, array_type: int) -> int:
+        """
+        更新末端动作(第四代控制器接口)
+        Args:
+            action_name (str): 末端动作名称
+            new_name (str): 更新后的末端动作名称
+            selected_array(list): 保存数组的值
+            array_size(int): 保存数组的大小
+            array_type(int): 保存数字的类型（0-表示保存类型为hand_pos。 1-表示保存类型为hand_angle）
+
+        Returns:
+            int: 函数执行的状态码。
+                - 0: 成功。
+                - 1: 控制器返回false，参数错误或机械臂状态发生错误。
+                - -1: 数据发送失败，通信过程中出现问题。
+                - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。
+                - -3: 返回值解析失败，控制器返回的数据无法识别或不完整等情况。
+                - -4: 三代控制器不支持该接口
+        """
+                # 将Python列表转换为C数组
+        c_array = (c_long * array_size)(*selected_array)
+        array_ptr = cast(c_array, POINTER(c_long))
+        tag = rm_update_tool_action(self.handle, action_name, new_name, array_ptr, array_size, array_type)
+        return tag
     
 
+     
    
 class Algo:
     """
@@ -6300,7 +6457,7 @@ class RoboticArm(ArmState, MovePlan, JointConfigSettings, JointConfigReader, Arm
                  ToolCoordinateConfig, WorkCoordinateConfig, ArmTeachMove, ArmMotionControl, ControllerConfig,
                  CommunicationConfig, ControllerIOConfig, EffectorIOConfig, GripperControl, Force, DragTeach, HandControl, ModbusConfig, InstallPos,
                  ForcePositionControl, ProjectManagement, GlobalWaypointManage, ElectronicFenceConfig, SelfCollision,
-                 UdpConfig, Algo, LiftControl, ExpandControl, TrajectoryManage, ModbusV4):
+                 UdpConfig, Algo, LiftControl, ExpandControl, TrajectoryManage, ModbusV4, ActionV4):
     """机械臂连接、断开、日志设置等操作
     """
 

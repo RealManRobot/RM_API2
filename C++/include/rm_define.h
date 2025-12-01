@@ -776,7 +776,9 @@ typedef enum {
     RM_PAUSE_E,                    // 暂停状态
     RM_CURRENT_DRAG_E,             // 电流环拖动状态
     RM_SENSOR_DRAG_E,              // 六维力拖动状态
-    RM_TECH_DEMONSTRATION_E        // 示教状态
+    RM_TECH_DEMONSTRATION_E,        // 示教状态
+    RM_TRAJECTORY_REPRODUCTON_E,   //轨迹复现状态
+    RM_MOVE_INIT_POSITION_E        // 长按蓝色按钮运动到初始位置状态
 } rm_udp_arm_current_status_e;
 
 /***
@@ -806,14 +808,14 @@ typedef struct{
     int touch_num;          // 触觉个数
     int touch_sw;       // 触觉开关
     int hand;               // 手方向 1 ：左手 2： 右手
-    int pos_up[12];         // 位置上限,单位：无量纲
-    int pos_low[12];        // 位置下限,单位：无量纲
-    int angle_up[12];        // 角度上限,单位：0.01度
-    int angle_low[12];       // 角度下限,单位：0.01度
-    int speed_up[12];        // 速度上限,单位：无量纲
-    int speed_low[12];       // 速度下限,单位：无量纲
-    int force_up[12];        // 力上限,单位：0.001N 
-    int force_low[12];       // 力下限,单位：0.001N 
+    int pos_up[6];         // 位置上限,单位：无量纲
+    int pos_low[6];        // 位置下限,单位：无量纲
+    int angle_up[6];        // 角度上限,单位：0.01度
+    int angle_low[6];       // 角度下限,单位：0.01度
+    int speed_up[6];        // 速度上限,单位：无量纲
+    int speed_low[6];       // 速度下限,单位：无量纲
+    int force_up[6];        // 力上限,单位：0.001N 
+    int force_low[6];       // 力下限,单位：0.001N 
 } rm_plus_base_info_t;
 // 单位：无量纲
 /**
@@ -821,19 +823,19 @@ typedef struct{
 */
 typedef struct{
     int sys_state;      // 系统状态:0正常1设备故障
-    int dof_state[12];   // 各自由度当前状态:0正在松开1正在闭合2位置到位停止3力控到位停止4触觉到位停止5电流保护停止6发生故障
-    int dof_err[12];     // 各自由度错误信息
-    int pos[12];       // 各自由度当前位置,单位：无量纲
-    int speed[12];  //各自由度当前速度,闭合正，松开负，单位：无量纲
-    int angle[12];     // 各自由度当前角度，单位：0.01度
-    int current[12];   // 各自由度当前电流，单位：mA
+    int dof_state[6];   // 各自由度当前状态:0正在松开1正在闭合2位置到位停止3力控到位停止4触觉到位停止5电流保护停止6发生故障
+    int dof_err[6];     // 各自由度错误信息
+    int pos[6];       // 各自由度当前位置,单位：无量纲
+    int speed[6];  //各自由度当前速度,闭合正，松开负，单位：无量纲
+    int angle[6];     // 各自由度当前角度，单位：0.01度
+    int current[6];   // 各自由度当前电流，单位：mA
     int normal_force[18];         // 自由度触觉三维力的法向力,1-6自由度触觉三维力的法向力*3
     int tangential_force[18];     // 自由度触觉三维力的切向力
     int tangential_force_dir[18]; // 自由度触觉三维力的切向力方向
     uint32_t tsa[12];         // 自由度触觉自接近
     uint32_t tma[12];         // 自由度触觉互接近
     int touch_data[18];    // 触觉传感器原始数据(示例中有，但未显示数据的JSON情况)
-    int force[12]; //自由度力矩,闭合正，松开负，单位0.001N
+    int force[6]; //自由度力矩,闭合正，松开负，单位0.001N
 } rm_plus_state_info_t;
 
 
@@ -1027,6 +1029,32 @@ typedef struct {
     int num;              // 写入数据数量，最大不超过100
     int data[120];        // 写入的数据，数据长度不超过100
 }rm_modbus_tcp_write_params_t;
+/**
+ * @brief 动作信息结构体
+ */
+typedef struct {
+    char name[20];      ///< 动作名称	
+    int hand_pos[100];    ///< 动作位置
+    int hand_angle[100];  ///< 动作角度
+}rm_tool_action_info_t;
+/**
+ * @brief 动作列表结构体
+ * @ingroup OnlineProgramming
+ */
+typedef struct{
+    int page_num;       ///< 页码
+    int page_size;      ///< 每页大小
+    int total_size;     ///< 列表长度
+    char vague_search[32];  ///< 模糊搜索 
+    int list_len;       ///<返回符合的动作列表长度
+    rm_tool_action_info_t act_list[100];   ///< 返回符合的动作列表
+}rm_tool_action_list_t;
+
+
+
+
+
+
 
 #ifdef __cplusplus
 }

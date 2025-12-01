@@ -197,6 +197,9 @@ int main(int argc, char *argv[]) {
         printf("Robot handle created successfully: %d\n", robot_handle->id);
     }
 
+    rm_arm_software_version_t software_info;
+    result = rm_get_arm_software_info(robot_handle, &software_info);
+
     int save_id;
     Drag_teach(robot_handle, 1, &save_id);
 
@@ -213,8 +216,12 @@ int main(int argc, char *argv[]) {
     add_lines_to_file(robot_handle, TRAJECTORY_FILE_PATH, PROJECT_FILE_PATH, lines);
 
     // Send file and query running status
-    send_project(robot_handle, PROJECT_FILE_PATH, 20, 1, 20, 0, 0, 0);
-
+    if(strcmp(software_info.robot_controller_version,"4.0") == 0){
+        printf("send_project is only for robot_controller_version 3");
+    }
+    else{
+        send_project(robot_handle, PROJECT_FILE_PATH, 20, 1, save_id, 0, 0, 0);
+    }
     // Set the default run program
     result = robotic_arm.rm_set_default_run_program(robot_handle, 20);
     if (check_result(result, "Failed to set default run program") != 0) {

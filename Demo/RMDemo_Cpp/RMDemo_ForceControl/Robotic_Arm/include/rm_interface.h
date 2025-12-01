@@ -1131,6 +1131,7 @@ RM_INTERFACE_EXPORT int rm_movel(rm_robot_handle *handle,rm_pose_t pose, int v, 
             - -4: 当前到位设备校验失败，即当前到位设备不为关节。
             - -5: 单线程模式超时未接收到返回，请确保超时时间设置合理。
             - -6: 机械臂停止运动规划，外部发送了停止运动指令。
+            - -7: 三代控制器不支持该接口。
  */
 RM_INTERFACE_EXPORT int rm_movel_offset(rm_robot_handle *handle,rm_pose_t offset, int v, int r, int trajectory_connect, int frame_type, int block);
 /**
@@ -2323,7 +2324,7 @@ RM_INTERFACE_EXPORT int rm_start_drag_teach(rm_robot_handle *handle, int traject
 RM_INTERFACE_EXPORT int rm_stop_drag_teach(rm_robot_handle *handle);
 /**
  * @brief 开始复合模式拖动示教
- * @attention 仅支持三代控制器，四代控制器使用rm_start_multi_drag_teach_new
+ * @attention 仅支持三代控制器
  * @param handle 机械臂控制句柄 
  * @param mode 拖动示教模式 0-电流环模式，1-使用末端六维力，只动位置，2-使用末端六维力，只动姿态，3-使用末端六维力，位置和姿态同时动
  * @param singular_wall 仅在六维力模式拖动示教中生效，用于指定是否开启拖动奇异墙，0表示关闭拖动奇异墙，1表示开启拖动奇异墙
@@ -2606,7 +2607,7 @@ RM_INTERFACE_EXPORT int rm_set_hand_seq(rm_robot_handle *handle, int seq_num, bo
  * @details 设置灵巧手角度，灵巧手有6个自由度，从1~6分别为小拇指，无名指，中指，食指，大拇指弯曲，大拇指旋转
  * @param handle 机械臂控制句柄 
  * @param hand_angle 手指角度数组，6个元素分别代表6个自由度的角度，范围：0~1000. 另外，-1代表该自由度不执行任何操作，保持当前状态
- * @param block 0：表示非阻塞模式，发送成功后返回，1：表示阻塞模式，接收设置成功指令后返回。
+ * @param block false：表示非阻塞模式，发送成功后返回，true：表示阻塞模式，接收设置成功指令后返回。
  * @param timeout 阻塞模式下超时时间设置，单位：秒
  * @return int 函数执行的状态码。  
             - 0: 成功。  
@@ -2623,7 +2624,7 @@ RM_INTERFACE_EXPORT int rm_set_hand_angle(rm_robot_handle *handle, const int *ha
  * @details 设置灵巧手跟随角度，灵巧手有6个自由度，从1~6分别为小拇指，无名指，中指，食指，大拇指弯曲，大拇指旋转，最高50Hz的控制频率
  * @param handle 机械臂控制句柄 
  * @param hand_angle 手指角度数组，最大表示范围为-32768到+32767，按照灵巧手厂商定义的角度做控制，例如因时的范围为0-2000
- * @param block 设置0时为非阻塞模式；设置1时为阻塞模式，阻塞模式时超时20ms未返回认为接受失败。
+ * @param block 设置false时为非阻塞模式；设置true时为阻塞模式，阻塞模式时超时20ms未返回认为接受失败。
  * @return int 函数执行的状态码。  
             - 0: 成功。  
             - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
@@ -2637,7 +2638,7 @@ RM_INTERFACE_EXPORT int rm_set_hand_follow_angle(rm_robot_handle *handle, const 
  * @details 设置灵巧手跟随位置，灵巧手有6个自由度，从1~6分别为小拇指，无名指，中指，食指，大拇指弯曲，大拇指旋转，最高50Hz的控制频率
  * @param handle 机械臂控制句柄 
  * @param hand_pos 手指位置数组，最大范围为0-65535，按照灵巧手厂商定义的角度做控制，例如因时的范围为0-1000
- * @param block 0：表示非阻塞模式，发送成功后返回，1：表示阻塞模式，接收设置成功指令后返回。
+ * @param block false：表示非阻塞模式，发送成功后返回，true：表示阻塞模式，接收设置成功指令后返回。
  * @return int 函数执行的状态码。  
             - 0: 成功。  
             - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
@@ -4167,7 +4168,7 @@ RM_INTERFACE_EXPORT void rm_algo_set_dh(rm_dh_t dh);
 /*********************************************四代控制器新增接口*******************************************************/
 
 /**
- * @brief 查询轨迹列表
+ * @brief 查询轨迹列表（四代控制器接口）
  * @param handle 机械臂控制句柄
  * @param page_num 页码
  * @param page_size 每页大小
@@ -4183,7 +4184,7 @@ RM_INTERFACE_EXPORT void rm_algo_set_dh(rm_dh_t dh);
  */
 RM_INTERFACE_EXPORT int rm_get_trajectory_file_list(rm_robot_handle *handle, int page_num, int page_size, const char *vague_search,rm_trajectory_list_t *trajectory_list);
 /**
- * @brief 开始运行指定轨迹
+ * @brief 开始运行指定轨迹（四代控制器接口）
  * @param handle 机械臂控制句柄
  * @param trajectory_name 轨迹名称
  * @return int 函数执行的状态码。
@@ -4196,7 +4197,7 @@ RM_INTERFACE_EXPORT int rm_get_trajectory_file_list(rm_robot_handle *handle, int
  */
 RM_INTERFACE_EXPORT int rm_set_run_trajectory(rm_robot_handle *handle, const char *trajectory_name);
 /**
- * @brief 删除指定轨迹
+ * @brief 删除指定轨迹（四代控制器接口）
  * @param handle 机械臂控制句柄
  * @param trajectory_name 轨迹名称
  * @return int 函数执行的状态码。
@@ -4209,7 +4210,7 @@ RM_INTERFACE_EXPORT int rm_set_run_trajectory(rm_robot_handle *handle, const cha
  */
 RM_INTERFACE_EXPORT int rm_delete_trajectory_file(rm_robot_handle *handle, const char *trajectory_name);
 /**
- * @brief 保存轨迹到控制器
+ * @brief 保存轨迹到控制器（四代控制器接口）
  * @param handle 机械臂控制句柄
  * @param trajectory_name 轨迹名称
  * @return int 函数执行的状态码。
@@ -4223,7 +4224,7 @@ RM_INTERFACE_EXPORT int rm_delete_trajectory_file(rm_robot_handle *handle, const
 RM_INTERFACE_EXPORT int rm_save_trajectory_file(rm_robot_handle *handle, const char *trajectory_name);
 
 /**
- * @brief 设置机械臂急停状态
+ * @brief 设置机械臂急停状态（四代控制器接口）
  * @param handle 机械臂控制句柄
  * @param state 急停状态，true：急停，false：恢复
  * @return int 函数执行的状态码。
@@ -4236,7 +4237,7 @@ RM_INTERFACE_EXPORT int rm_save_trajectory_file(rm_robot_handle *handle, const c
  */
 RM_INTERFACE_EXPORT int rm_set_arm_emergency_stop(rm_robot_handle *handle, bool state);
 /**
- * @brief 新增Modbus TCP主站
+ * @brief 新增Modbus TCP主站（四代控制器接口）
  * @param handle 机械臂控制句柄
  * @param master Modbus TCP主站信息
  * @return int 函数执行的状态码。
@@ -4249,7 +4250,7 @@ RM_INTERFACE_EXPORT int rm_set_arm_emergency_stop(rm_robot_handle *handle, bool 
  */
 RM_INTERFACE_EXPORT int rm_add_modbus_tcp_master(rm_robot_handle *handle, rm_modbus_tcp_master_info_t master);
 /**
- * @brief 修改Modbus TCP主站
+ * @brief 修改Modbus TCP主站（四代控制器接口）
  * @param handle 机械臂控制句柄
  * @param master_name Modbus TCP主站名称
  * @param master 要修改的Modbus TCP主站信息
@@ -4263,7 +4264,7 @@ RM_INTERFACE_EXPORT int rm_add_modbus_tcp_master(rm_robot_handle *handle, rm_mod
  */
 RM_INTERFACE_EXPORT int rm_update_modbus_tcp_master(rm_robot_handle *handle, const char *master_name, rm_modbus_tcp_master_info_t master);
 /**
- * @brief 删除Modbus TCP主站
+ * @brief 删除Modbus TCP主站（四代控制器接口）
  * @param handle 机械臂控制句柄
  * @param master_name Modbus TCP主站名称
  * @return int 函数执行的状态码。
@@ -4276,7 +4277,7 @@ RM_INTERFACE_EXPORT int rm_update_modbus_tcp_master(rm_robot_handle *handle, con
  */
 RM_INTERFACE_EXPORT int rm_delete_modbus_tcp_master(rm_robot_handle *handle, const char *master_name);
 /**
- * @brief 查询Modbus TCP主站
+ * @brief 查询Modbus TCP主站（四代控制器接口）
  * @param handle 机械臂控制句柄
  * @param master_name Modbus TCP主站名称
  * @param master Modbus TCP主站信息
@@ -4290,7 +4291,7 @@ RM_INTERFACE_EXPORT int rm_delete_modbus_tcp_master(rm_robot_handle *handle, con
  */
 RM_INTERFACE_EXPORT int rm_get_modbus_tcp_master(rm_robot_handle *handle, const char *master_name, rm_modbus_tcp_master_info_t *master);
 /**
- * @brief 查询TCP主站列表
+ * @brief 查询TCP主站列表（四代控制器接口）
  * @param handle 机械臂控制句柄
  * @param page_num 页码
  * @param page_size 每页大小
@@ -4306,7 +4307,7 @@ RM_INTERFACE_EXPORT int rm_get_modbus_tcp_master(rm_robot_handle *handle, const 
  */
 RM_INTERFACE_EXPORT int rm_get_modbus_tcp_master_list(rm_robot_handle *handle, int page_num, int page_size, const char *vague_search,rm_modbus_tcp_master_list_t *list);
 /**
- * @brief 设置控制器RS485模式(四代控制器支持)
+ * @brief 设置控制器RS485模式（四代控制器接口）
  * @param handle 机械臂控制句柄
  * @param mode 0代表默认RS485串行通讯，1代表modbus-RTU主站模式，2-代表modbus-RTU从站模式。
  * @param baudrate 波特率(当前支持9600 19200 38400 57600 115200 230400 460800)
@@ -4320,7 +4321,7 @@ RM_INTERFACE_EXPORT int rm_get_modbus_tcp_master_list(rm_robot_handle *handle, i
  */
 RM_INTERFACE_EXPORT int rm_set_controller_rs485_mode(rm_robot_handle *handle, int mode, int baudrate);
 /**
- * @brief 查询控制器RS485模式(四代控制器支持)
+ * @brief 查询控制器RS485模式（四代控制器接口）
  * @param handle 机械臂控制句柄
  * @param controller_rs485_mode 0代表默认RS485串行通讯，1代表modbus-RTU主站模式，2-代表modbus-RTU从站模式。
  * @param baudrate 波特率(当前支持9600 19200 38400 57600 115200 230400 460800)
@@ -4334,7 +4335,7 @@ RM_INTERFACE_EXPORT int rm_set_controller_rs485_mode(rm_robot_handle *handle, in
  */
 RM_INTERFACE_EXPORT int rm_get_controller_rs485_mode_v4(rm_robot_handle *handle, int *controller_rs485_mode, int *baudrate);
 /**
- * @brief 设置工具端RS485模式(四代控制器支持)
+ * @brief 设置工具端RS485模式（四代控制器接口）
  * @param handle 机械臂控制句柄
  * @param mode 通讯端口，0-设置工具端RS485端口为RTU主站，1-设置工具端RS485端口为灵巧手模式，2-设置工具端RS485端口为夹爪模式。
  * @param baudrate 波特率(当前支持9600,115200,460800)
@@ -4348,7 +4349,7 @@ RM_INTERFACE_EXPORT int rm_get_controller_rs485_mode_v4(rm_robot_handle *handle,
  */
 RM_INTERFACE_EXPORT int rm_set_tool_rs485_mode(rm_robot_handle *handle, int mode, int baudrate);
 /**
- * @brief 查询工具端RS485模式(四代控制器支持)
+ * @brief 查询工具端RS485模式（四代控制器接口）
  * @param handle 机械臂控制句柄
  * @param tool_rs485_mode 0-代表modbus-RTU主站模式，1-代表灵巧手模式，2-代表夹爪模式。
  * @param baudrate 波特率(当前支持9600,115200,460800)
@@ -4362,7 +4363,7 @@ RM_INTERFACE_EXPORT int rm_set_tool_rs485_mode(rm_robot_handle *handle, int mode
  */
 RM_INTERFACE_EXPORT int rm_get_tool_rs485_mode_v4(rm_robot_handle *handle, int *tool_rs485_mode, int *baudrate);
 /**
- * @brief Modbus RTU协议读线圈
+ * @brief Modbus RTU协议读线圈（四代控制器接口）
  * @param handle 机械臂控制句柄
  * @param param 读线圈参数
  * @param data 读线圈数据，数组大小为param.num
@@ -4376,7 +4377,7 @@ RM_INTERFACE_EXPORT int rm_get_tool_rs485_mode_v4(rm_robot_handle *handle, int *
  */
 RM_INTERFACE_EXPORT int rm_read_modbus_rtu_coils(rm_robot_handle *handle, rm_modbus_rtu_read_params_t param, int *data);
 /**
- * @brief Modbus RTU协议写线圈
+ * @brief Modbus RTU协议写线圈（四代控制器接口）
  * @param handle 机械臂控制句柄
  * @param param 写线圈参数
  * @return int 函数执行的状态码。
@@ -4389,7 +4390,7 @@ RM_INTERFACE_EXPORT int rm_read_modbus_rtu_coils(rm_robot_handle *handle, rm_mod
  */
 RM_INTERFACE_EXPORT int rm_write_modbus_rtu_coils(rm_robot_handle *handle, rm_modbus_rtu_write_params_t param);
 /**
- * @brief Modbus RTU协议读离散量输入
+ * @brief Modbus RTU协议读离散量输入（四代控制器接口）
  * @param handle 机械臂控制句柄
  * @param param 读离散输入参数
  * @param data 读离散输入数据，数组大小为param.num
@@ -4403,7 +4404,7 @@ RM_INTERFACE_EXPORT int rm_write_modbus_rtu_coils(rm_robot_handle *handle, rm_mo
  */
 RM_INTERFACE_EXPORT int rm_read_modbus_rtu_input_status(rm_robot_handle *handle, rm_modbus_rtu_read_params_t param, int *data);
 /**
- * @brief Modbus RTU协议读保持寄存器
+ * @brief Modbus RTU协议读保持寄存器（四代控制器接口）
  * @param handle 机械臂控制句柄
  * @param param 读保持寄存器参数
  * @param data 读保持寄存器数据，数组大小为param.num
@@ -4417,7 +4418,7 @@ RM_INTERFACE_EXPORT int rm_read_modbus_rtu_input_status(rm_robot_handle *handle,
  */
 RM_INTERFACE_EXPORT int rm_read_modbus_rtu_holding_registers(rm_robot_handle *handle, rm_modbus_rtu_read_params_t param, int *data);
 /**
- * @brief Modbus RTU协议写保持寄存器
+ * @brief Modbus RTU协议写保持寄存器（四代控制器接口）
  * @param handle 机械臂控制句柄
  * @param param 写保持寄存器参数
  * @return int 函数执行的状态码。
@@ -4430,7 +4431,7 @@ RM_INTERFACE_EXPORT int rm_read_modbus_rtu_holding_registers(rm_robot_handle *ha
  */
 RM_INTERFACE_EXPORT int rm_write_modbus_rtu_registers(rm_robot_handle *handle, rm_modbus_rtu_write_params_t param);
 /**
- * @brief Modbus RTU协议读输入寄存器
+ * @brief Modbus RTU协议读输入寄存器（四代控制器接口）
  * @param handle 机械臂控制句柄
  * @param param 读输入寄存器参数
  * @param data 读输入寄存器数据，数组大小为param.num
@@ -4444,7 +4445,7 @@ RM_INTERFACE_EXPORT int rm_write_modbus_rtu_registers(rm_robot_handle *handle, r
  */
 RM_INTERFACE_EXPORT int rm_read_modbus_rtu_input_registers(rm_robot_handle *handle, rm_modbus_rtu_read_params_t param, int *data);
 /**
- * @brief Modbus TCP协议读线圈
+ * @brief Modbus TCP协议读线圈（四代控制器接口）
  * @param handle 机械臂控制句柄
  * @param param 读线圈参数
  * @param data 读线圈数据，数组大小为param.num
@@ -4458,7 +4459,7 @@ RM_INTERFACE_EXPORT int rm_read_modbus_rtu_input_registers(rm_robot_handle *hand
  */
 RM_INTERFACE_EXPORT int rm_read_modbus_tcp_coils(rm_robot_handle *handle, rm_modbus_tcp_read_params_t param, int *data);
 /**
- * @brief Modbus TCP协议写线圈
+ * @brief Modbus TCP协议写线圈（四代控制器接口）
  * @param handle 机械臂控制句柄
  * @param param 写线圈参数
  * @return int 函数执行的状态码。
@@ -4471,7 +4472,7 @@ RM_INTERFACE_EXPORT int rm_read_modbus_tcp_coils(rm_robot_handle *handle, rm_mod
  */
 RM_INTERFACE_EXPORT int rm_write_modbus_tcp_coils(rm_robot_handle *handle, rm_modbus_tcp_write_params_t param);
 /**
- * @brief Modbus TCP协议读离散量输入
+ * @brief Modbus TCP协议读离散量输入（四代控制器接口）
  * @param handle 机械臂控制句柄
  * @param param 读离散输入参数
  * @param data 读离散输入数据，数组大小为param.num
@@ -4485,7 +4486,7 @@ RM_INTERFACE_EXPORT int rm_write_modbus_tcp_coils(rm_robot_handle *handle, rm_mo
  */
 RM_INTERFACE_EXPORT int rm_read_modbus_tcp_input_status(rm_robot_handle *handle, rm_modbus_tcp_read_params_t param, int *data);
 /**
- * @brief Modbus TCP协议读保持寄存器
+ * @brief Modbus TCP协议读保持寄存器（四代控制器接口）
  * @param handle 机械臂控制句柄
  * @param param 读保持寄存器参数
  * @param data 读保持寄存器数据，数组大小为param.num
@@ -4499,7 +4500,7 @@ RM_INTERFACE_EXPORT int rm_read_modbus_tcp_input_status(rm_robot_handle *handle,
  */
 RM_INTERFACE_EXPORT int rm_read_modbus_tcp_holding_registers(rm_robot_handle *handle, rm_modbus_tcp_read_params_t param, int *data);
 /**
- * @brief Modbus TCP协议写保持寄存器
+ * @brief Modbus TCP协议写保持寄存器（四代控制器接口）
  * @param handle 机械臂控制句柄
  * @param param 写保持寄存器参数
  * @return int 函数执行的状态码。
@@ -4512,7 +4513,7 @@ RM_INTERFACE_EXPORT int rm_read_modbus_tcp_holding_registers(rm_robot_handle *ha
  */
 RM_INTERFACE_EXPORT int rm_write_modbus_tcp_registers(rm_robot_handle *handle, rm_modbus_tcp_write_params_t param);
 /**
- * @brief Modbus TCP协议读输入寄存器
+ * @brief Modbus TCP协议读输入寄存器（四代控制器接口）
  * @param handle 机械臂控制句柄
  * @param param 读输入寄存器参数
  * @param data 读输入寄存器数据，数组大小为param.num
@@ -4525,6 +4526,108 @@ RM_INTERFACE_EXPORT int rm_write_modbus_tcp_registers(rm_robot_handle *handle, r
  *            - -4: 三代控制器不支持该接口。
  */
 RM_INTERFACE_EXPORT int rm_read_modbus_tcp_input_registers(rm_robot_handle *handle, rm_modbus_tcp_read_params_t param, int *data);
+/**
+ * @brief 查询动作列表（四代控制器接口）
+ * @param handle 机械臂控制句柄
+ * @param page_num 页码
+ * @param page_size 每页大小
+ * @param vague_search 模糊搜索
+ * @param list 动作列表
+ * @return int 函数执行的状态码。
+ *            - 0: 成功。
+ *            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。
+ *            - -1: 数据发送失败，通信过程中出现问题。
+ *            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。
+ *            - -3: 返回值解析失败，接收到的数据格式不正确或不完整。
+ *            - -4: 三代控制器不支持该接口
+ */
+RM_INTERFACE_EXPORT int rm_get_tool_action_list(rm_robot_handle *handle, int page_num, int page_size, const char *vague_search, rm_tool_action_list_t *list);
+/**
+ * @brief 运行指定末端动作（四代控制器接口）
+ * @param handle 机械臂控制句柄
+ * @param action_name 动作名称
+ * @return int 函数执行的状态码。
+ *            - 0: 成功。
+ *            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。
+ *            - -1: 数据发送失败，通信过程中出现问题。
+ *            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。
+ *            - -3: 返回值解析失败，接收到的数据格式不正确或不完整。
+ *            - -4: 三代控制器不支持该接口
+ *            - -5: 当前到位设备校验失败，即当前到位设备不为末端工具动作。
+ */
+RM_INTERFACE_EXPORT int rm_run_tool_action(rm_robot_handle *handle, const char *action_name);
+/**
+ * @brief 删除指定末端动作（四代控制器接口）
+ * @param handle 机械臂控制句柄
+ * @param action_name 动作名称
+ * @return int 函数执行的状态码。
+ *            - 0: 成功。
+ *            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。
+ *            - -1: 数据发送失败，通信过程中出现问题。
+ *            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。
+ *            - -3: 返回值解析失败，接收到的数据格式不正确或不完整。
+ *            - -4: 三代控制器不支持该接口
+ */
+RM_INTERFACE_EXPORT int rm_delete_tool_action(rm_robot_handle *handle, const char *action_name);
+/**
+ * @brief 保存动作到控制器（四代控制器接口）
+ * @param handle 机械臂控制句柄
+ * @param action_name 动作名称
+ * @param selected_array 保存数组的值
+ * @param array_size 保存数组的大小
+ * @param array_type 保存数字的类型（0-表示保存类型为hand_pos。 1-表示保存类型为hand_angle）
+ * @return int 函数执行的状态码。
+ *            - 0: 成功。
+ *            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。
+ *            - -1: 数据发送失败，通信过程中出现问题。
+ *            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。
+ *            - -3: 返回值解析失败，接收到的数据格式不正确或不完整。
+ *            - -4: 三代控制器不支持该接口
+ */
+RM_INTERFACE_EXPORT int rm_save_tool_action(rm_robot_handle *handle, const char *action_name,int *selected_array,int array_size, int array_type);
+/**
+ * @brief 更新动作到控制器（四代控制器接口）
+ * @param handle 机械臂控制句柄
+ * @param action_name 动作名称
+ * @param new_name 新动作名称
+ * @param selected_array 保存数组的值
+ * @param array_size 保存数组的大小
+ * @param array_type 保存数字的类型（0-表示保存类型为hand_pos。 1-表示保存类型为hand_angle）
+ * @return int 函数执行的状态码。
+ *            - 0: 成功。
+ *            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。
+ *            - -1: 数据发送失败，通信过程中出现问题。
+ *            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。
+ *            - -3: 返回值解析失败，接收到的数据格式不正确或不完整。
+ *            - -4: 三代控制器不支持该接口
+ */
+RM_INTERFACE_EXPORT int rm_update_tool_action(rm_robot_handle *handle, const char *action_name, const char *new_name, int *selected_array,int array_size, int array_type);
+/**
+ * @brief 设置避奇异模式（只支持6自由度机械臂）
+ * 
+ * @param handle 机械臂控制句柄
+ * @param mode 模式 0-不规避奇异点，1-规避奇异点
+ * @return int 函数执行的状态码。  
+            - 0: 成功。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
+            - -1: 数据发送失败，通信过程中出现问题。
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
+            - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
+ */
+RM_INTERFACE_EXPORT int rm_set_avoid_singularity_mode(rm_robot_handle *handle, int mode);
+/**
+ * @brief 获取避奇异模式（只支持6自由度机械臂）
+ * 
+ * @param handle 机械臂控制句柄
+ * @param mode 模式 0-不规避奇异点，1-规避奇异点
+ * @return int 函数执行的状态码。  
+            - 0: 成功。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
+            - -1: 数据发送失败，通信过程中出现问题。
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
+            - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
+ */
+RM_INTERFACE_EXPORT int rm_get_avoid_singularity_mode(rm_robot_handle *handle, int* mode);
 
 #ifdef __cplusplus
 }
