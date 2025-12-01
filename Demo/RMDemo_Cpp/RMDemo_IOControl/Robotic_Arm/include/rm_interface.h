@@ -4603,7 +4603,7 @@ RM_INTERFACE_EXPORT int rm_save_tool_action(rm_robot_handle *handle, const char 
  */
 RM_INTERFACE_EXPORT int rm_update_tool_action(rm_robot_handle *handle, const char *action_name, const char *new_name, int *selected_array,int array_size, int array_type);
 /**
- * @brief 设置避奇异模式（只支持6自由度机械臂）
+ * @brief 设置避奇异模式
  * 
  * @param handle 机械臂控制句柄
  * @param mode 模式 0-不规避奇异点，1-规避奇异点
@@ -4616,7 +4616,7 @@ RM_INTERFACE_EXPORT int rm_update_tool_action(rm_robot_handle *handle, const cha
  */
 RM_INTERFACE_EXPORT int rm_set_avoid_singularity_mode(rm_robot_handle *handle, int mode);
 /**
- * @brief 获取避奇异模式（只支持6自由度机械臂）
+ * @brief 获取避奇异模式
  * 
  * @param handle 机械臂控制句柄
  * @param mode 模式 0-不规避奇异点，1-规避奇异点
@@ -4628,6 +4628,88 @@ RM_INTERFACE_EXPORT int rm_set_avoid_singularity_mode(rm_robot_handle *handle, i
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 RM_INTERFACE_EXPORT int rm_get_avoid_singularity_mode(rm_robot_handle *handle, int* mode);
+/**
+ * @brief 设置静止状态碰撞检测开关(三代控制器)
+ * 
+ * @param handle 机械臂控制句柄
+ * @param mode 0：关闭静止状态碰撞检测功能；1：开启静止状态碰撞检测功能。
+ * @return int 函数执行的状态码。  
+            - 0: 成功。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
+            - -1: 数据发送失败，通信过程中出现问题。
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
+            - -3: 返回值解析失败，接收到的数据格式不正确或不完整。
+ */
+RM_INTERFACE_EXPORT int rm_set_collision_detection(rm_robot_handle *handle, int mode);
+/**
+ * @brief 查询静止状态碰撞检测开关
+ * 
+ * @param handle 机械臂控制句柄
+ * @param mode   0：关闭静止状态碰撞检测功能；1：开启静止状态碰撞检测功能。
+ * @return int 函数执行的状态码。  
+            - 0: 成功。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
+            - -1: 数据发送失败，通信过程中出现问题。
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
+            - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
+ */
+RM_INTERFACE_EXPORT int rm_get_collision_detection(rm_robot_handle *handle, int *mode);
+/**
+ * @brief 笛卡尔速度透传
+ * @details 使用这个接口前先进性笛卡尔速度透传初始化
+ * @param handle 机械臂控制句柄 
+ * @param config 笛卡尔速度透传模式配置结构体
+ * @return int 函数执行的状态码。
+            - 0: 成功。  
+            - -1: 数据发送失败，通信过程中出现问题。
+ */
+RM_INTERFACE_EXPORT int rm_movev_canfd(rm_robot_handle *handle, rm_movev_canfd_mode_t config);
+/**
+ * @brief 笛卡尔速度透传初始化
+ * 
+ * @param handle 机械臂控制句柄
+ * @param avoid_singularity_flag	int	是否开启避奇异。1:开启；0:关闭.
+ * @param frame_type	int	参考坐标系选择。1：速度在工作坐标系下表示；0：速度在工具坐标系下表示。
+ * @param dt	int	周期，单位ms。
+ * @return int 函数执行的状态码。  
+            - 0: 成功。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
+            - -1: 数据发送失败，通信过程中出现问题。
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
+            - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
+ */
+RM_INTERFACE_EXPORT int rm_set_movev_canfd_init(rm_robot_handle *handle, int avoid_singularity_flag, int frame_type, int dt);
+/**
+ * @brief 读末端生态设备寄存器
+ * 
+ * @param handle 机械臂控制句柄
+ * @param addr	int	寄存器起始地址，寄存器具体功能需参考末端生态协议定义。
+ * @param length	int	寄存器长度。注意：寄存器有效地址范围1000~1653。
+ * @param regarr	intarray	数据读取存放处。
+ * @return int 函数执行的状态码。  
+            - 0: 成功。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
+            - -1: 数据发送失败，通信过程中出现问题。
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
+            - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
+ */
+RM_INTERFACE_EXPORT int rm_get_rm_plus_reg(rm_robot_handle *handle, int addr, int length, int *regarr);
+
+/**
+ * @brief 写末端生态设备寄存器
+ * 
+ * @param handle 机械臂控制句柄
+ * @param addr	int	寄存器起始地址，寄存器具体功能需参考末端生态协议定义。
+ * @param length	int	寄存器长度。注意：寄存器有效地址范围1000~1653。
+ * @param data	intarray	写入数据。
+ * @return int 函数执行的状态码。  
+            - 0: 成功。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
+            - -1: 数据发送失败，通信过程中出现问题。
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
+            - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
+ */
+RM_INTERFACE_EXPORT int rm_set_rm_plus_reg(rm_robot_handle *handle, int addr, int length, int *data);
 
 #ifdef __cplusplus
 }
