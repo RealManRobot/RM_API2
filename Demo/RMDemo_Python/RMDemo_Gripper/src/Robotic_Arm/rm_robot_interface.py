@@ -18,7 +18,7 @@
 
 from .rm_ctypes_wrap import *
 import ctypes
-from typing import Callable
+from typing import Callable, Tuple, Optional
 
 
 class JointConfigSettings:
@@ -2559,7 +2559,7 @@ class ControllerIOConfig:
             4-输入继续功能复用模式、5-输入急停功能复用模式、6-输入进入电流环拖动复用模式、7-输入进入力只动位置拖动模式（六维力版本可配置）、
             8-输入进入力只动姿态拖动模式（六维力版本可配置）、9-输入进入力位姿结合拖动复用模式（六维力版本可配置）、
             10-输入外部轴最大软限位复用模式（外部轴模式可配置）、11-输入外部轴最小软限位复用模式（外部轴模式可配置）、12-输入初始位姿功能复用模式、
-            13-输出碰撞功能复用模式。
+            13-输出碰撞功能复用模式、14-实时调速功能复用模式
             io_speed (int): 速度取值范围0-100
             io_speed_mode (int): 模式取值范围1或2，
                                 1表示单次触发模式,单次触发模式下当IO拉低速度设置为speed参数值，IO恢复高电平速度设置为初始值
@@ -5112,7 +5112,46 @@ class SelfCollision:
         enable = c_bool()
         tag = rm_get_self_collision_enable(self.handle, byref(enable))
         return tag, enable.value
-  
+    
+    def rm_set_collision_remove_enable(self, set_enable: bool) -> int:
+        """
+        手动关闭碰撞解除模式指令（仅支持三代控制器）
+
+        Args:
+            set_enable (bool): true为手动关闭指令，false为取消关闭指令（即恢复默认状态）
+
+        Returns:
+            int: 函数执行的状态码。
+                - 0: 成功。
+                - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。
+                - -1: 数据发送失败，通信过程中出现问题。
+                - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。
+                - -3: 返回值解析失败，接收到的数据格式不正确或不完整。
+        """
+        tag = rm_set_collision_remove_enable(self.handle, set_enable)
+        return tag
+
+    def rm_get_collision_remove_enable(self) -> Tuple[int, Optional[bool]]:
+        """
+        获取手动关闭碰撞解除使能状态（仅支持三代控制器）
+
+        Returns:
+            Tuple[int, Optional[bool]]: (状态码, 使能状态)
+                状态码说明：
+                - 0: 成功（第二个元素为当前使能状态，true=手动关闭生效，false=恢复默认）。
+                - 1: 控制器返回false，传递参数错误或机械臂状态发生错误（第二个元素为None）。
+                - -1: 数据发送失败，通信过程中出现问题（第二个元素为None）。
+                - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回（第二个元素为None）。
+                - -3: 返回值解析失败，接收到的数据格式不正确或不完整（第二个元素为None）。
+        """
+        enable_state_c = c_bool()
+        
+        ret = rm_get_collision_remove_enable(self.handle, byref(enable_state_c))
+
+        if ret == 0:
+            return (ret, enable_state_c.value)
+        else:
+            return (ret, None)
 
 class UdpConfig:
     """
@@ -5806,6 +5845,11 @@ class Algo:
             rm_robot_arm_model_e.RM_MODEL_ZM7R_E,
             rm_robot_arm_model_e.RM_MODEL_RXL75_E,
             rm_robot_arm_model_e.RM_MODEL_RXR75_E,
+            rm_robot_arm_model_e.RM_MODEL_ZPFL74_E,
+            rm_robot_arm_model_e.RM_MODEL_ZPFR74_E, 
+            rm_robot_arm_model_e.RM_MODEL_RXL75II_E,   
+            rm_robot_arm_model_e.RM_MODEL_RXR75II_E,    
+
         }
         if arm_model == rm_robot_arm_model_e.RM_MODEL_UNIVERSAL_E:
             if arm_dof == -1:
@@ -5819,7 +5863,9 @@ class Algo:
             self.arm_dof = 6
 
         if(arm_model == rm_robot_arm_model_e.RM_MODEL_ZM7L_E or arm_model == rm_robot_arm_model_e.RM_MODEL_ZM7R_E or 
-           arm_model == rm_robot_arm_model_e.RM_MODEL_RXL75_E or arm_model == rm_robot_arm_model_e.RM_MODEL_RXR75_E):
+           arm_model == rm_robot_arm_model_e.RM_MODEL_RXL75_E or arm_model == rm_robot_arm_model_e.RM_MODEL_RXR75_E or
+           arm_model == rm_robot_arm_model_e.RM_MODEL_ZPFL74_E or arm_model == rm_robot_arm_model_e.RM_MODEL_ZPFR74_E or
+           arm_model == rm_robot_arm_model_e.RM_MODEL_RXL75II_E or arm_model == rm_robot_arm_model_e.RM_MODEL_RXR75II_E):
             self.dh_dof = 8
         else:
             self.dh_dof = self.arm_dof
@@ -6550,6 +6596,166 @@ class Algo:
         joint_deg_c = (c_float * 7)(*joint_deg)
         ret = rm_algo_safety_robot_self_collision_detection(joint_deg_c)
         return ret
+    
+
+    def rm_algo_ik_remote_init(self, dT: float, tool_or_work: int) -> None:
+        """
+        初始化遥操作运动学结构体
+
+        Args:
+            dT (float): 用户下发周期设置
+            tool_or_work (int): 0: 相对工具坐标系 1: 相对工作坐标系
+
+        Returns:
+            None
+        """
+        # 类型转换确保参数符合C接口要求
+        dT_c = c_float(dT)
+        tool_or_work_c = c_int(tool_or_work)
+        rm_algo_ik_remote_init(dT_c, tool_or_work_c)
+
+    def rm_algo_set_error_weight(self, weight: list[float]) -> None:
+        """
+        设置位姿误差权重
+
+        Args:
+            weight (list[float]): 长度为6的数组，对应末端位姿x,y,z,rx,ry,rz的权重，取值0~1
+                                  权重越大对应的位姿到达精确度越高
+
+        Returns:
+            None
+        """
+        # 校验数组长度，不足补0，超出截断
+        if len(weight) != 6:
+            weight = weight[:6] + [0.0] * (6 - len(weight))
+        weight_c = (c_float * 6)(*weight)
+        rm_algo_set_error_weight(weight_c)
+
+    def rm_algo_set_dq_weight(self, dq_weight: list[float]) -> None:
+        """
+        设置关节速度权重
+
+        Args:
+            dq_weight (list[float]): 长度为自由度个数的数组，为关节最大限速乘以权重，取值0~1
+                                     权重越大则跟踪效果越好
+
+        Returns:
+            None
+        """
+        # 转换为ctypes浮点数组（兼容6/7自由度）
+        dq_weight_c = (c_float * len(dq_weight))(*dq_weight)
+        rm_algo_set_dq_weight(dq_weight_c)
+
+    def rm_algo_enable_q3_tracker(self, is_open: int) -> None:
+        """
+        使能七轴机械臂肘部追踪功能
+
+        Args:
+            is_open (int): 1: OPEN TARCKER 0: CLOSE TRACKER
+
+        Returns:
+            None
+        """
+        is_open_c = c_int(is_open)
+        rm_algo_enable_q3_tracker(is_open_c)
+
+    def rm_algo_set_q3_tracker_velocity_level(self, level: float) -> None:
+        """
+        设置七轴机械臂肘部追踪等级
+
+        Args:
+            level (float): 追踪等级，取值0~1，等级越高，追踪速度越快
+
+        Returns:
+            None
+        """
+        # 限制取值范围在0~1之间
+        level_clamped = max(0.0, min(1.0, level))
+        level_c = c_float(level_clamped)
+        rm_algo_set_q3_tracker_velocity_level(level_c)
+
+    def rm_algo_set_enable_limit_holdon(self, enable: int) -> None:
+        """
+        设置限位保持功能接口
+
+        Args:
+            enable (int): 0: 关闭限位保持  1: 开启限位保持 若客户不调用此接口则默认为0即关闭限位保持功能, 当调用ik_remote_init时自动初始化为0
+
+        Returns:
+            None
+        """
+        enable_c = c_int(enable)
+        rm_algo_set_enable_limit_holdon(enable_c)
+
+    def rm_algo_set_7dof_q3_track_angle(self, obj_angle: float) -> int:
+        """
+        设置七轴机械臂肘部追踪下的关节3的追踪角度
+
+        Args:
+            obj_angle (float): 关节3的目标追踪角度
+
+        Returns:
+            int:
+                -2: angle is over joint_limit（角度超出关节限位）
+                 0: success（成功）
+        """
+        obj_angle_c = c_float(obj_angle)
+        ret = rm_algo_set_7dof_q3_track_angle(obj_angle_c)
+        return ret
+
+    def rm_algo_set_joint_limit_angle(self, dof_type: rm_dofType_e, joint: rm_jointType_e, 
+                                      limit: rm_limitType_e, angle: float) -> int:
+        """
+        统一的关节角度限位设置接口（新增算法限位判断）
+
+        Args:
+            dof_type (rm_dofType_e): 机械臂自由度类型 (DOF_TYPE_6 或 DOF_TYPE_7)
+            joint (rm_jointType_e): 要设置的关节 (JOINT_Q3 或 JOINT_Q4；七轴支持设置关节3和关节4，六轴仅支持关节3)
+            limit (rm_limitType_e): 限位类型 (LIMIT_MAX 或 LIMIT_MIN)
+            angle (float): 要设置的角度值
+
+        Returns:
+            int: 错误码
+                -1: 无效的参数 (自由度、关节、限位类型错误或指针为空)
+                -2: 设置的角度值超出硬件/系统限制
+                -3: 输入角度超出算法固有关节限位
+                 0: 成功
+        """
+        # 转换枚举值为整型，兼容C接口
+        dof_type_c = c_int(dof_type.value)
+        joint_c = c_int(joint.value)
+        limit_c = c_int(limit.value)
+        angle_c = c_float(angle)
+        
+        ret = rm_algo_set_joint_limit_angle(dof_type_c, joint_c, limit_c, angle_c)
+        return ret
+
+    def rm_algo_ik_remote(self, T06d: rm_Mat_t, q_in: list[float], q_out: POINTER(c_float)) -> int:
+        """
+        ik remote 正式的逆解函数（强制传4个参数版本）
+        
+        @attention 1.建议客户在仿真模式下先验证自己下发的数据是否有异常后再开启真机使用
+                   2.机械臂肘关节限位防护：禁止关节4（7轴）/关节3（6轴）完全打直为0，否则边界奇异易引发机械臂震荡、回移困难等异常；需通过限位设置接口或示教器安全配置设置非0软限位（限位值可在仿真模式下调试确定）
+                   3.机械臂关节软限位防护：功能自带关节软限位效果，但应避免运动至软限位；若到位姿下发后关节仍需向限位外转动以满足位姿要求，易引发机械臂震荡等异常
+        Args:
+            T06d (rm_Mat_t): 目标末端位姿矩阵
+            q_in (list[float]): 当前关节角度列表（长度匹配自由度）
+            q_out (POINTER(c_float)): 提前初始化的ctypes浮点数组（输出参数，接收求解结果）
+
+        Returns:
+            int: 状态码
+                -4: UNKNOW ROBOT TYPE（未知机器人类型）
+                -1: IK FAILED（逆解失败）
+                -2: IK LIMITED（逆解超出限位）
+                0: IK SUCCESSFUL（逆解成功）
+        """
+            # 1. 转换q_in为ctypes数组（匹配C的float*）
+        q_in_len = len(q_in)
+        q_in_c = (c_float * q_in_len)(*q_in)
+        
+        # 2. 调用底层C接口（严格匹配C的3个参数：T06d + q_in_c + q_out）
+        ret = rm_algo_ik_remote(T06d, q_in_c, q_out)  # q_out是外部传入的ctypes数组指针
+        return ret
 
  
 
@@ -6610,7 +6816,9 @@ class RoboticArm(ArmState, MovePlan, JointConfigSettings, JointConfigReader, Arm
                 self.arm_dof = info.arm_dof
                 self.robot_controller_version = info.robot_controller_version
                 if(info.arm_model == rm_robot_arm_model_e.RM_MODEL_ZM7L_E or info.arm_model == rm_robot_arm_model_e.RM_MODEL_ZM7R_E or
-                   info.arm_model == rm_robot_arm_model_e.RM_MODEL_RXL75_E or info.arm_model == rm_robot_arm_model_e.RM_MODEL_RXR75_E):
+                   info.arm_model == rm_robot_arm_model_e.RM_MODEL_RXL75_E or info.arm_model == rm_robot_arm_model_e.RM_MODEL_RXR75_E or
+                   info.arm_model == rm_robot_arm_model_e.RM_MODEL_ZPFL74_E or info.arm_model == rm_robot_arm_model_e.RM_MODEL_ZPFR74_E or
+                   info.arm_model == rm_robot_arm_model_e.RM_MODEL_RXL75II_E or info.arm_model == rm_robot_arm_model_e.RM_MODEL_RXR75II_E):
                     self.dh_dof = 8
                 else:
                     self.dh_dof = self.arm_dof
