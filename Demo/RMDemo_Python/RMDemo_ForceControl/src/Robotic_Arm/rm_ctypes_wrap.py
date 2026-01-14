@@ -956,6 +956,10 @@ class rm_robot_arm_model_e(IntEnum):
         RM_MODEL_ZM7R_E (int): ZM7R型号
         RM_MODEL_RXL75_E (int): 人型机器人左臂
         RM_MODEL_RXR75_E (int): 人型机器人右臂
+        RM_MODEL_ZPFL74_E (int)   ///< ZM7LII
+        RM_MODEL_ZPFR74_E (int)   ///< ZM7RII
+        RM_MODEL_RXL75II_E (int)    ///< 人型机器人左臂II
+        RM_MODEL_RXR75II_E (int)    ///< 人型机器人右臂II
     """
     # RM_65型号
     RM_MODEL_RM_65_E = 0
@@ -985,6 +989,14 @@ class rm_robot_arm_model_e(IntEnum):
     RM_MODEL_RXL75_E = RM_MODEL_ZM7R_E + 1
     # 人型机器人右臂
     RM_MODEL_RXR75_E = RM_MODEL_RXL75_E + 1
+    # ZM7LII
+    RM_MODEL_ZPFL74_E = RM_MODEL_RXR75_E + 1
+    # ZM7RII
+    RM_MODEL_ZPFR74_E = RM_MODEL_ZPFL74_E + 1
+    # 人型机器人左臂II
+    RM_MODEL_RXL75II_E = RM_MODEL_ZPFR74_E + 1
+    # 人型机器人右臂II
+    RM_MODEL_RXR75II_E = RM_MODEL_RXL75II_E + 1
 
 
 class rm_force_type_e(IntEnum):
@@ -998,6 +1010,11 @@ class rm_force_type_e(IntEnum):
     RM_MODEL_RM_SF_E = (RM_MODEL_RM_ZF_E + 1)
     # 一体化六维力版
     RM_MODEL_RM_ISF_E = (RM_MODEL_RM_SF_E + 1)
+    # 标准末端+视觉
+    RM_MODEL_RM_BV_E = (RM_MODEL_RM_ISF_E + 1)
+    # 一体化六维力传感器(新版)+视觉
+    RM_MODEL_RM_ISFV_E = (RM_MODEL_RM_BV_E + 1)
+ 
 
 class rm_event_type_e(IntEnum):
     """机械臂事件类型枚举 
@@ -1876,7 +1893,7 @@ class rm_joint_status_t(Structure):
         joint_position (list[float]): 关节角度，单位°，精度：0.001°
         joint_temperature (list[float]): 当前关节温度，精度0.001℃
         joint_voltage (list[float]): 当前关节电压，精度0.001V
-        joint_speed (list[float]): 当前关节速度，精度0.01°/s。
+        joint_speed (list[float]): 当前关节速度，精度0.01°/s
     """
     _fields_ = [
         ('joint_current', c_float * int(7)),
@@ -3361,6 +3378,7 @@ class rm_realtime_arm_joint_state_t(Structure):
     **Attributes**:  
         - errCode (int): 数据解析错误码，-3为数据解析错误，代表推送的数据不完整或格式不正确  
         - arm_ip (bytes): 推送数据的机械臂的IP地址 
+        - arm_port (int): 机械臂的port
         - joint_status (rm_joint_status_t): 机械臂关节状态结构体  
         - force_sensor (rm_force_sensor_t): 力传感器数据结构体  
         - err (rm_err_t): 错误码结构体  
@@ -3377,6 +3395,7 @@ class rm_realtime_arm_joint_state_t(Structure):
     _fields_ = [
         ('errCode', c_int),
         ('arm_ip', c_char * int(16)),
+        ('arm_port', c_int),
         ('joint_status', rm_joint_status_t),
         ('force_sensor', rm_force_sensor_t),
         ('err', rm_err_t),
@@ -3552,12 +3571,18 @@ class rm_robot_info_t(Structure):
             rm_robot_arm_model_e.RM_MODEL_ZM7R_E: "ZM7R",
             rm_robot_arm_model_e.RM_MODEL_RXL75_E: "RXL75",
             rm_robot_arm_model_e.RM_MODEL_RXR75_E: "RXR75",
+            rm_robot_arm_model_e.RM_MODEL_ZPFL74_E: "ZM7LII",
+            rm_robot_arm_model_e.RM_MODEL_ZPFR74_E: "ZM7RII", 
+            rm_robot_arm_model_e.RM_MODEL_RXL75II_E: "RXL75II",   
+            rm_robot_arm_model_e.RM_MODEL_RXR75II_E: "RXR75II",                     
         }
         force_to_string = {
             rm_force_type_e.RM_MODEL_RM_B_E: "B",
             rm_force_type_e.RM_MODEL_RM_ZF_E: "ZF",
-            rm_force_type_e.RM_MODEL_RM_SF_E: "SF",
-            rm_force_type_e.RM_MODEL_RM_ISF_E: "ISF"
+            rm_force_type_e.RM_MODEL_RM_SF_E: "6F",
+            rm_force_type_e.RM_MODEL_RM_ISF_E: "6FB",
+            rm_force_type_e.RM_MODEL_RM_BV_E: "B-V",
+            rm_force_type_e.RM_MODEL_RM_ISFV_E: "6FB-V"
         }
 
         # 使用字典来查找对应的字符串表示
@@ -3956,8 +3981,122 @@ class rm_tool_action_list_t(Structure):
                 # 值不是字节类型，直接保留
                 result[key] = value
         return result
+    
+class rm_Mat_t(Structure):
+    """
+    矩阵结构体（18x18浮点矩阵）
+    **Attributes**
+        - row: 矩阵有效行数（≤18）
+        - col: 矩阵有效列数（≤18）
+        - data: 18x18浮点数组（存储矩阵数据，超出有效行列的部分默认0）
+    """
+    _fields_ = [
+        ('row', c_int),          # 有效行数
+        ('col', c_int),          # 有效列数
+        ('data', (c_float * 18) * 18)  # 18x18二维浮点数组
+    ]
+
+    def __init__(self, row: int = None, col: int = None, data: list = None) -> None:
+        """
+        初始化矩阵结构体
+        :param row: 有效行数（默认None，不初始化；传值则自动限制0~18）
+        :param col: 有效列数（默认None，不初始化；传值则自动限制0~18）
+        :param data: 二维列表/数组（填充矩阵数据，超出18x18的部分忽略，不足则补0）
+        """
+        # 全参数为None时，不做初始化（保留ctypes默认值）
+        if all(param is None for param in [row, col, data]):
+            return
+        
+        # 初始化行数（边界限制：0~18）
+        if row is not None:
+            self.row = max(0, min(row, 18))  # 防止行数超出18或为负数
+        else:
+            self.row = 0  # 未传行数时默认0
+        
+        # 初始化列数（边界限制：0~18）
+        if col is not None:
+            self.col = max(0, min(col, 18))  # 防止列数超出18或为负数
+        else:
+            self.col = 0  # 未传列数时默认0
+        
+        # 初始化二维数组（先全部置0，避免垃圾值）
+        for i in range(18):
+            for j in range(18):
+                self.data[i][j] = 0.0
+        
+        # 传入数据时，填充有效行列范围内的数值
+        if data is not None and isinstance(data, list):
+            # 遍历有效行数
+            for i in range(self.row):
+                # 防止数据行数不足
+                if i >= len(data):
+                    break
+                # 遍历有效列数
+                for j in range(self.col):
+                    # 防止数据列数不足
+                    if j >= len(data[i]):
+                        break
+                    # 转换为浮点型并赋值（兼容int/str等可转float的类型）
+                    try:
+                        self.data[i][j] = float(data[i][j])
+                    except (ValueError, TypeError):
+                        # 无法转换时置0
+                        self.data[i][j] = 0.0
+
+    def to_dict(self, recurse=True):
+        """
+        将结构体转换为字典，适配二维数组的特殊处理
+        :param recurse: 递归标记（此处无嵌套结构体，仅为兼容统一接口）
+        :return: 包含row/col/data的字典（data转为二维列表，仅保留有效行列）
+        """
+        result = {}
+        for field, ctype in self._fields_:
+            value = getattr(self, field)
+
+            # 处理二维数组（特殊逻辑：转为易读的二维列表，仅保留有效行列）
+            if field == "data":
+                # 初始化空的二维列表
+                data_list = []
+                # 仅遍历有效行数
+                for i in range(self.row):
+                    row_list = []
+                    # 仅遍历有效列数
+                    for j in range(self.col):
+                        row_list.append(float(value[i][j]))  # 确保是float类型
+                    data_list.append(row_list)
+                result[field] = data_list
+            else:
+                # 普通字段（row/col）直接赋值
+                result[field] = value
+
+            # 字节类型解码（此处无bytes字段，仅保留兼容逻辑）
+            if isinstance(result[field], bytes):
+                try:
+                    result[field] = result[field].decode('utf-8')
+                except UnicodeDecodeError:
+                    result[field] = result[field].hex()
+
+        return result
+
+class rm_dofType_e(IntEnum):
+    """机械臂自由度类型枚举
+    """
+    DOF_TYPE_6 = 6               # 6自由度
+    DOF_TYPE_7 = DOF_TYPE_6 + 1  # 7自由度
 
 
+class rm_jointType_e(IntEnum):
+    """机械臂关节类型枚举
+    """
+    JOINT_Q3 = 0                 # 关节3
+    JOINT_Q4 = JOINT_Q3 + 1   # 肘部关节4
+
+
+class rm_limitType_e(IntEnum):
+    """机械臂关节限位类型枚举
+    """
+    LIMIT_MAX = 0               # 最大角度限位
+    LIMIT_MIN = LIMIT_MAX + 1   # 最小角度限位
 
 if _libs[libname].has("rm_api_version", "cdecl"):
     rm_api_version = _libs[libname].get("rm_api_version", "cdecl")
@@ -5407,6 +5546,51 @@ if _libs[libname].has("rm_algo_set_workframe", "cdecl"):
     rm_algo_set_workframe.argtypes = [POINTER(rm_frame_t)]
     rm_algo_set_workframe.restype = None
 
+if _libs[libname].has("rm_algo_ik_remote_init", "cdecl"):
+    rm_algo_ik_remote_init = _libs[libname].get("rm_algo_ik_remote_init", "cdecl")
+    rm_algo_ik_remote_init.argtypes = [c_float, c_int] 
+    rm_algo_ik_remote_init.restype = None
+
+if _libs[libname].has("rm_algo_set_error_weight", "cdecl"):
+    rm_algo_set_error_weight = _libs[libname].get("rm_algo_set_error_weight", "cdecl")
+    rm_algo_set_error_weight.argtypes = [POINTER(c_float)]  
+    rm_algo_set_error_weight.restype = None
+
+if _libs[libname].has("rm_algo_set_dq_weight", "cdecl"):
+    rm_algo_set_dq_weight = _libs[libname].get("rm_algo_set_dq_weight", "cdecl")
+    rm_algo_set_dq_weight.argtypes = [POINTER(c_float)] 
+    rm_algo_set_dq_weight.restype = None
+
+if _libs[libname].has("rm_algo_enable_q3_tracker", "cdecl"):
+    rm_algo_enable_q3_tracker = _libs[libname].get("rm_algo_enable_q3_tracker", "cdecl")
+    rm_algo_enable_q3_tracker.argtypes = [c_int]  
+    rm_algo_enable_q3_tracker.restype = None
+
+if _libs[libname].has("rm_algo_set_q3_tracker_velocity_level", "cdecl"):
+    rm_algo_set_q3_tracker_velocity_level = _libs[libname].get("rm_algo_set_q3_tracker_velocity_level", "cdecl")
+    rm_algo_set_q3_tracker_velocity_level.argtypes = [c_float] 
+    rm_algo_set_q3_tracker_velocity_level.restype = None
+
+if _libs[libname].has("rm_algo_set_enable_limit_holdon", "cdecl"):
+    rm_algo_set_enable_limit_holdon = _libs[libname].get("rm_algo_set_enable_limit_holdon", "cdecl")
+    rm_algo_set_enable_limit_holdon.argtypes = [c_int] 
+    rm_algo_set_enable_limit_holdon.restype = None
+
+if _libs[libname].has("rm_algo_set_7dof_q3_track_angle", "cdecl"):
+    rm_algo_set_7dof_q3_track_angle = _libs[libname].get("rm_algo_set_7dof_q3_track_angle", "cdecl")
+    rm_algo_set_7dof_q3_track_angle.argtypes = [c_float]  
+    rm_algo_set_7dof_q3_track_angle.restype = c_int 
+
+if _libs[libname].has("rm_algo_set_joint_limit_angle", "cdecl"):
+    rm_algo_set_joint_limit_angle = _libs[libname].get("rm_algo_set_joint_limit_angle", "cdecl")
+    rm_algo_set_joint_limit_angle.argtypes = [c_int, c_int, c_int, c_float]
+    rm_algo_set_joint_limit_angle.restype = c_int  
+
+if _libs[libname].has("rm_algo_ik_remote", "cdecl"):
+    rm_algo_ik_remote = _libs[libname].get("rm_algo_ik_remote", "cdecl")
+    rm_algo_ik_remote.argtypes = [rm_Mat_t, POINTER(c_float), POINTER(c_float)]
+    rm_algo_ik_remote.restype = c_int  
+
 if _libs[libname].has("rm_algo_get_curr_workframe", "cdecl"):
     rm_algo_get_curr_workframe = _libs[libname].get(
         "rm_algo_get_curr_workframe", "cdecl")
@@ -5642,6 +5826,22 @@ if _libs[libname].has("rm_get_rm_plus_state_info", "cdecl"):
         POINTER(rm_robot_handle), POINTER(rm_plus_state_info_t)]
     rm_get_rm_plus_state_info.restype = c_int
 
+if _libs[libname].has("rm_set_collision_remove_enable", "cdecl"):
+    rm_set_collision_remove_enable = _libs[libname].get(
+        "rm_set_collision_remove_enable", "cdecl")
+    rm_set_collision_remove_enable.argtypes = [
+        POINTER(rm_robot_handle), c_bool
+    ]
+    rm_set_collision_remove_enable.restype = c_int 
+
+if _libs[libname].has("rm_get_collision_remove_enable", "cdecl"):
+    rm_get_collision_remove_enable = _libs[libname].get(
+        "rm_get_collision_remove_enable", "cdecl")
+    rm_get_collision_remove_enable.argtypes = [
+        POINTER(rm_robot_handle),  
+        POINTER(c_bool)            
+    ]
+    rm_get_collision_remove_enable.restype = c_int  
 
 if _libs[libname].has("rm_algo_universal_singularity_analyse", "cdecl"):
     rm_algo_universal_singularity_analyse = _libs[libname].get(
@@ -5835,6 +6035,7 @@ if _libs[libname].has("rm_read_modbus_tcp_input_registers", "cdecl"):
     rm_read_modbus_tcp_input_registers = _libs[libname].get("rm_read_modbus_tcp_input_registers", "cdecl")
     rm_read_modbus_tcp_input_registers.argtypes = [POINTER(rm_robot_handle), rm_modbus_tcp_read_params_t, POINTER(c_int)]
     rm_read_modbus_tcp_input_registers.restype = c_int
+
 
 if _libs[libname].has("rm_get_tool_action_list", "cdecl"):
     rm_get_tool_action_list = _libs[libname].get(
