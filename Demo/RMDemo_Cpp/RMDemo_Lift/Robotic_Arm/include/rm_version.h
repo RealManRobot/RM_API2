@@ -6,7 +6,7 @@
 extern "C" {
 #endif
 
-#define SDK_VERSION ("1.1.4")
+#define SDK_VERSION ("v1.1.5")
 
 #ifdef __cplusplus
 }

@@ -2402,6 +2402,44 @@ class ControllerConfig:
         """
         tag = rm_clear_system_err(self.handle)
         return tag
+    
+    def rm_set_webserver_enabled(self, enable: int) -> int:
+        """
+        设置Web服务器使能状态
+
+        @attention 仅支持四代控制器
+        Args:
+            enable (int): (默认状态是使能)非0代表使能，0代表禁使能
+
+        Returns:
+            int: 函数执行的状态码。
+                - 0: 成功。
+                - 1: 控制器返回false，参数错误或机械臂状态发生错误。
+                - -1: 数据发送失败，通信过程中出现问题。
+                - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。
+                - -3: 返回值解析失败，控制器返回的数据无法识别或不完整等情况。
+        """
+        tag = rm_set_webserver_enabled(self.handle, enable)
+        return tag
+
+    def rm_get_webserver_enabled(self) -> tuple[int, int]:
+        """
+        获取Web服务器使能状态
+        
+        @attention 仅支持四代控制器
+        Returns:
+            tuple[int,int]: 包含两个元素的元组。
+                - int: 函数执行的状态码。
+                    - 0: 成功。
+                    - 1: 控制器返回false，参数错误或机械臂状态发生错误。
+                    - -1: 数据发送失败，通信过程中出现问题。
+                    - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。
+                    - -3: 返回值解析失败，控制器返回的数据无法识别或不完整等情况。
+                - int: 返回Web服务器使能状态(默认状态是使能)，非0代表使能，0代表禁使能
+        """
+        enable = c_int()  # 定义整型输出变量，替代原布尔型c_bool
+        tag = rm_get_webserver_enabled(self.handle, byref(enable))
+        return tag, enable.value
 
 
 class CommunicationConfig:

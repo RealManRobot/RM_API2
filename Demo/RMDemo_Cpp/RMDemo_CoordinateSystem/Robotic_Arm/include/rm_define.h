@@ -100,6 +100,7 @@ typedef enum
     RM_CARTESIAN_ARC_PLANNING_E,        ///< 笛卡尔空间圆弧规划
     RM_SPLINE_CURVE_MOTION_PLANNING_E,  ///< 样条曲线运动规划
     RM_TRAJECTORY_REPLAY_PLANNING_E,    ///< 示教轨迹复现规划
+    RM_BLEND_TRAJECTORY_PLANNING_E,
 }rm_arm_current_trajectory_e;
 
 typedef struct
