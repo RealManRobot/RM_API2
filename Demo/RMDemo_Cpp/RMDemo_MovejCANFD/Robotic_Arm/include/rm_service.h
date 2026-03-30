@@ -1549,6 +1549,33 @@ RM_INTERFACE_EXPORT int rm_set_stop_teach(rm_robot_handle *handle);
  * @{  
  */
 /**
+ * @brief 设置Web服务器使能状态
+ * @attention 仅支持四代控制器
+ * @param handle 机械臂控制句柄 
+ * @param state Web服务器使能状态(默认状态是使能)：非0代表使能，0代表禁使能
+ * @return int 函数执行的状态码。  
+            - 0: 成功。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
+            - -1: 数据发送失败，通信过程中出现问题。
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
+            - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
+ */
+RM_INTERFACE_EXPORT int rm_set_webserver_enabled(rm_robot_handle *handle, int state);
+
+/**
+ * @brief 获取Web服务器使能状态
+ * @attention 仅支持四代控制器
+ * @param handle 机械臂控制句柄 
+ * @param state 输出参数，存储Web服务器当前使能状态(默认状态是使能)：非0代表使能，0代表禁使能
+ * @return int 函数执行的状态码。  
+            - 0: 成功。  
+            - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。  
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。  
+            - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
+ */
+RM_INTERFACE_EXPORT int rm_get_webserver_enabled(rm_robot_handle *handle, int *state);
+
+/**
  * @brief 获取控制器状态
  * 
  * @param handle 机械臂控制句柄 
@@ -3665,6 +3692,7 @@ RM_INTERFACE_EXPORT int rm_set_virtual_wall_config(rm_robot_handle *handle, rm_f
             - -3: 返回值解析失败，接收到的数据格式不正确或不完整。 
  */
 RM_INTERFACE_EXPORT int rm_get_virtual_wall_config(rm_robot_handle *handle, rm_fence_config_t *config);
+
 /** @} */ // 结束电子围栏组的定义
 
 /**  

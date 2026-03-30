@@ -2587,7 +2587,12 @@ class rm_waypoint_t(Structure):
 
     def to_dict(self):
         """将类的变量返回为字典"""
-        name = self.point_name.decode("GBK")
+        if os.name == "nt":
+        # Windows平台：按GBK编码，保留错误处理避免程序崩溃
+            name = self.point_name.decode("GBK")
+        else:
+        # Linux/macOS平台：按UTF-8编码，与C层iconv转换逻辑匹配
+            name = self.point_name.decode("utf-8")
         work_name = self.work_frame.decode("utf-8")
         tool_name = self.tool_frame.decode("utf-8")
         time = self.time.decode("utf-8")
@@ -5498,6 +5503,20 @@ if _libs[libname].has("rm_get_self_collision_enable", "cdecl"):
         POINTER(rm_robot_handle), POINTER(c_bool)]
     rm_get_self_collision_enable.restype = c_int
 
+if _libs[libname].has("rm_set_webserver_enabled", "cdecl"):
+    rm_set_webserver_enabled = _libs[libname].get(
+        "rm_set_webserver_enabled", "cdecl")
+    rm_set_webserver_enabled.argtypes = [
+        POINTER(rm_robot_handle), c_int]
+    rm_set_webserver_enabled.restype = c_int
+
+if _libs[libname].has("rm_get_webserver_enabled", "cdecl"):
+    rm_get_webserver_enabled = _libs[libname].get(
+        "rm_get_webserver_enabled", "cdecl")
+    rm_get_webserver_enabled.argtypes = [
+        POINTER(rm_robot_handle), POINTER(c_int)]
+    rm_get_webserver_enabled.restype = c_int
+
 if _libs[libname].has("rm_algo_version", "cdecl"):
     rm_algo_version = _libs[libname].get("rm_algo_version", "cdecl")
     rm_algo_version.argtypes = []
@@ -6035,6 +6054,7 @@ if _libs[libname].has("rm_read_modbus_tcp_input_registers", "cdecl"):
     rm_read_modbus_tcp_input_registers = _libs[libname].get("rm_read_modbus_tcp_input_registers", "cdecl")
     rm_read_modbus_tcp_input_registers.argtypes = [POINTER(rm_robot_handle), rm_modbus_tcp_read_params_t, POINTER(c_int)]
     rm_read_modbus_tcp_input_registers.restype = c_int
+
 
 if _libs[libname].has("rm_get_tool_action_list", "cdecl"):
     rm_get_tool_action_list = _libs[libname].get(
