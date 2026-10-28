@@ -1439,10 +1439,10 @@ partial class Program
     public static extern rm_pose_t rm_algo_matrix2pos(rm_matrix_t matrix);
 
     [DllImport("api_c.dll", EntryPoint = "rm_algo_base2workframe", CharSet = CharSet.Auto, CallingConvention = CallingConvention.Cdecl)]
-    public static extern rm_pose_t rm_algo_base2workframe(rm_matrix_t matrix, rm_pose_t state);
+    public static extern rm_pose_t rm_algo_base2workframe(rm_pose_t pose, rm_pose_t state);
 
     [DllImport("api_c.dll", EntryPoint = "rm_algo_workframe2base", CharSet = CharSet.Auto, CallingConvention = CallingConvention.Cdecl)]
-    public static extern rm_pose_t rm_algo_workframe2base(rm_matrix_t matrix, rm_pose_t state);
+    public static extern rm_pose_t rm_algo_workframe2base(rm_pose_t pose, rm_pose_t state);
 
     [DllImport("api_c.dll", EntryPoint = "rm_algo_RotateMove", CharSet = CharSet.Auto, CallingConvention = CallingConvention.Cdecl)]
     public static extern rm_pose_t rm_algo_RotateMove(IntPtr handle, [In, Out] float[] curr_joint, int rotate_axis, float rotate_angle, rm_pose_t choose_axis);

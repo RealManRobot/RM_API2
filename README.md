@@ -57,8 +57,14 @@ if software_info[0] == 0:
     print("Arm Model: ", software_info[1]['product_version'])
     print("Algorithm Library Version: ", software_info[1]['algorithm_info']['version'])
     print("Control Layer Software Version: ", software_info[1]['ctrl_info']['version'])
-    print("Dynamics Version: ", software_info[1]['dynamic_info']['model_version'])
-    print("Planning Layer Software Version: ", software_info[1]['plan_info']['version'])
+    if 'dynamic_info' in software_info[1]:
+        print("Dynamics Version: ", software_info[1]['dynamic_info']['model_version'])
+    if 'plan_info' in software_info[1]:
+        print("Planning Layer Software Version: ", software_info[1]['plan_info']['version'])
+    if 'com_info' in software_info[1]:
+        print("Communication Layer Software Version: ", software_info[1]['com_info']['version'])
+    if 'program_info' in software_info[1]:
+        print("Programming Layer Software Version: ", software_info[1]['program_info']['version'])
     print("==============================================================\n")
 else:
     print("\nFailed to get arm software information, Error code: ", software_info[0], "\n")
@@ -87,7 +93,7 @@ else:
   如果是C++开发，则额外包含以下头文件：
   
   - `rm_service.h`：机械臂自定义头文件，声明了C++语言机械臂操作接口。
-  - `rm_service_global.h`：机械臂自定义头文件，定义编译Windows C++版本库时导出宏。
+  - `rm_interface_global.h`：机械臂自定义头文件，定义编译Windows C++版本库时导出宏。
   
 - **动态链接库（DLLs）**：包含了控制机械臂所需的函数和接口。用户需要在项目中正确配置这些DLLs的路径及版本，以便编译器能够找到并链接它们。包含以下版本：
 

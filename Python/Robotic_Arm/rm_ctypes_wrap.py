@@ -2813,9 +2813,9 @@ class rm_fence_config_t(Structure):
 
             if plane is not None and self.form == 2:
                 # 点面矢量平面参数
-                self.plane = plane
+                self.plan = plane
             else:
-                self.plane = rm_fence_config_plane_t()
+                self.plan = rm_fence_config_plane_t()
 
             if sphere is not None and self.form == 3:
                 # 球体参数
@@ -4770,16 +4770,6 @@ if _libs[libname].has("rm_get_arm_software_info", "cdecl"):
         POINTER(rm_robot_handle), POINTER(rm_arm_software_version_t)]
     rm_get_arm_software_info.restype = c_int
 
-if _libs[libname].has("rm_set_sn", "cdecl"):
-    rm_set_sn = _libs[libname].get("rm_set_sn", "cdecl")
-    rm_set_sn.argtypes = [POINTER(rm_robot_handle), String]
-    rm_set_sn.restype = c_int
-
-if _libs[libname].has("rm_get_sn", "cdecl"):
-    rm_get_sn = _libs[libname].get("rm_get_sn", "cdecl")
-    rm_get_sn.argtypes = [POINTER(rm_robot_handle), String]
-    rm_get_sn.restype = c_int
-
 if _libs[libname].has("rm_set_wifi_ap", "cdecl"):
     rm_set_wifi_ap = _libs[libname].get("rm_set_wifi_ap", "cdecl")
     rm_set_wifi_ap.argtypes = [POINTER(rm_robot_handle), String, String]
@@ -4851,6 +4841,17 @@ if _libs[libname].has("rm_set_DO_state", "cdecl"):
     rm_set_DO_state = _libs[libname].get("rm_set_DO_state", "cdecl")
     rm_set_DO_state.argtypes = [POINTER(rm_robot_handle), c_int, c_int]
     rm_set_DO_state.restype = c_int
+
+if _libs[libname].has("rm_set_end_button_enabled", "cdecl"):
+    rm_set_end_button_enabled = _libs[libname].get("rm_set_end_button_enabled", "cdecl")
+    rm_set_end_button_enabled.argtypes = [POINTER(rm_robot_handle), c_int, c_int]
+    rm_set_end_button_enabled.restype = c_int
+
+if _libs[libname].has("rm_get_end_button_enabled", "cdecl"):
+    rm_get_end_button_enabled = _libs[libname].get("rm_get_end_button_enabled", "cdecl")
+    rm_get_end_button_enabled.argtypes = [
+        POINTER(rm_robot_handle), POINTER(c_int), POINTER(c_int)]
+    rm_get_end_button_enabled.restype = c_int
 
 if _libs[libname].has("rm_get_IO_state", "cdecl"):
     rm_get_IO_state = _libs[libname].get("rm_get_IO_state", "cdecl")
@@ -5788,13 +5789,13 @@ if _libs[libname].has("rm_algo_matrix2pos", "cdecl"):
 if _libs[libname].has("rm_algo_base2workframe", "cdecl"):
     rm_algo_base2workframe = _libs[libname].get(
         "rm_algo_base2workframe", "cdecl")
-    rm_algo_base2workframe.argtypes = [rm_matrix_t, rm_pose_t]
+    rm_algo_base2workframe.argtypes = [rm_pose_t, rm_pose_t]
     rm_algo_base2workframe.restype = rm_pose_t
 
 if _libs[libname].has("rm_algo_workframe2base", "cdecl"):
     rm_algo_workframe2base = _libs[libname].get(
         "rm_algo_workframe2base", "cdecl")
-    rm_algo_workframe2base.argtypes = [rm_matrix_t, rm_pose_t]
+    rm_algo_workframe2base.argtypes = [rm_pose_t, rm_pose_t]
     rm_algo_workframe2base.restype = rm_pose_t
 
 if _libs[libname].has("rm_algo_rotate_move", "cdecl"):
