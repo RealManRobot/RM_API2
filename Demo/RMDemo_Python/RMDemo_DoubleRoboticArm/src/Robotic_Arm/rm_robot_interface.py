@@ -18,6 +18,7 @@
 
 from .rm_ctypes_wrap import *
 import ctypes
+import re
 from typing import Callable, Tuple, Optional
 
 
@@ -505,7 +506,7 @@ class ArmTipVelocityParameters:
         Returns:
             int: 函数执行的状态码。
                 - 0: 成功。
-                - 1: 控制器返回设置失败，可能是参数错误或控制器发生错误。
+                - 1: 参数非法，或控制器返回设置失败。
                 - -1: 数据发送失败，通信过程中出现问题。
                 - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。
                 - -3: 返回值解析失败，控制器返回的数据格式不正确或无法识别。
@@ -523,7 +524,7 @@ class ArmTipVelocityParameters:
         Returns:
             int: 函数执行的状态码。
                 - 0: 成功。
-                - 1: 控制器返回设置失败，可能是参数错误或控制器发生错误。
+                - 1: 参数非法，或控制器返回设置失败。
                 - -1: 数据发送失败，通信过程中出现问题。
                 - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。
                 - -3: 返回值解析失败，控制器返回的数据格式不正确或无法识别。
@@ -541,7 +542,7 @@ class ArmTipVelocityParameters:
         Returns:
             int: 函数执行的状态码。
                 - 0: 成功。
-                - 1: 控制器返回设置失败，可能是参数错误或控制器发生错误。
+                - 1: 参数非法，或控制器返回设置失败。
                 - -1: 数据发送失败，通信过程中出现问题。
                 - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。
                 - -3: 返回值解析失败，控制器返回的数据格式不正确或无法识别。
@@ -559,7 +560,7 @@ class ArmTipVelocityParameters:
         Returns:
             int: 函数执行的状态码。
                 - 0: 成功。
-                - 1: 控制器返回设置失败，可能是参数错误或控制器发生错误。
+                - 1: 参数非法，或控制器返回设置失败。
                 - -1: 数据发送失败，通信过程中出现问题。
                 - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。
                 - -3: 返回值解析失败，控制器返回的数据格式不正确或无法识别。
@@ -2365,44 +2366,15 @@ class ControllerConfig:
         """
         version = rm_arm_software_version_t()
         ret = rm_get_arm_software_info(self.handle, byref(version))
+        if ret == 0 and self.robot_controller_version == 4:
+            self._new_force_name = None
+            match = re.fullmatch(rb"[vV]?(\d+)\.(\d+)\.(\d+)(?:[-+.][A-Za-z0-9_.+-]+)?", version.com_info.version)
+            if match is None:
+                print("communication 软件版本解析失败")
+                return -3, version.to_dict(self.robot_controller_version)
+            self._new_force_name = tuple(int(value) for value in match.groups()) > (1, 0, 5)
 
         return ret, version.to_dict(self.robot_controller_version)
-
-    def rm_set_sn(self, sn: str) -> int:
-        """
-        设置机械臂序列号(SN)
-
-        Args:
-            sn (str): 序列号字符串，不能为空字符串
-
-        Returns:
-            int: 函数执行的状态码。
-                - 0: 成功。
-                - 1: 控制器返回false，传递参数错误（如 sn 为空字符串）或机械臂状态发生错误。
-                - -1: 数据发送失败，通信过程中出现问题。
-                - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。
-                - -3: 返回值解析失败，接收到的数据格式不正确或不完整。
-        """
-        tag = rm_set_sn(self.handle, sn)
-        return tag
-
-    def rm_get_sn(self) -> tuple[int, str]:
-        """
-        获取机械臂序列号(SN)
-
-        Returns:
-            tuple[int, str]: 包含两个元素的元组。
-            - int: 函数执行的状态码。
-                - 0: 成功。
-                - 1: 控制器返回false，传递参数错误或机械臂状态发生错误。
-                - -1: 数据发送失败，通信过程中出现问题。
-                - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。
-                - -3: 返回值解析失败，接收到的数据格式不正确或不完整。
-            - str: 返回的序列号字符串。未设置过时返回空字符串。
-        """
-        sn = ctypes.create_string_buffer(28)
-        ret = rm_get_sn(self.handle, sn)
-        return ret, sn.value.decode()
 
     def rm_set_NetIP(self, ip: str, netmask: str, gw: str) -> int:
         """
@@ -2923,6 +2895,49 @@ class ControllerIOConfig:
         """
         tag = rm_set_DO_state(self.handle, io_num, state)
         return tag
+
+    def rm_set_end_button_enabled(self, drag_teach_enabled: int, trajectory_replay_enabled: int) -> int:
+        """
+        设置末端按钮使能，需要重启 ctrl-core 或机械臂后生效
+
+        Args:
+            drag_teach_enabled (int): 绿色拖动示教按钮，1：启用，0：禁用
+            trajectory_replay_enabled (int): 蓝色轨迹复现按钮，1：启用，0：禁用
+
+        Returns:
+            int: 函数执行的状态码。
+            - 0: 成功。
+            - 1: 控制器返回false，参数错误或机械臂状态发生错误。
+            - -1: 数据发送失败，通信过程中出现问题。
+            - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。
+            - -3: 返回值解析失败，接收到的数据格式不正确或不完整。
+        """
+        tag = rm_set_end_button_enabled(self.handle, drag_teach_enabled, trajectory_replay_enabled)
+        return tag
+
+    def rm_get_end_button_enabled(self) -> tuple[int, dict[str, int]]:
+        """
+        获取末端按钮使能，读取当前 communication 内存状态
+
+        Returns:
+            tuple[int, dict[str, int]]: 包含两个元素的元组。
+            - int: 函数执行的状态码。
+                - 0: 成功。
+                - -1: 数据发送失败，通信过程中出现问题。
+                - -2: 数据接收失败，通信过程中出现问题或者控制器超时没有返回。
+                - -3: 返回值解析失败，接收到的数据格式不正确或不完整。
+            - dict[str, int]: 末端按钮使能状态，1：启用，0：禁用。
+                - drag_teach_enabled: 绿色拖动示教按钮。
+                - trajectory_replay_enabled: 蓝色轨迹复现按钮。
+        """
+        drag_teach_enabled = c_int()
+        trajectory_replay_enabled = c_int()
+        ret = rm_get_end_button_enabled(self.handle, byref(drag_teach_enabled), byref(trajectory_replay_enabled))
+        result_dict = {
+            'drag_teach_enabled': drag_teach_enabled.value,
+            'trajectory_replay_enabled': trajectory_replay_enabled.value,
+        }
+        return ret, result_dict
 
     def rm_get_io_state(self, io_num: int) -> tuple[int, dict[str, any]]:
         """
@@ -5072,7 +5087,9 @@ class GlobalWaypointManage:
         waypoint = rm_waypoint_t()
         tag = rm_get_given_global_waypoint(
             self.handle, point_name, byref(waypoint))
-        return tag, waypoint.to_dict()
+        waypoint_dict = waypoint.to_dict()
+        waypoint_dict["joint"] = waypoint_dict["joint"][:self.arm_dof or ARM_DOF]
+        return tag, waypoint_dict
 
     def rm_get_global_waypoints_list(self, page_num: int, page_size: int, vague_search: str) -> tuple[int, dict[str, any]]:
         """
@@ -5096,7 +5113,12 @@ class GlobalWaypointManage:
         waypoint_list = rm_waypoint_list_t()
         ret = rm_get_global_waypoints_list(
             self.handle, page_num, page_size, vague_search, byref(waypoint_list))
-        return ret, waypoint_list.to_dict()
+        waypoint_list_dict = waypoint_list.to_dict()
+
+        for waypoint_dict in waypoint_list_dict["points_list"]:
+            waypoint_dict["joint"] = waypoint_dict["joint"][:self.arm_dof or ARM_DOF]
+
+        return ret, waypoint_list_dict
 
 
 class ElectronicFenceConfig:
@@ -6614,21 +6636,23 @@ class Algo:
         return pose_eul if flag else pose_qua
         # return pose.to_dict()
 
-    def rm_algo_base2workframe(self, matrix: rm_matrix_t, pose_in_base: rm_pose_t, flag: int = 1) -> list[float]:
+    def rm_algo_base2workframe(self, pose: rm_pose_t, pose_in_base: rm_pose_t, flag: int = 1) -> list[float]:
         """
         基坐标系转工作坐标系
 
         Args:
-            matrix (rm_matrix_t): 工作坐标系在基坐标系下的矩阵
+            pose (rm_pose_t): 基坐标系相对于工作坐标系的位姿，填写position（m）和euler（rad）
             pose_in_base (rm_pose_t): 工具端坐标在基坐标系下位姿
             flag (int, optional): 选择姿态表示方式，默认欧拉角表示姿态
                 - 0: 返回使用四元数表示姿态的位姿列表[x,y,z,w,x,y,z]
                 - 1: 返回使用欧拉角表示姿态的位姿列表[x,y,z,rx,ry,rz]
 
         Returns:
-            list[float]: 基坐标系在工作坐标系下的位姿
+            list[float]: 工具端在工作坐标系下的位姿
+
+        转换关系：T_work_tool = T_work_base * T_base_tool，其中T_work_base由pose转换得到。
         """
-        pose_in_work = rm_algo_matrix2pos(matrix, pose_in_base)
+        pose_in_work = rm_algo_base2workframe(pose, pose_in_base)
         position = pose_in_work.position
         euler = pose_in_work.euler
         qua = pose_in_work.quaternion
@@ -6639,21 +6663,23 @@ class Algo:
         return pose_eul if flag else pose_qua
         # return pose_in_work.to_dict()
 
-    def rm_algo_workframe2base(self, matrix: rm_matrix_t, pose_in_work: rm_pose_t, flag: int = 1) -> list[float]:
+    def rm_algo_workframe2base(self, pose: rm_pose_t, pose_in_work: rm_pose_t, flag: int = 1) -> list[float]:
         """
         工作坐标系转基坐标系
 
         Args:
-            matrix (rm_matrix_t): 工具端坐标在工作坐标系下矩阵
+            pose (rm_pose_t): 工作坐标系相对于基坐标系的位姿，填写position（m）和euler（rad）
             pose_in_work (rm_pose_t): 工具端坐标在工作坐标系下位姿
             flag (int, optional): 选择姿态表示方式，默认欧拉角表示姿态
                 - 0: 返回使用四元数表示姿态的位姿列表[x,y,z,w,x,y,z]
                 - 1: 返回使用欧拉角表示姿态的位姿列表[x,y,z,rx,ry,rz]
 
         Returns:
-            list[float]: 工作坐标系在基坐标系下的位姿
+            list[float]: 工具端在基坐标系下的位姿
+
+        转换关系：T_base_tool = T_base_work * T_work_tool，其中T_base_work由pose转换得到。
         """
-        pose_in_base = rm_algo_workframe2base(matrix, pose_in_work)
+        pose_in_base = rm_algo_workframe2base(pose, pose_in_work)
         position = pose_in_base.position
         euler = pose_in_base.euler
         qua = pose_in_base.quaternion
@@ -7110,7 +7136,7 @@ class RoboticArm(ArmState, MovePlan, JointConfigSettings, JointConfigReader, Arm
         if mode == None:
             return
         rm_init(mode)
-        print("current c api version: ", rm_api_version())
+        print("current api version: ", rm_api_version())
 
     def rm_create_robot_arm(self, ip: str, port: int, level: int = 3, log_func: CFUNCTYPE = None) -> rm_robot_handle:
         """
@@ -7137,6 +7163,7 @@ class RoboticArm(ArmState, MovePlan, JointConfigSettings, JointConfigReader, Arm
             rm_set_log_call_back(log_func, level)
 
         # rm_init(thread_mode)
+        self._new_force_name = None
         self.handle = rm_create_robot_arm(ip, port)
         if self.handle.contents.id == -1:
             self.arm_dof = 0
@@ -7154,6 +7181,9 @@ class RoboticArm(ArmState, MovePlan, JointConfigSettings, JointConfigReader, Arm
                     self.dh_dof = 8
                 else:
                     self.dh_dof = self.arm_dof
+                if self.robot_controller_version == 4 and info.force_type in (
+                        rm_force_type_e.RM_MODEL_RM_ISF_E, rm_force_type_e.RM_MODEL_RM_ISFV_E):
+                    self.rm_get_arm_software_info()
         return self.handle.contents
 
     def rm_delete_robot_arm(self) -> int:
@@ -7247,11 +7277,19 @@ class RoboticArm(ArmState, MovePlan, JointConfigSettings, JointConfigReader, Arm
                 - 0: 成功。
                 - -1: 未找到对应句柄,句柄为空或已被删除。
                 - -2: 获取到的机械臂基本信息非法，检查句柄是否已被删除。
+                - -3: 四代控制器软件版本未获取或解析失败。
             - dict[str, any]: 返回机械臂基本信息字典，键为rm_robot_info_t结构体的字段名称。
         """
         info = rm_robot_info_t()
         ret = rm_get_robot_info(self.handle, info)
-        return ret, info.to_dictionary() #返回字典，也可直接返回info
+        data = info.to_dictionary()
+        if ret == 0 and info.robot_controller_version == 4 and info.force_type in (
+                rm_force_type_e.RM_MODEL_RM_ISF_E, rm_force_type_e.RM_MODEL_RM_ISFV_E):
+            if getattr(self, "_new_force_name", None) is None:
+                return -3, data
+            if self._new_force_name:
+                data["force_type"] = {"6FB": "6F", "6FB-V": "6F-V"}[data["force_type"]]
+        return ret, data
 
     def rm_get_arm_event_call_back(self, event_callback: rm_event_callback_ptr):
         """注册机械臂事件回调函数
